@@ -1,0 +1,50 @@
+{
+  "goal": "End-of-day strategy: research + write the roadmap from 'impressive previews' to a finished, playable v1, and prep for the paid art pack landing.",
+  "completed": [
+    "Chris decided to buy the $2.99 full Cute Fantasy pack (horse + ~52 buildings) and go to sleep; asked for a forward strategy, safe overnight work, a closing handoff for a Claude chat, and a /wrap.",
+    "Ran a research subagent (WebSearch) on finishing small solo RPGs; it returned a well-sourced brief and corrected two things in my first roadmap draft.",
+    "docs/roadmap.md: honest current-state (previews done but the live game is still the placeholder), the revised v1 build sequence, content-pipeline reality, story/build division, scope discipline, sources.",
+    "docs/pack-arrival.md: the concrete morning checklist for when the paid pack is committed -- decode building/horse sheets, give the shop and library DISTINCT buildings, place a horse by Ariana's pond, re-render the chosen variant, then apply the world live.",
+    "Committed + pushed both docs; confirmed scripts/island_map.gd byte-untouched vs origin (standing hold intact)."
+  ],
+  "discovered": [
+    "The research (Derek Yu + scope-creep essays) is blunt: the thing that kills a solo first game is scope creep + perfectionism, and the specific trap here is building a dialogue SYSTEM or combat FRAMEWORK instead of the ~5 lines and the one fight. My first roadmap draft over-engineered exactly that (proposed a dialogue data pipeline) -- corrected to 'hardcode the lines as exported strings.'",
+    "Better build order than my first pass: get a beatable path (menu -> walk -> win via a STUBBED trigger) working early so the game is always shippable, THEN slot the real boss in. Combat sits in the middle where the game is still simple.",
+    "Web local-save has a real gotcha: on HTML5 user:// is IndexedDB synced async via Emscripten FS.syncfs(); modern Godot 4 syncs when a written file is CLOSED, so always close after writing, don't spam saves, and don't save right before the tab closes. localStorage via JavaScriptBridge.eval() is a synchronous bulletproof alternative for a tiny save. Must be validated on a real web export, not the editor.",
+    "For v1's ~5 total dialogue lines, hardcoding beats any data format; a Godot Resource (.tres) IS worth it for the save file (type-safe), not for content. Dialogue Manager/Dialogic are overkill until v2 branching."
+  ],
+  "decisions": [
+    "v1 build sequence: land the world in-engine -> player-select + Game autoload (settle the 2P camera here) -> hardcoded NPC dialogue -> quest-complete screen with a stubbed trigger (beatable early) -> boss (HP+Attack, real-time, minimal) -> local save (validated on web export) -> polish, then stop.",
+    "Do NOT build a dialogue system or content data pipeline for v1 -- hardcode the handful of lines as exported strings; the story session writes the words, the build session wires them.",
+    "Combat is HP + one attack (bump/one-button real-time), no turn queue/menus/skills/items.",
+    "The single highest-value next move is landing a chosen world into the actual game (stop previewing, start playing).",
+    "Overnight work was strategy/docs only -- no engine or island_map.gd changes (standing hold)."
+  ],
+  "lessons": [
+    "When a research subagent contradicts your own draft, treat that as the point of running it -- I revised the roadmap (dialogue: hardcode not data-pipeline; reorder for a beatable-path-early) rather than defending the first draft.",
+    "Name the preview-vs-play drift out loud: several gorgeous preview rounds, nothing playable yet -- the honest next step is to land it, and each preview round makes 'apply' bigger.",
+    "For a solo first game, the strategy doc's most useful content is what NOT to build (no dialogue engine, no turn-based combat, no content pipeline at N=5)."
+  ],
+  "files_changed": [
+    "docs/roadmap.md (new -- v1 build strategy, research-backed)",
+    "docs/pack-arrival.md (new -- morning checklist for the paid pack)"
+  ],
+  "open_questions": [
+    "Which cove3-rich variant does Chris pick (1 balanced / 2 pastoral / 3 wild)?",
+    "Once the paid pack is committed: which buildings for the shop vs the library, and where exactly does the horse go near Ariana's pond?",
+    "2P camera rule -- to be settled at the player-select step (leash / zoom-out / clamp).",
+    "Real-time vs turn-based combat -- roadmap recommends real-time (simpler to code); Chris's call if he'd rather avoid twitch input.",
+    "Duck swap for Ariana still pending (assets/ducky/ uncommitted + __MACOSX junk)."
+  ],
+  "intent": "End-of-day. Did the safe, high-value overnight work (research + strategy docs) and stopped -- everything past this needs Chris's variant pick, the committed pack, or the engine/playtest, none of which are available while he sleeps.",
+  "next_task": "Morning: Chris picks a cove3-rich variant + commits the $2.99 pack (clean __MACOSX); build session runs docs/pack-arrival.md and then applies the world live (roadmap step 1), then player-select + hardcoded dialogue.",
+  "blockers": null,
+  "resume_minutes": 10,
+  "dont_retry": [
+    "Don't build a dialogue system or content data pipeline for v1 -- hardcode ~5 lines as exported strings.",
+    "Don't use turn-based combat unless Chris asks -- real-time HP+one-attack is simpler for a first game.",
+    "Don't trust editor-only save testing on web -- validate refresh-persistence on a real export; close files after writing (syncfs-on-close) or use localStorage.",
+    "Don't touch scripts/island_map.gd until Chris picks a variant (standing hold)."
+  ],
+  "session_id": "session_01PyCWLhnuhoW79J25QhMwPD"
+}
