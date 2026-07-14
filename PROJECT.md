@@ -8,16 +8,17 @@ is learning the engine end-to-end, not shipping commercially.
 
 ## Status
 
-- next: **Chris picks a layout from `docs/world-options/`.** The world brief is
-  filled in (spawn → Evan's Subway-in-a-village shop → library-by-the-pond where
-  Ariana the duck-stand-in sits and Irene is the boss). Three distinct candidate
-  full-island layouts are rendered for review — A (straight ceremonial avenue),
-  B (winding woods with a hidden-then-revealed library), C (lakeside crescent,
-  library on a point). Each is a validated ASCII map + preview PNG; see
-  `docs/world-options/README.md`. **The live map (`scripts/island_map.gd`) is
-  still untouched** per Chris's hold. Once he picks: drop that option's `.txt`
-  into `island_map.gd` and add `L` (library) handling to `level.gd` + `main.gd`
-  (small build follow-up). Still deferred, awaiting playtest: the 2P camera rule.
+- next: **Chris picks a final enriched cove from `docs/world-options/`.** He
+  chose the cove-3 (lakeside) direction; it's now enriched into three
+  detailed variants — `cove3-rich-1` (balanced, recommended), `-2` (pastoral
+  village with farm pens), `-3` (wild garden) — with animals (cow/pig/sheep +
+  Ariana's chicken), lamp posts, rocks, stumps, wildflowers, garden flowers, a
+  veg patch, and a chest, all aligned to the brief (see
+  `docs/world-options/README.md`). **The live map (`scripts/island_map.gd`) is
+  still untouched** per Chris's hold. Applying the winner is now a bigger build
+  step: drop its `.txt` into `island_map.gd` AND teach `level.gd`/`main.gd` the
+  new symbols (`L` library + `o p e r u w f v i x` props — sprite + collision
+  each). Still deferred, awaiting playtest: the 2P camera rule.
 
 ### v1 scope (the whole build — nothing beyond this without asking)
 

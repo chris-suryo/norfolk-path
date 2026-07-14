@@ -1,6 +1,40 @@
 # Candidate island layouts
 
-**Round 2 (current): cove refinements.** Chris picked the **Option C / lakeside**
+**Round 3 (current): cove-3 enriched — variety, density, animals, character.**
+Chris picked cove-3 and asked to fill it with detail aligned to the story. These
+build on cove-3's geography (lagoon, library peninsula, fenced garden campus,
+single 2-wide crescent path) and add the pack's wider art set — animals, lamp
+posts, rocks, stumps, wildflowers, garden flowers, a veg patch, a chest. Pick
+one (or mix). NOTE: making the winner *live* is a bigger build step than before
+— `main.gd`/`level.gd` must learn every new prop symbol (sprite + collision).
+
+## cove3-rich-1 — Balanced (recommended) (`cove3-rich-1.png`)
+
+Every zone dressed without tipping into clutter: a calm, lamp-lit spawn; one
+tidy fenced farmstead (cow, sheep, pig, a carrot patch) giving the "old-world
+village" the Subway joke plays against; lamp posts lining the path east toward
+the library; a lush reading garden (flowers, corner lamps, a chest) at the
+climax; rocks along the shore, stumps and wildflowers breaking up the woods.
+
+## cove3-rich-2 — Pastoral Village (`cove3-rich-2.png`)
+
+Leans into settled farmland: **two** fenced plots near the start — a livestock
+pen (cows, sheep, pigs) and a carrot field — so the island reads as a small
+working homestead. Lamp-lit path, modest library garden. The most
+"people-live-here" of the three.
+
+## cove3-rich-3 — Wild Garden (`cove3-rich-3.png`)
+
+No farm pens — a quiet, overgrown, naturalistic island: dense trees, heavy
+rocks/stumps/wildflowers everywhere, and the richest, most flower-filled reading
+garden at the library. Ariana's pond feels like a secret clearing at the end of
+a wild path. The calmest and most atmospheric; least "villagey."
+
+---
+
+# Round 2 (history): cove refinements.
+
+** Chris picked the **Option C / lakeside**
 direction, with notes: make the cove *bigger + smoother + pushed further east*,
 and *populate the island more*. Three refined variants below — review
 `cove-1/2/3.png` and pick (or send more notes for another round). Round 1

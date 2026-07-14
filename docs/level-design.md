@@ -44,8 +44,22 @@ One character = one 16px tile. The current map is **70 wide × 45 tall**.
 | `t` | small oak tree | no (trunk collides) |
 | `F` | fence segment | no (collides) |
 | `H` | Evan's shop / a house (anchor = base/door) | building collides |
+| `L` | the library (same house sprite; sited by the pond) | building collides |
 | `S` | player spawn (put on path) | — |
 | `C` | chicken (Ariana stand-in — should become a duck) | — |
+| `o` | cow | (decor) |
+| `p` | pig | (decor) |
+| `e` | sheep | (decor) |
+| `r` | rock | (decor) |
+| `u` | tree stump | (decor) |
+| `w` | wildflowers (meadow) | (decor) |
+| `f` | garden flowers (potted) | (decor) |
+| `v` | veg / carrot plant | (decor) |
+| `i` | lamp post (tall) | (decor) |
+| `x` | chest | (decor) |
+
+*(decor)* = whether each animal/prop collides is a build-time choice made when a
+layout goes live; the preview renders them regardless.
 
 ## The palette — what art we actually have
 
@@ -54,10 +68,12 @@ here means it can't be built without sourcing new art.
 
 - **Ground:** grass, dirt path, water. (Also unused: beach/sand, farmland,
   cliff — available if a brief wants them, needs a build pass to wire in.)
-- **Nature:** oak trees (big + small). *(No bushes, flowers, rocks, or reeds in
-  the free tier.)*
-- **Structures:** one house (blue roof), wood fences, a wood bridge. *(No shops-
-  interior, no wells, signs, market stalls, or castle/dungeon pieces.)*
+- **Nature:** oak trees (big + small), rocks, tree stumps, wildflowers, potted
+  garden flowers, carrot/veg plants. *(No round bushes — the pack's "bushes"
+  are tiny sprigs that vanish on grass, so they're dropped.)*
+- **Structures:** one house sprite (blue roof — reused for both the shop and the
+  library), wood fences, a wood bridge, a lamp post, a chest. *(No shop
+  interiors, wells, market stalls, or castle/dungeon pieces.)*
 - **Creatures:** chicken, cow, pig, sheep (farm animals); slime + skeleton
   (enemies, unused so far). *(No duck yet — Ariana is a chicken stand-in.)*
 - **People:** one player sprite (reused for both players and — for now — any

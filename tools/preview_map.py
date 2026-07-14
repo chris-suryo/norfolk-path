@@ -204,7 +204,22 @@ def render(rows, out_path):
     bridge = tex("Outdoor decoration/Bridge_Wood.png")
     house = tex("Outdoor decoration/House_1_Wood_Base_Blue.png")
     chicken = tex("Animals/Chicken/Chicken.png")
+    cow = tex("Animals/Cow/Cow.png")
+    pig = tex("Animals/Pig/Pig.png")
+    sheep = tex("Animals/Sheep/Sheep.png")
+    decor = tex("Outdoor decoration/Outdoor_Decor_Free.png")
+    chest = tex("Outdoor decoration/Chest.png")
     player = tex("Player/Player.png")
+    # Decoration atlas regions (16px grid in Outdoor_Decor_Free.png). Chosen to
+    # read clearly on grass at zoom (tiny sprigs were invisible, so dropped).
+    decor_region = {
+        "r": (0, 48, 16, 16),    # grey rock
+        "u": (0, 32, 16, 16),    # tree stump
+        "w": (0, 16, 16, 16),    # wildflowers (meadow)
+        "f": (32, 176, 16, 16),  # garden flowers (potted, upright)
+        "v": (64, 32, 16, 16),   # carrot / veg plant
+        "i": (64, 64, 16, 64),   # tall lamp post
+    }
 
     # terrain: grass under everything, then water/path edge tiles.
     for y in range(h):
@@ -249,6 +264,16 @@ def render(rows, out_path):
         elif sym == "F":
             piece = _fence_piece(rows, x, y)
             blit(canvas, cw, ch, fences, piece[0] * 16, piece[1] * 16, 16, 16, px_ - 8, py_ - 8)
+        elif sym in "ope":
+            # Farm animals (2x2 sheets, frame 0). o=cow, p=pig, e=sheep.
+            sheet = {"o": cow, "p": pig, "e": sheep}[sym]
+            blit(canvas, cw, ch, sheet, 0, 0, 32, 32, px_ - 16, py_ - 26)
+        elif sym == "x":
+            blit(canvas, cw, ch, chest, 0, 0, 16, 16, px_ - 8, py_ - 12)
+        elif sym in decor_region:
+            rx, ry, rw, rh = decor_region[sym]
+            # Anchor each prop's base near the cell (tall lamp hangs upward).
+            blit(canvas, cw, ch, decor, rx, ry, rw, rh, px_ - rw // 2, py_ + 8 - rh)
 
     encode_png(cw, ch, canvas, out_path)
     return cw, ch
