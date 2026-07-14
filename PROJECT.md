@@ -8,16 +8,15 @@ is learning the engine end-to-end, not shipping commercially.
 
 ## Status
 
-- next: **Playtest Slice 2 (world pipeline) on Windows.** The art pass is
-  browser-verified. Slice 2 adds the level-design pipeline: the island is now
-  an ASCII map (`scripts/island_map.gd` — edit the string, reshape the world),
-  shorelines/path edges autotile from the pack's edge sheets, trees/fences/
-  bridge spawn from map symbols with collision, the chicken pecks, zoom is an
-  Inspector-tunable export (default 2.5), and **both players now spawn** (WASD
-  + arrows) with the camera tracking their midpoint — deliberately no leash
-  yet, so walking apart is expected to break framing; that playtest feedback
-  drives the camera design. Chris: pull → first-time import → Web export →
-  serve → hard-refresh, then walk it (and feel the 2P camera problem).
+- next: **Story session writes `docs/world-brief.md`.** Slice 2 (world
+  pipeline) is playtested and looks great. The level-design handoff kit now
+  exists so a *second* session (the story/character one — Evan, Irene, Ariana,
+  the Norfolk Path premise) can drive the world: `docs/level-design.md` is the
+  contract (legend, art palette, rules, brief template), `docs/world-brief.md`
+  is the stub it fills in, and `tools/preview_map.py` renders any map to
+  `docs/island-preview.png` with validation. **The build session will NOT touch
+  the map layout until the filled brief comes back** (Chris's hold). Deferred
+  and awaiting Chris's playtest feedback: the 2P camera rule (leash/zoom/clamp).
 
 ### v1 scope (the whole build — nothing beyond this without asking)
 
@@ -46,6 +45,9 @@ screen, and their progress survives a refresh.
 | Engine | Godot **4.7 stable** (June 2026) — from godotengine.org; pin matches the repo |
 | Art pack | *Cute Fantasy RPG – 16×16* (free tier), committed at `assets/cute_fantasy/Cute_Fantasy_Free/` |
 | Build plan | `docs/slice-1-plan.md` |
+| Level-design contract | `docs/level-design.md` (legend, palette, rules, brief template) |
+| World brief (story session fills) | `docs/world-brief.md` |
+| Map preview image | `docs/island-preview.png` (regenerate: `python tools/preview_map.py`) |
 | Web build | (HTML5 export → `export/web/` once Slice 1 lands; browser link TBD) |
 
 **On-disk standard:** code repos live under the code root `E:\code\<name>`.
@@ -66,6 +68,7 @@ assumed on PATH as `godot`):
 | Serve the web build locally (PowerShell) | `py -m http.server 8000 --directory export/web` → open `http://localhost:8000` |
 | Lint GDScript (what CI runs) | `pip install gdtoolkit==4.5.0`, then `gdformat --check scripts/` and `gdlint scripts/` |
 | **Edit the level** | change the ASCII grid in `scripts/island_map.gd` (legend at top of file) — terrain, props, and spawns all follow it; no editor painting needed |
+| **Preview / validate the map** | `python tools/preview_map.py` → writes `docs/island-preview.png`, reports rule violations (must be 0). Dev-only tool, not in the game build (`.gdignore`). |
 
 **Playtesting the movement feel is a human-in-editor task on Windows**, not something
 the cloud build session can verify — movement lives in exported constants
@@ -88,6 +91,15 @@ the cloud build session can verify — movement lives in exported constants
   rule the art imposes: keep water/path regions ≥ 2 tiles wide (the sheets
   have no strip tiles). The cloud session verifies layouts with a real-art
   preview renderer (scratchpad tool) before pushing.
+- **Level design is a two-session handoff:** the story session owns the vision
+  (writes `docs/world-brief.md`), the build session owns the geometry
+  (translates it into `scripts/island_map.gd`) — see `docs/level-design.md` for
+  the full loop. **Image models (diffusion) are explicitly NOT in the level
+  pipeline** — they produce flat rasters with no grid/collision/tileset link;
+  cohesion comes from story-driven layout iterated against the preview render,
+  not one-shot generation. `tools/preview_map.py` is the shared eyes: it
+  composites the real tiles the way the engine does and validates the design
+  rules, so a brief-turned-map is checked before it hits the engine.
 - **Camera zoom is an exported var** (`zoom_level` on Camera2D, default 2.5)
   — 3× felt too tight in the first browser test; tune it live in the
   Inspector.
