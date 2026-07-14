@@ -1,4 +1,36 @@
-# Candidate island layouts — pick one
+# Candidate island layouts
+
+**Round 2 (current): cove refinements.** Chris picked the **Option C / lakeside**
+direction, with notes: make the cove *bigger + smoother + pushed further east*,
+and *populate the island more*. Three refined variants below — review
+`cove-1/2/3.png` and pick (or send more notes for another round). Round 1
+(`option-a/b/c`) is kept below for history.
+
+## cove-1 — Open Smooth Bay (`cove-1.png`)
+
+A large, clean-edged bay biting in from the east; the library sits on a point at
+the water with a small reading-garden fence. Balanced, evenly-wooded island —
+the calmest read, the cove itself doing the "you've arrived" work. Smoothest
+shoreline of the three.
+
+## cove-2 — Enclosed Cove (`cove-2.png`)
+
+The biggest, most *enclosed* cove — a south land-arm wraps under the water so it
+reads as a sheltered curve rather than open sea, and the island is heavily
+forested throughout. The path threads a denser wood to the library point; the
+most lush and secluded feel.
+
+## cove-3 — Lagoon & Garden Campus (`cove-3.png`)
+
+A lagoon with the library on a broad peninsula ringed by a fenced "reading
+garden campus" (two garden plots) — the most *populated*, settlement-like
+climax. Densest decoration; the library area reads as a real place, not just a
+building. (Trade-off: the busiest, so the calm-spawn contrast is a touch weaker
+than cove-1.)
+
+---
+
+# Round 1 (history) — pick one
 
 Three full-island layouts for the Norfolk Path quest (`docs/world-brief.md`),
 each rendered from its own ASCII source. All are the same fixed story: calm
