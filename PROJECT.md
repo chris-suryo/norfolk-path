@@ -8,17 +8,16 @@ is learning the engine end-to-end, not shipping commercially.
 
 ## Status
 
-- next: **Verify Slice 1 on Windows — import is clean, Web export + movement
-  feel still to check.** The walking skeleton is authored (branch
-  `claude/slice-1-godot-toolchain-ij6e9w`, per [`docs/slice-1-plan.md`](docs/slice-1-plan.md)).
-  Engine-side verification is deliberately Chris's step: the cloud build
-  session's egress policy blocks github.com/godotengine.org, so Godot 4.7 could
-  not be installed there — the plan's Step 0 toolchain spike failed and the
-  headless import + Web export checks moved to the local machine. First-time
-  headless import (`godot --headless --editor --path . --quit`) is confirmed
-  clean on Windows as of this session. Remaining: run the Web export command,
-  serve it locally and confirm it runs in a browser, then tune movement feel
-  in-editor.
+- next: **Re-test on Windows after the art pass.** Slice 1 toolchain is fully
+  proven (headless import, Web export, browser run all confirmed). The real-art
+  pass has now landed on `claude/slice-1-godot-toolchain-ij6e9w`: Cute Fantasy
+  player spritesheet with directional frames, grass-island level (water ring,
+  east pond, winding path), Evan's shop with a proximity line, chicken stand-in
+  at the pond. Chris: pull, run the first-time import command below, re-export
+  Web, serve, **hard-refresh the tab (Ctrl+Shift+R)** — the "invisible player /
+  no stretch" bugs were fixed in `dcc1cad` but the last browser test predated
+  that fix, so a stale cached build would false-negative it. Then tune movement
+  feel in-editor.
 
 ### v1 scope (the whole build — nothing beyond this without asking)
 
@@ -45,7 +44,7 @@ screen, and their progress survives a refresh.
 |---|---|
 | Repo | `E:\code\norfolk-path` |
 | Engine | Godot **4.7 stable** (June 2026) — from godotengine.org; pin matches the repo |
-| Art pack | *Cute Fantasy RPG – 16×16*, itch.io (free tier) — not yet imported |
+| Art pack | *Cute Fantasy RPG – 16×16* (free tier), committed at `assets/cute_fantasy/Cute_Fantasy_Free/` |
 | Build plan | `docs/slice-1-plan.md` |
 | Web build | (HTML5 export → `export/web/` once Slice 1 lands; browser link TBD) |
 
@@ -79,11 +78,13 @@ the cloud build session can verify — movement lives in exported constants
   above). Flip threads on later only behind a header-setting host.
 - **Renderer = GL Compatibility** (WebGL 2), not Forward+ — the well-supported
   web path in Godot 4 and the safe choice for an HTML5-first project.
-- **Placeholder level is painted in code** (`scripts/level.gd`, runtime
-  `set_cell()`), not hand-painted in the editor: the project was authored
-  headlessly and TileMapLayer's packed tile data isn't safe to hand-write. Real
-  art still drops in by swapping `assets/placeholder/tileset.tres`; the layout
-  can be repainted by hand in-editor whenever that's nicer.
+- **Level is painted in code** (`scripts/level.gd`, runtime `set_cell()`), not
+  hand-painted in the editor: the project was authored headlessly and
+  TileMapLayer's packed tile data isn't safe to hand-write. The tileset is now
+  the real Cute Fantasy art (`assets/tileset.tres`: grass / path / water fill
+  tiles, water collides); the layout can be repainted by hand in-editor
+  whenever that's nicer. Edge/corner autotiling (the `*_Tile.png` sheets) is a
+  deferred polish pass — fill tiles only for now.
 - **CI = gdtoolkit lint only** (see comment in `.github/workflows/ci.yml`): a
   headless-Godot import/export job couldn't be validated from the cloud session
   (egress blocked the engine download), so CI gates on `gdformat --check` +
@@ -98,6 +99,19 @@ the cloud build session can verify — movement lives in exported constants
   failure. That was a real misdiagnosis: `git hash-object` on the Windows
   working copy matched `git rev-parse HEAD:...` exactly for both PNGs, proving
   the files were byte-identical to what's committed the whole time.
+- **The chicken at the pond is a TEMPORARY stand-in for Ariana, who should be
+  a DUCK.** A duck sprite download was attempted but didn't extract correctly;
+  the pack's `Animals/Chicken/Chicken.png` fills the spot visually until a duck
+  is sourced. Swap = replace the `Chicken` Sprite2D texture in
+  `scenes/main.tscn` (frames are 2×2 of 32×32; adjust `hframes`/`vframes` to
+  the duck sheet).
+- **Art pack license caution:** the Cute Fantasy free tier allows
+  non-commercial use and modification but **forbids redistribution, even
+  modified**. The pack is committed to this repo — fine while the repo is
+  private, but making the repo public would arguably be redistribution.
+  Chris's call to revisit before any public hosting of the repo itself (the
+  exported game build is a different question from redistributing the raw
+  pack).
 - **Real cause of "No loader found for resource" on first Windows import:**
   the project had *never* been imported (`.godot/` didn't exist yet), and the
   documented sanity command, `godot --headless --path . --quit` (no

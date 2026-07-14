@@ -1,0 +1,28 @@
+[gd_resource type="TileSet" load_steps=7 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/cute_fantasy/Cute_Fantasy_Free/Tiles/Grass_Middle.png" id="1_grass"]
+[ext_resource type="Texture2D" path="res://assets/cute_fantasy/Cute_Fantasy_Free/Tiles/Path_Middle.png" id="2_path"]
+[ext_resource type="Texture2D" path="res://assets/cute_fantasy/Cute_Fantasy_Free/Tiles/Water_Middle.png" id="3_water"]
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_grass"]
+texture = ExtResource("1_grass")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_path"]
+texture = ExtResource("2_path")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_water"]
+texture = ExtResource("3_water")
+texture_region_size = Vector2i(16, 16)
+0:0/0 = 0
+0:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+
+[resource]
+tile_size = Vector2i(16, 16)
+physics_layer_0/collision_layer = 1
+sources/0 = SubResource("TileSetAtlasSource_grass")
+sources/1 = SubResource("TileSetAtlasSource_path")
+sources/2 = SubResource("TileSetAtlasSource_water")

@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://scripts/level.gd" id="1_level"]
-[ext_resource type="TileSet" path="res://assets/placeholder/tileset.tres" id="2_tileset"]
+[ext_resource type="TileSet" path="res://assets/tileset.tres" id="2_tileset"]
 
 [node name="Level" type="TileMapLayer"]
 tile_set = ExtResource("2_tileset")
