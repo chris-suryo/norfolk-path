@@ -1,20 +1,27 @@
 # Candidate world layouts
 
-# Norfolk Path valley — the expanded first level (Round 4, CURRENT)
+# Norfolk Path valley — the expanded first level (Round 5 = DENSITY PASS, CURRENT)
 
-A fresh, ~2×-longer world (**140 wide**) replacing the small coves, per Chris's
-brief: **one golden path west→east escalating through 4 regions** — a busy
+A fresh, ~2×-longer world (**144 wide**) replacing the small coves, re-rendered
+to match the Stardew **references/** density (round 1 was flat green with
+floating objects). **One golden path west→east through 4 regions** — a busy
 **Village** (spawn) → **Path & Evan's Stall** → **Woods** → **Library & Lake**
-climax, with tree-lined corridors linking bounded encounter pockets and
-decoration ramping toward the library. Rendered large (`tools/preview_map.py
---scale 3`, ~6700px wide) from the real pack tiles. **Preview only —
-`scripts/island_map.gd` is untouched; pick/iterate before anything goes live.**
+climax. **Preview only — `scripts/island_map.gd` is untouched.**
 
-All buildings are **real pack art** (no stand-ins needed): **Inn** = the library,
-**Market_Stalls** = Evan's shop, plus barn / coop / silo / cottages / well.
-Ambient **villagers** use the `Farmer_Bob` sprite as a generic placeholder
-(final villager sprites TBD); **ducks + capybara + Ariana** are the real animal
-sprites, sat on the grass shoreline. Named cast + the 5 dialogue lines unchanged.
+**What changed (the density pass).** `tools/preview_map.py` now *procedurally
+layers* the lushness so the ground reads worked, not flat: grass-shade patches +
+a dense scatter of tufts/flowers/pebbles on every open cell; **organic
+lakeshores** with a sand edge + reeds + lily-pads + shore rocks; **crop rows** on
+the tilled plots. `tools/gen_valley.py` gives every **building context** — a
+cobble apron at the door, a cobble spur to the road, flanking lamps, a fenced
+yard, flowerbeds — plus an **organic (elliptic) library lake**, a bridged brook,
+and **dense tree borders** framing the valley. See the close-ups
+(`valley-1-village.png`, `valley-1-library.png`) for the texture + shore detail.
+
+All buildings are **real pack art**: **Inn** = library, **Market_Stalls** =
+Evan, plus barn/coop/silo/cottages/well. Ambient **villagers** use `Farmer_Bob`
+as a placeholder; **ducks + capybara + Ariana** are real animal sprites on the
+grass shoreline. Named cast + the 5 dialogue lines unchanged.
 
 ## valley-1 — Balanced (recommended) (`valley-1.png`)
 The even read: a tidy village (cottages, barn, wells, a fenced pasture, two crop

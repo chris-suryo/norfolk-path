@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 """Render an ASCII world map to a preview PNG + validate it.
 
-DEV-ONLY tool (never part of the game build — see tools/.gdignore). It is the
-design loop's eyes: it turns the ASCII map into a picture composited from the
-real Cute Fantasy tiles, laid out the way the engine renders them, so a level
-can be seen and checked before it ever runs in Godot.
+DEV-ONLY tool (never part of the game build — see tools/.gdignore). Composites
+the real Cute Fantasy tiles the way the engine paints them, so a level can be
+seen and checked before it runs in Godot.
+
+Density model (matches the Stardew references in references/): the ASCII map
+defines STRUCTURE (terrain shapes, buildings, trees), and the tool procedurally
+LAYERS the lushness — grass-shade variation, a dense scatter of tufts/flowers,
+sandy shores with reeds/lily-pads/rocks, cobble aprons — all as render overlays
+keyed off terrain (NOT map symbols), so they never affect autotiling/validation.
 
 Usage:
-    python tools/preview_map.py                                  # current island
     python tools/preview_map.py --map foo.txt --out foo.png --scale 3
+    python tools/preview_map.py --map foo.txt --out crop.png --scale 5 --crop 4,6,44,40
 
-Sprites come from two roots: the committed FREE pack (terrain, base props) and
-the paid FULL pack library (buildings + extra animals) — the tool reads PNGs
-directly, so the FULL pack's .gdignore is irrelevant here. No third-party deps.
-
-KEEP IN SYNC: the terrain classification + EDGE_BY_LAND_MASK table mirror
-scripts/level.gd. Legend lives in docs/level-design.md.
+KEEP IN SYNC: terrain classification + EDGE_BY_LAND_MASK mirror scripts/level.gd.
 """
 import os
 import re
@@ -31,14 +31,12 @@ OUT = os.path.join(REPO, "docs", "island-preview.png")
 
 TILE = 16
 
-# --- mirror of scripts/level.gd -----------------------------------------------
-EDGE_BY_LAND_MASK = {  # land-neighbor bitmask N=1 S=2 E=4 W=8 -> atlas cell
+EDGE_BY_LAND_MASK = {
     1: (1, 0), 2: (1, 2), 4: (2, 1), 8: (0, 1),
     5: (2, 0), 9: (0, 0), 6: (2, 2), 10: (0, 2),
 }
 CENTER = (1, 1)
 
-# Terrain symbols (everything else is grass, incl. all the building/prop chars).
 WATER_SYMS = "~B"
 PATH_SYMS = "#S"
 FARM_SYMS = "D"
@@ -51,7 +49,17 @@ def terrain_of(ch):
         return "path"
     if ch in FARM_SYMS:
         return "farm"
+    if ch == "c":
+        return "cobble"
     return "grass"
+
+
+def rng(x, y, salt=0):
+    """Deterministic per-cell hash in [0,1)."""
+    n = (x * 73856093) ^ (y * 19349663) ^ (salt * 83492791)
+    n = (n ^ (n >> 13)) & 0xFFFFFFFF
+    n = (n * 1274126177) & 0xFFFFFFFF
+    return n / 0xFFFFFFFF
 
 
 # --- PNG stdlib codec ---------------------------------------------------------
@@ -116,6 +124,16 @@ def encode_png(w, h, rgba, path):
     open(path, "wb").write(png)
 
 
+def crop(w, h, rgba, box):
+    x0, y0, x1, y1 = box
+    nw, nh = x1 - x0, y1 - y0
+    out = bytearray(nw * nh * 4)
+    for y in range(nh):
+        src = ((y0 + y) * w + x0) * 4
+        out[y * nw * 4 : (y + 1) * nw * 4] = rgba[src : src + nw * 4]
+    return nw, nh, out
+
+
 def upscale(w, h, rgba, factor):
     if factor <= 1:
         return w, h, rgba
@@ -133,16 +151,13 @@ def upscale(w, h, rgba, factor):
     return nw, nh, out
 
 
-# --- map loading --------------------------------------------------------------
 def load_map(path=MAP_GD):
-    """Load an ASCII map from a .gd (const MAP block) or a raw .txt file."""
     src = open(path, encoding="utf-8").read()
     m = re.search(r'const MAP :=\s*"""\n(.*?)"""', src, re.S)
     body = m.group(1) if m else src
     return body.strip("\n").split("\n")
 
 
-# --- autotiling (mirror of level.gd) -----------------------------------------
 def cell(rows, x, y):
     if y < 0 or y >= len(rows) or x < 0 or x >= len(rows[y]):
         return "~"
@@ -150,30 +165,30 @@ def cell(rows, x, y):
 
 
 def land_mask(rows, x, y, kind):
-    def is_same(dx, dy):
+    def same(dx, dy):
         return terrain_of(cell(rows, x + dx, y + dy)) == kind
 
     mask = 0
-    if not is_same(0, -1):
+    if not same(0, -1):
         mask |= 1
-    if not is_same(0, 1):
+    if not same(0, 1):
         mask |= 2
-    if not is_same(1, 0):
+    if not same(1, 0):
         mask |= 4
-    if not is_same(-1, 0):
+    if not same(-1, 0):
         mask |= 8
     return mask
 
 
 def edge_pick(rows, x, y, kind, has_inner=True):
-    def is_same(dx, dy):
+    def same(dx, dy):
         return terrain_of(cell(rows, x + dx, y + dy)) == kind
 
     mask = land_mask(rows, x, y, kind)
     if mask == 0:
         if has_inner:
             for dx, dy, res in ((1, 1, (0, 3)), (-1, 1, (1, 3)), (1, -1, (0, 4)), (-1, -1, (1, 4))):
-                if not is_same(dx, dy):
+                if not same(dx, dy):
                     return res
             if (x * 7 + y * 13) % 17 == 0:
                 return ((x + y) % 3, 5)
@@ -181,7 +196,6 @@ def edge_pick(rows, x, y, kind, has_inner=True):
     return EDGE_BY_LAND_MASK.get(mask, CENTER)
 
 
-# --- composite ----------------------------------------------------------------
 def blit(canvas, cw, ch, src, sx, sy, sw, sh, dx, dy):
     w, _, px = src
     for yy in range(sh):
@@ -214,21 +228,33 @@ def tex2(rel):
 
 
 def blit_building(canvas, cw, ch, src, px_, py_, foot=8):
-    """Draw a whole building centered on px_ with its base ~foot px below the
-    cell center (so it sits on the ground and Y-sorts by its base)."""
     w, h, _ = src
     blit(canvas, cw, ch, src, 0, 0, w, h, px_ - w // 2, py_ + foot - h)
 
 
-def render(rows, out_path, scale=1):
+def render(rows, out_path, scale=1, crop_box=None):
     w, h = len(rows[0]), len(rows)
     cw, ch = w * TILE, h * TILE
     canvas = bytearray(cw * ch * 4)
 
-    grass = tex("Tiles/Grass_Middle.png")
+    # --- terrain + autotile sheets (FREE pack, proven autotiler) ---
     path_sheet = tex("Tiles/Path_Tile.png")
     water_sheet = tex("Tiles/Water_Tile.png")
     farm_sheet = tex("Tiles/FarmLand_Tile.png")
+    # --- ground texture + detail (FULL pack) ---
+    grasses = [tex2("Tiles/Grass/Grass_%d_Middle.png" % i) for i in (1, 2, 3, 4)]
+    sand = tex2("Tiles/Beach/Beach_Tiles.png")            # cell (3,0) = solid sand
+    cobble_t = tex2("Tiles/Cobble_Road/Cobble_Road_1.png")  # cell (1,1) = cobble
+    ga = "Outdoor decoration/Outdoor_Decor_Animations/Grass_Animations/"
+    tufts = [tex2(ga + "Grass_%d_Anim.png" % i) for i in (1, 2, 3)]
+    fgrass = [tex2(ga + "Flower_Grass_%d_Anim.png" % i) for i in (1, 3, 5, 7, 9, 11, 13, 15)]
+    flowers = tex2("Outdoor decoration/Flowers.png")     # 10x10 @16; cols 0-4 = no pot
+    ores = tex2("Outdoor decoration/Ores.png")           # col 0 = grey rocks
+    wp = "Outdoor decoration/Outdoor_Decor_Animations/Water_Decor_Animations/Water_Plants/"
+    reeds = [tex2(wp + "Water_Grass_%d_Anim.png" % i) for i in (1, 2)]
+    waterdec = tex2("Tiles/Water/Water_Decoration.png")  # 3x1 lily pads
+
+    # --- props (existing) ---
     oak = tex("Outdoor decoration/Oak_Tree.png")
     oak_s = tex("Outdoor decoration/Oak_Tree_Small.png")
     fences = tex("Outdoor decoration/Fences.png")
@@ -240,8 +266,6 @@ def render(rows, out_path, scale=1):
     decor = tex("Outdoor decoration/Outdoor_Decor_Free.png")
     chest = tex("Outdoor decoration/Chest.png")
     player = tex("Player/Player.png")
-
-    # FULL-pack buildings + extra fauna (whole sprites unless noted).
     stall = tex2("Buildings/Buildings/Unique_Buildings/Stalls/Market_Stalls.png")
     inn = tex2("Buildings/Buildings/Unique_Buildings/Inn/Inn_Blue.png")
     barn = tex2("Buildings/Buildings/Unique_Buildings/Barn/Barn_Base_Red.png")
@@ -257,51 +281,98 @@ def render(rows, out_path, scale=1):
     capy = tex2("Animals/Kapybara/Static/Kapybara_Idle.png")
     villager = tex2("NPCs (Premade)/Farmer_Bob.png")
 
-    # Decoration atlas regions (16px grid in Outdoor_Decor_Free.png).
     decor_region = {
-        "r": (0, 48, 16, 16),    # grey rock
-        "u": (0, 32, 16, 16),    # tree stump
-        "w": (0, 16, 16, 16),    # wildflowers (meadow)
-        "f": (32, 176, 16, 16),  # garden flowers (potted, upright)
-        "v": (64, 32, 16, 16),   # carrot / veg plant
-        "i": (64, 64, 16, 64),   # tall lamp post
-        "n": (48, 0, 16, 16),    # wooden sign
-        "q": (96, 32, 16, 16),   # wheat / grain
-        "m": (32, 112, 16, 16),  # mushroom
+        "r": (0, 48, 16, 16), "u": (0, 32, 16, 16), "w": (0, 16, 16, 16),
+        "f": (32, 176, 16, 16), "v": (64, 32, 16, 16), "i": (64, 64, 16, 64),
+        "n": (48, 0, 16, 16), "q": (96, 32, 16, 16), "m": (32, 112, 16, 16),
     }
     buildings = {"H": (stall, 8), "L": (inn, 8), "A": (house_a, 8), "G": (house_g, 8),
                  "J": (house_j, 8), "Y": (barn, 8), "W": (well, 6), "P": (coop, 8),
                  "Z": (silo, 6)}
+    flower_cells = [(0, 0), (2, 0), (4, 0), (1, 2), (3, 2), (0, 4), (2, 4), (4, 4), (1, 8), (3, 8)]
 
-    # terrain: grass under everything, then water/path/farm edge tiles.
+    def is_water(x, y):
+        return terrain_of(cell(rows, x, y)) == "water"
+
+    def near_water(x, y):
+        return is_water(x - 1, y) or is_water(x + 1, y) or is_water(x, y - 1) or is_water(x, y + 1)
+
+    # ---- pass 1: base terrain (grass shade / path / water / farm / cobble / sand) ----
     for y in range(h):
         for x in range(w):
-            blit(canvas, cw, ch, grass, 0, 0, TILE, TILE, x * TILE, y * TILE)
             t = terrain_of(rows[y][x])
+            gx, gy = x * TILE, y * TILE
             if t == "water":
                 cx, cy = edge_pick(rows, x, y, "water")
-                blit(canvas, cw, ch, water_sheet, cx * TILE, cy * TILE, TILE, TILE, x * TILE, y * TILE)
+                blit(canvas, cw, ch, water_sheet, cx * TILE, cy * TILE, TILE, TILE, gx, gy)
             elif t == "path":
                 cx, cy = edge_pick(rows, x, y, "path")
-                blit(canvas, cw, ch, path_sheet, cx * TILE, cy * TILE, TILE, TILE, x * TILE, y * TILE)
+                blit(canvas, cw, ch, path_sheet, cx * TILE, cy * TILE, TILE, TILE, gx, gy)
             elif t == "farm":
                 cx, cy = edge_pick(rows, x, y, "farm", has_inner=False)
-                blit(canvas, cw, ch, farm_sheet, cx * TILE, cy * TILE, TILE, TILE, x * TILE, y * TILE)
+                blit(canvas, cw, ch, farm_sheet, cx * TILE, cy * TILE, TILE, TILE, gx, gy)
+            elif t == "cobble":
+                blit(canvas, cw, ch, cobble_t, 16, 16, TILE, TILE, gx, gy)
+            else:
+                # soft grass-shade PATCHES (3x3, biased to one base shade) rather
+                # than per-cell random, so it reads textured not checkerboarded.
+                p = rng(x // 3, y // 3, 5)
+                g = grasses[0 if p < 0.74 else 1]  # subtle 2-shade patches
+                blit(canvas, cw, ch, g, 0, 0, TILE, TILE, gx, gy)
+                if near_water(x, y):  # sandy shore ring on the land side
+                    blit(canvas, cw, ch, sand, 48, 0, TILE, TILE, gx, gy)
 
-    # bridge sits under all props (engine: unsorted GroundProps).
+    # ---- pass 2: ground/shore detail (procedural overlays; no symbol change) ----
+    for y in range(h):
+        for x in range(w):
+            t = terrain_of(rows[y][x])
+            cx_, cy_ = x * TILE + 8, y * TILE + 8
+            if t == "water":
+                if near_water_land(rows, x, y) and rng(x, y, 11) < 0.5:
+                    if rng(x, y, 12) < 0.5:
+                        blit(canvas, cw, ch, waterdec, (int(rng(x, y, 13) * 3) % 3) * 16, 0,
+                             16, 16, cx_ - 8, cy_ - 8)
+                    else:
+                        rd = reeds[int(rng(x, y, 14) * 2) % 2]
+                        blit(canvas, cw, ch, rd, 0, 0, 16, 16, cx_ - 8, cy_ - 10)
+            elif t == "farm":  # crop rows on the tilled plots (so they aren't bare)
+                if rng(x, y, 41) < 0.72:
+                    reg = (64, 32) if (x + y) % 2 == 0 else (96, 32)
+                    blit(canvas, cw, ch, decor, reg[0], reg[1], 16, 16, cx_ - 8, cy_ - 9)
+            elif t == "grass":
+                if near_water(x, y):  # sand shore: occasional rocks / reeds
+                    if rng(x, y, 21) < 0.2:
+                        blit(canvas, cw, ch, ores, 0, (int(rng(x, y, 22) * 4) % 4) * 16,
+                             16, 16, cx_ - 8, cy_ - 10)
+                    continue
+                r = rng(x, y, 31)
+                jx = int(rng(x, y, 32) * 6) - 3
+                jy = int(rng(x, y, 33) * 6) - 3
+                if r < 0.34:
+                    tu = tufts[int(rng(x, y, 34) * 3) % 3]
+                    blit(canvas, cw, ch, tu, 0, 0, 16, 16, cx_ - 8 + jx, cy_ - 8 + jy)
+                elif r < 0.52:
+                    fg = fgrass[int(rng(x, y, 35) * len(fgrass)) % len(fgrass)]
+                    blit(canvas, cw, ch, fg, 0, 0, 16, 16, cx_ - 8 + jx, cy_ - 8 + jy)
+                elif r < 0.66:
+                    fc = flower_cells[int(rng(x, y, 36) * len(flower_cells)) % len(flower_cells)]
+                    blit(canvas, cw, ch, flowers, fc[0] * 16, fc[1] * 16, 16, 16,
+                         cx_ - 8 + jx, cy_ - 8 + jy)
+                elif r < 0.69:
+                    blit(canvas, cw, ch, ores, 0, (int(rng(x, y, 37) * 4) % 4) * 16, 16, 16,
+                         cx_ - 8 + jx, cy_ - 6)
+
+    # bridge under props
     bcells = [(x, y) for y in range(h) for x in range(w) if rows[y][x] == "B"]
     if bcells:
         bx = (sum(p[0] for p in bcells) / len(bcells) + 0.5) * TILE
         by = (sum(p[1] for p in bcells) / len(bcells) + 0.5) * TILE
         blit(canvas, cw, ch, bridge, 5, 0, 38, 54, int(bx) - 19, int(by) - 27)
 
-    # props/entities, painter-sorted by body-origin Y (mirror of engine y-sort).
-    items = []
-    for y in range(h):
-        for x in range(w):
-            items.append((y * TILE + TILE // 2, rows[y][x], x, y))
-    for _key, sym, x, y in sorted(items, key=lambda i: i[0]):
-        px_, py_ = x * TILE + TILE // 2, y * TILE + TILE // 2
+    # ---- pass 3: props/buildings, painter-sorted by base Y ----
+    items = [(y, rows[y][x], x) for y in range(h) for x in range(w)]
+    for y, sym, x in sorted(items, key=lambda i: i[0]):
+        px_, py_ = x * TILE + 8, y * TILE + 8
         if sym == "T":
             blit(canvas, cw, ch, oak, 0, 0, 64, 80, px_ - 32, py_ - 70)
         elif sym == "t":
@@ -336,9 +407,21 @@ def render(rows, out_path, scale=1):
             rx, ry, rw, rh = decor_region[sym]
             blit(canvas, cw, ch, decor, rx, ry, rw, rh, px_ - rw // 2, py_ + 8 - rh)
 
+    if crop_box:
+        x0, y0, x1, y1 = crop_box
+        cw, ch, canvas = crop(cw, ch, canvas, (x0 * TILE, y0 * TILE, x1 * TILE, y1 * TILE))
     cw, ch, canvas = upscale(cw, ch, canvas, scale)
     encode_png(cw, ch, canvas, out_path)
     return cw, ch
+
+
+def near_water_land(rows, x, y):
+    """A water cell that touches land (grass/path/cobble) — the shoreline."""
+    for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+        t = terrain_of(cell(rows, x + dx, y + dy))
+        if t in ("grass", "path", "cobble"):
+            return True
+    return False
 
 
 def _fence_piece(rows, x, y):
@@ -353,14 +436,12 @@ def _fence_piece(rows, x, y):
     return (0, 3)
 
 
-# --- validation ---------------------------------------------------------------
 def validate(rows):
     problems = []
     w = len(rows[0])
     for y, row in enumerate(rows):
         if len(row) != w:
             problems.append(f"row {y}: width {len(row)} != {w} (map must be rectangular)")
-
     for y in range(len(rows)):
         for x in range(len(rows[y])):
             t = terrain_of(rows[y][x])
@@ -389,14 +470,16 @@ def main():
     import argparse
 
     ap = argparse.ArgumentParser(description="Render + validate an island/world map.")
-    ap.add_argument("--map", default=MAP_GD, help="map source (.gd const MAP block, or a .txt)")
-    ap.add_argument("--out", default=OUT, help="output PNG path")
-    ap.add_argument("--scale", type=int, default=1, help="integer upscale factor (default 1)")
+    ap.add_argument("--map", default=MAP_GD)
+    ap.add_argument("--out", default=OUT)
+    ap.add_argument("--scale", type=int, default=1)
+    ap.add_argument("--crop", default=None, help="x0,y0,x1,y1 in tiles (render a close-up)")
     args = ap.parse_args()
 
     rows = load_map(args.map)
     problems = validate(rows)
-    cw, ch = render(rows, args.out, args.scale)
+    box = tuple(int(v) for v in args.crop.split(",")) if args.crop else None
+    cw, ch = render(rows, args.out, args.scale, box)
     print(f"rendered {cw}x{ch}px -> {os.path.relpath(args.out, REPO)}")
     if problems:
         print(f"\n{len(problems)} validation problem(s):")
