@@ -1,0 +1,53 @@
+{
+  "goal": "Enrich the chosen cove-3 island with variety, density, animals, and story-aligned character -- 3 detailed preview variants for Chris to pick from.",
+  "completed": [
+    "Mined the pack's wider art: cataloged Outdoor_Decor_Free.png (bushes/sprigs, rocks, tree stump, wildflowers, potted garden flowers, carrot/veg, tall lamp post, signs, gold) and the Cow/Pig/Sheep animal sheets (2x2, frame 0).",
+    "Extended tools/preview_map.py with new grass-prop render symbols: o=cow p=pig e=sheep (animals), r=rock u=stump w=wildflowers f=garden-flowers v=veg/carrot i=lamp-post, x=chest. Dropped 'bush' -- the pack's only bush art is tiny sprigs invisible on grass. Verified every symbol on a dedicated symbol-test render before use.",
+    "Generated 3 enriched cove-3 variants (all validate 0 problems): rich-1 Balanced (lamp-lit path, one farmstead with cow/sheep/pig + carrot patch, lush library reading garden, shore rocks, stumps + wildflowers), rich-2 Pastoral Village (two fenced plots -- livestock pen + carrot field), rich-3 Wild Garden (no farm pens, dense naturalistic flora, richest flower garden).",
+    "Placement is zone-aligned to the brief: calm lamp-marked spawn, a farmstead giving the 'old-world village' the Subway joke plays against, path lamps guiding the eye east, the reading garden as the most-decorated climax, rocks along the shore.",
+    "docs/level-design.md legend + palette updated with L and all new prop/animal symbols; README round-3 notes; PROJECT.md status. Committed + pushed; delivered the 3 PNGs to Chris.",
+    "Confirmed scripts/island_map.gd byte-untouched vs origin; gdformat/gdlint green; preview tool py-compiles."
+  ],
+  "discovered": [
+    "Outdoor_Decor_Free.png is a 7x12 16px grid full of usable detail props -- the earlier level-design.md claim of 'no flowers/rocks/bushes' was wrong; there are rocks, stumps, wildflowers, potted flowers, veg, a lamp post, signs, and more. Legend/palette corrected.",
+    "The pack has NO round bush sprite -- the green blobs are all in the tree files; the decor 'bushes' are tiny sprigs that don't read on grass. Dropped rather than shipped invisible.",
+    "Cow/Pig/Sheep are 64x64 2x2 sheets exactly like the chicken; frame 0 is a complete animal.",
+    "The lamp post is a tall 16x64 sprite (col 4, rows 4-7 of the decor sheet) -- anchoring its base at the cell makes it read as a real path/garden lamp and doubles as a landmark cue toward the library."
+  ],
+  "decisions": [
+    "Three enriched cove-3 variants delivered; Chris picks (rich-1 balanced recommended). Live map still untouched per his standing hold.",
+    "New preview symbols: L library + o/p/e animals + r/u/w/f/v/i decor + x chest. All render-only for now; whether each collides is deferred to the build/apply step.",
+    "Farm animals + a farmstead are IN, as deliberate village character the Subway anachronism plays against -- Chris explicitly asked for animals/variety, so this extends the brief's minimalism on purpose.",
+    "preview_map.py is now a fairly complete world compositor (terrain autotile + y-sorted props + animals + decor)."
+  ],
+  "lessons": [
+    "Verify a sprite reads at target zoom before committing it to a palette -- a symbol-test render caught that the 'bush' sprig was invisible on grass, avoiding a whole variant dressed in nothing.",
+    "Re-check stale 'we don't have X' claims against the actual art before designing around the absence -- the decor sheet had exactly the flowers/rocks the docs said were missing.",
+    "Name the growing cost as fidelity climbs: each new preview prop is a future main.gd/level.gd sprite+collision task, so 'apply the winner' is now materially bigger than the first single-symbol case. Flagged in docs so it's a chosen cost."
+  ],
+  "files_changed": [
+    "tools/preview_map.py (animal + decor prop symbols)",
+    "docs/world-options/cove3-rich-1.txt + .png (new)",
+    "docs/world-options/cove3-rich-2.txt + .png (new)",
+    "docs/world-options/cove3-rich-3.txt + .png (new)",
+    "docs/world-options/README.md (round-3 notes)",
+    "docs/level-design.md (legend + palette: L and all new props)",
+    "PROJECT.md (status)"
+  ],
+  "open_questions": [
+    "Which enriched cove does Chris pick (rich-1 balanced / rich-2 pastoral / rich-3 wild)? Or a mix / more notes?",
+    "Applying the winner is now a real build slice: drop its .txt into island_map.gd AND teach level.gd/main.gd every new symbol (L + o p e r u w f v i x) with sprite + collision choices per prop.",
+    "Which props collide in-game (rocks/lamp/animals yes? flowers/wildflowers/stumps no?) -- decide at apply time.",
+    "Still open from before: 2P camera rule (awaiting playtest), duck swap for Ariana (assets/ducky/ uncommitted + __MACOSX junk)."
+  ],
+  "intent": "Stopped after delivering 3 enriched variants because the next move is Chris's aesthetic pick at his PC, and the standing hold forbids touching the live map until then. Deliberately did not start the (now larger) apply-to-engine work.",
+  "next_task": "Chris reviews cove3-rich-{1,2,3}.png and picks one; then a build slice applies that .txt to island_map.gd and adds all the new symbol handling to level.gd + main.gd.",
+  "blockers": null,
+  "resume_minutes": 15,
+  "dont_retry": [
+    "Don't use the pack's 'bush' sprigs as ground cover -- invisible on grass; use rocks/stumps/wildflowers/flowers for variety instead.",
+    "Don't trust the old 'no flowers/rocks' palette note -- the decor sheet has them; legend is now corrected.",
+    "Don't touch scripts/island_map.gd until Chris picks (standing hold)."
+  ],
+  "session_id": "session_01PyCWLhnuhoW79J25QhMwPD"
+}
