@@ -13,6 +13,8 @@ const DECOR_DIR := "res://assets/cute_fantasy/Cute_Fantasy_Free/Outdoor decorati
 ## (found by scanning the sheet's alpha channel — it is not 16px-aligned).
 const BRIDGE_REGION := Rect2(5, 0, 38, 54)
 
+const SLIME_SCENE := preload("res://scenes/enemy_slime.tscn")
+
 var _rows := IslandMap.rows()
 var _oak: Texture2D = load(DECOR_DIR + "Oak_Tree.png")
 var _oak_small: Texture2D = load(DECOR_DIR + "Oak_Tree_Small.png")
@@ -26,12 +28,24 @@ var _bridge: Texture2D = load(DECOR_DIR + "Bridge_Wood.png")
 func _ready() -> void:
 	var spawn := IslandMap.cell_center(IslandMap.find_one("S"))
 	$World/Player.position = spawn
+	$World/Player.respawn_point = spawn
 	$World/Player2.position = spawn + Vector2(18, 0)
+	$World/Player2.respawn_point = spawn + Vector2(18, 0)
 	$World/Shop.position = IslandMap.cell_center(IslandMap.find_one("H"))
 	$World/Chicken.position = IslandMap.cell_center(IslandMap.find_one("C"))
 	_spawn_trees()
 	_spawn_fences()
 	_spawn_bridge()
+	# Stage 1: one test slime east of spawn (the encounter manager replaces this
+	# in Stage 2). Lets us verify swing-kills-slime and slime-damages-player.
+	_spawn_enemy(SLIME_SCENE, spawn + Vector2(56, 0))
+
+
+func _spawn_enemy(scene: PackedScene, pos: Vector2) -> Node2D:
+	var enemy := scene.instantiate()
+	enemy.position = pos
+	_world.add_child(enemy)
+	return enemy
 
 
 func _symbol(x: int, y: int) -> String:
