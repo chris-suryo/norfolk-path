@@ -8,7 +8,19 @@ is learning the engine end-to-end, not shipping commercially.
 
 ## Status
 
-- next: **Chris picks a final enriched cove from `docs/world-options/`.** He
+- next: **Chris verifies the combat slice on Windows** (see
+  `docs/combat-slice.md`). The whole real-time game loop is built headlessly
+  (Stages 0–5, lint-clean, pushed): player-select (1P/2P) → walk the path →
+  three encounters (2 slimes, a skeleton) with a **sword + dodge-roll** → **boss
+  Irene** (throws books, HP bar, staged dialogue) → **win screen** → local save
+  (localStorage on web) that survives a refresh. Co-op has a clear-to-revive
+  rule; the 1P camera drops Player2. Controls: P1 = WASD + Space + C, P2 =
+  arrows + `/` + `.`. **Not yet run in-engine** — Chris does the import/run/web
+  loop and tunes positions/feel. **Gated next:** boss Phase 2 (minions; report
+  first) and the cove world swap + pack buildings (still needs the cove pick).
+  `scripts/island_map.gd` stays frozen until that swap.
+- earlier next (still open): **Chris picks a final enriched cove from
+  `docs/world-options/`.** He
   chose the cove-3 (lakeside) direction; it's now enriched into three
   detailed variants — `cove3-rich-1` (balanced, recommended), `-2` (pastoral
   village with farm pens), `-3` (wild garden) — with animals (cow/pig/sheep +
