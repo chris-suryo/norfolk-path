@@ -8,14 +8,17 @@ is learning the engine end-to-end, not shipping commercially.
 
 ## Status
 
-- next: **Verify Slice 1 on Windows.** The walking skeleton is authored (branch
-  `claude/slice-1-godot-toolchain-ij6e9w`, per [`docs/slice-1-plan.md`](docs/slice-1-plan.md)),
-  but engine-side verification is deliberately Chris's step: the cloud build
+- next: **Verify Slice 1 on Windows — import is clean, Web export + movement
+  feel still to check.** The walking skeleton is authored (branch
+  `claude/slice-1-godot-toolchain-ij6e9w`, per [`docs/slice-1-plan.md`](docs/slice-1-plan.md)).
+  Engine-side verification is deliberately Chris's step: the cloud build
   session's egress policy blocks github.com/godotengine.org, so Godot 4.7 could
   not be installed there — the plan's Step 0 toolchain spike failed and the
-  headless import + Web export checks moved to the local machine. Chris: install
-  Godot 4.7, pull the branch, run the headless import + Web export commands
-  below, then tune movement feel in-editor.
+  headless import + Web export checks moved to the local machine. First-time
+  headless import (`godot --headless --editor --path . --quit`) is confirmed
+  clean on Windows as of this session. Remaining: run the Web export command,
+  serve it locally and confirm it runs in a browser, then tune movement feel
+  in-editor.
 
 ### v1 scope (the whole build — nothing beyond this without asking)
 
@@ -58,7 +61,8 @@ assumed on PATH as `godot`):
 |---|---|
 | Open in editor (Windows) | `godot --path . --editor` |
 | Run the game | `godot --path .` (runs the main scene, `scenes/main.tscn`) |
-| Headless import / sanity-check | `godot --headless --path . --quit` |
+| **First-time import** (run once per fresh clone, before anything else) | `godot --headless --editor --path . --quit` |
+| Headless sanity-check (after the import cache exists) | `godot --headless --path . --quit` |
 | Web export (headless) | `godot --headless --path . --export-release "Web" export/web/index.html` |
 | Serve the web build locally (PowerShell) | `py -m http.server 8000 --directory export/web` → open `http://localhost:8000` |
 | Lint GDScript (what CI runs) | `pip install gdtoolkit==4.5.0`, then `gdformat --check scripts/` and `gdlint scripts/` |
@@ -89,12 +93,21 @@ the cloud build session can verify — movement lives in exported constants
   godotengine.org are blocked by the session's egress policy, and no allowed
   mirror carries the engine. All engine-side checks (headless import, Web
   export, movement feel) are therefore local, human steps for now.
-- **`.gitattributes` marks image/audio/font extensions `binary`.** First
-  Windows headless-import attempt failed with "No loader found for resource"
-  on the placeholder PNGs — they were byte-correct on origin, but with no
-  `.gitattributes`, Windows `core.autocrlf` corrupted them on checkout by
-  rewriting a lone LF byte inside the binary data as CRLF. Fixed once, at the
-  repo level, so it can't recur when the real Cute Fantasy art lands.
+- **`.gitattributes` marks image/audio/font extensions `binary`** (good
+  hygiene, kept) — but this was **not** the cause of the first Windows import
+  failure. That was a real misdiagnosis: `git hash-object` on the Windows
+  working copy matched `git rev-parse HEAD:...` exactly for both PNGs, proving
+  the files were byte-identical to what's committed the whole time.
+- **Real cause of "No loader found for resource" on first Windows import:**
+  the project had *never* been imported (`.godot/` didn't exist yet), and the
+  documented sanity command, `godot --headless --path . --quit` (no
+  `--editor`), runs in runtime/game mode — which only loads *already-imported*
+  resources and has no import pipeline. A brand-new headless checkout needs
+  one `godot --headless --editor --path . --quit` pass first to build the
+  `.godot/imported/` cache; only after that does the plain `--quit` sanity
+  command work. Documented as a separate "first-time import" row above so
+  this doesn't trip the next fresh clone (including CI, if a headless Godot
+  job is ever promoted there).
 
 ---
 kit: 364605cbbd6bbff3e9ed81ee4fe49035120c7ff0 · stamped by dos new
