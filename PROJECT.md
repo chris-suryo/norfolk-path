@@ -89,6 +89,12 @@ the cloud build session can verify — movement lives in exported constants
   godotengine.org are blocked by the session's egress policy, and no allowed
   mirror carries the engine. All engine-side checks (headless import, Web
   export, movement feel) are therefore local, human steps for now.
+- **`.gitattributes` marks image/audio/font extensions `binary`.** First
+  Windows headless-import attempt failed with "No loader found for resource"
+  on the placeholder PNGs — they were byte-correct on origin, but with no
+  `.gitattributes`, Windows `core.autocrlf` corrupted them on checkout by
+  rewriting a lone LF byte inside the binary data as CRLF. Fixed once, at the
+  repo level, so it can't recur when the real Cute Fantasy art lands.
 
 ---
 kit: 364605cbbd6bbff3e9ed81ee4fe49035120c7ff0 · stamped by dos new
