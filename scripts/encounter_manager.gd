@@ -14,6 +14,7 @@ extends Node
 
 const SLIME_SCENE := preload("res://scenes/enemy_slime.tscn")
 const SKELETON_SCENE := preload("res://scenes/enemy_skeleton.tscn")
+const BOSS_SCENE := preload("res://scenes/boss_irene.tscn")
 const TRIGGER_RADIUS := 40.0
 
 ## Co-op: a downed teammate revives once no live enemy is within this radius of
@@ -57,7 +58,7 @@ func _build_areas() -> void:
 			0, Vector2i(9, 20), [[SLIME_SCENE, Vector2i(14, 20)], [SLIME_SCENE, Vector2i(17, 21)]]
 		),
 		_make_area(1, Vector2i(24, 20), [[SKELETON_SCENE, Vector2i(31, 20)]]),
-		_make_area(2, Vector2i(44, 22), []),
+		_make_area(2, Vector2i(44, 22), [[BOSS_SCENE, Vector2i(45, 22)]]),
 	]
 
 
@@ -124,6 +125,7 @@ func _on_area_entered(body: Node, area: Dictionary) -> void:
 		Game.save()
 	for player in get_tree().get_nodes_in_group("players"):
 		player.respawn_point = area.center
+	_activate_area(area)
 
 
 func _on_downed() -> void:
@@ -178,6 +180,16 @@ func _reset_area(area: Dictionary) -> void:
 	area.instances = []
 	area.spawned = false
 	_spawn_area(area)
+	# On a retry the player is already standing in the area, so re-activate any
+	# boss immediately (a fresh boss would otherwise wait for a re-entry that
+	# never fires while the body already overlaps the trigger).
+	_activate_area(area)
+
+
+func _activate_area(area: Dictionary) -> void:
+	for enemy in area.instances:
+		if is_instance_valid(enemy) and enemy.has_method("activate"):
+			enemy.activate()
 
 
 func _clear_area(area: Dictionary) -> void:
