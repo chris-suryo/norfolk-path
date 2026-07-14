@@ -1,0 +1,81 @@
+{
+  "goal": "Build Slice 1 (the walking skeleton) per docs/slice-1-plan.md, starting with the Step 0 Godot 4.7 toolchain + Web export spike, before authoring any project files.",
+  "completed": [
+    "Ran the Step 0 toolchain spike: attempted to install Godot 4.7 headless + Web export templates in the cloud session; it failed on network egress, not on Godot itself.",
+    "Reported the Step 0 failure clearly and stopped before authoring anything, per the plan's explicit gate.",
+    "Got user direction to proceed anyway under a revised split: author all project files headlessly, defer headless import + Web export verification to the user's local Windows Godot 4.7 install.",
+    "Removed the Python CLI scaffold (src/, tests/, pyproject.toml) that didn't fit a Godot project.",
+    "Rewrote .gitignore for Godot (.godot/, export/).",
+    "Rewrote .github/workflows/ci.yml to lint GDScript with gdtoolkit (gdformat --check + gdlint) instead of a headless Godot import/export job, since that job could not be validated from this session; documented the decision and promotion path in the workflow file's comments.",
+    "Authored project.godot: 4.7 pin, GL Compatibility (WebGL2) renderer, 640x360 viewport with canvas_items/expand stretch, pixel snap + Nearest filtering, p1_*/p2_* input maps (WASD / arrows) both defined.",
+    "Authored player.tscn + player.gd: CharacterBody2D in Floating motion mode, normalized 8-directional input, velocity move_toward with exported max_speed/acceleration/friction constants for in-editor tuning, player_index field so P2 can reuse the scene later.",
+    "Authored a placeholder tileset (generated player.png and tiles.png via a raw zlib PNG writer, since PIL wasn't available) plus tileset.tres with wall-tile collision.",
+    "Authored level.tscn + level.gd: a 60x40 bordered level with interior walls, painted at runtime via set_cell() rather than hand-painted in the editor, since packed TileMapLayer data can't be safely hand-authored headlessly; documented that as a deliberate deviation.",
+    "Authored follow_camera.gd: target-agnostic Camera2D follow at 3x zoom, bounds clamped (deferred) to the level's painted rect, written so the target can become a two-player midpoint later without restructuring.",
+    "Authored export_presets.cfg with a Web preset, threads OFF (no COOP/COEP headers required, serves from any static server).",
+    "Installed gdtoolkit locally in a scratch venv and ran gdformat --check + gdlint against all authored GDScript; both passed clean before committing, so the new CI gate is proven green.",
+    "Updated PROJECT.md: Status/next now points at Windows verification, added the local-serve command, the gdtoolkit lint command, and a 'Slice 1 decisions recorded by the build session' section covering threads-off, GL Compatibility renderer, code-painted level, lint-only CI, and the failed toolchain spike.",
+    "Committed in two logical units (scaffold removal; walking-skeleton authoring) and pushed to claude/slice-1-godot-toolchain-ij6e9w.",
+    "Recovered cleanly from a branch mixup mid-session (see lessons) without losing or discarding any work."
+  ],
+  "discovered": [
+    "This cloud session's network egress policy blocks both github.com and godotengine.org outright (403 on CONNECT) -- the two only official sources for the Godot engine binary and Web export templates.",
+    "api.github.com is reachable but scoped by the proxy to chris-suryo/norfolk-path only; unauthenticated calls to godotengine/godot-builds fail with 'GitHub access to this repository is not enabled for this session', so even release metadata (let alone signed asset URLs) is unreachable for that repo.",
+    "objects.githubusercontent.com (the asset CDN) is reachable, but it only serves content via signed URLs issued by github.com, so being reachable doesn't help without an origin that can issue those URLs.",
+    "No PyPI or npm package vendors the actual Godot engine binary -- packages like gdtoolkit are GDScript tooling only, and Godot-CLI-named npm packages just re-download from the blocked github.com at install time.",
+    "gdtoolkit (pip, PyPI) is a legitimate, cloud-reachable way to get a real, verifiable CI gate on GDScript even when the engine itself is unreachable.",
+    "Godot 4's CharacterBody2D defaults to Grounded motion_mode (platformer semantics); top-down free movement needs motion_mode = 1 (Floating) or move_and_slide() behaves wrong -- caught and fixed before commit despite no engine access to test it.",
+    "Web export threads-off avoids the COOP/COEP cross-origin-isolation header requirement entirely, which is the simplest possible local-serve story for a first web export."
+  ],
+  "decisions": [
+    "Slice 1 delivery model changed from 'cloud proves headless import + Web export' to 'cloud authors all project files headlessly; Chris runs headless import + Web export + movement-feel tuning locally on Windows after installing Godot 4.7' -- because the cloud session cannot reach github.com or godotengine.org to install the engine, and that block is a stable org egress policy, not a transient failure.",
+    "CI gates on gdtoolkit lint (gdformat --check + gdlint) for now, not a headless Godot import/export job, with the rationale and a promotion path recorded directly in .github/workflows/ci.yml's comments.",
+    "Web export preset ships with threads OFF for Slice 1, trading some performance so the build needs no COOP/COEP headers and can be served from any plain static server.",
+    "Renderer is GL Compatibility (WebGL2), not Forward+/Vulkan -- the well-supported path for an HTML5-first Godot 4 project.",
+    "The placeholder level is painted at runtime in code (level.gd) rather than hand-painted in the editor, because this session had no engine access to safely author TileMapLayer's packed binary tile data; real art still drops in via a tileset.tres swap.",
+    "Did not open a pull request -- user didn't ask for one this session."
+  ],
+  "lessons": [
+    "When a plan names a Step 0 toolchain spike as a hard gate ('stop and surface it loudly if it fails'), actually stop and report before touching any other files -- don't fold the bad news into a larger status update. That's what happened here and it kept the user in control of the pivot to option 3.",
+    "In a claude-code-remote session with GitHub access scoped to one repo, treat 403s from other GitHub-hosted domains (github.com release downloads, godotengine.org which also proxies through similar infra) as policy denials to report, not errors to route around -- confirmed via the proxy's own README and status endpoint before giving up.",
+    "Before declaring a cloud-side download impossible, it's worth a quick sweep of PyPI/npm for a package that vendors the binary rather than re-fetching it -- but don't over-invest: none existed here and the sweep took only a few minutes.",
+    "git checkout -b against a branch name the harness had already pre-created silently fails with 'branch already exists' and can strand a commit on the wrong branch if not checked immediately -- caught here via git log/git status right after the failed checkout, fixed with git branch -f onto the intended branch plus restoring the other branch to its origin ref, no work lost. Always verify the actual current branch and its unique commits (git log branchA..branchB) before assuming a checkout -b succeeded.",
+    "A raw zlib/struct PNG writer is a fine fallback for trivial placeholder art (solid-color tiles with a border) when PIL isn't installed and installing it isn't worth a dependency ask -- validated by reading the header bytes back and viewing the image, not just checking exit code 0."
+  ],
+  "files_changed": [
+    ".gitignore",
+    ".github/workflows/ci.yml",
+    "PROJECT.md",
+    "project.godot",
+    "export_presets.cfg",
+    "scenes/main.tscn",
+    "scenes/level.tscn",
+    "scenes/player.tscn",
+    "scripts/player.gd",
+    "scripts/level.gd",
+    "scripts/follow_camera.gd",
+    "assets/placeholder/player.png",
+    "assets/placeholder/tiles.png",
+    "assets/placeholder/tileset.tres",
+    "src/norfolk_path/__init__.py (deleted)",
+    "src/norfolk_path/cli.py (deleted)",
+    "tests/test_smoke.py (deleted)",
+    "pyproject.toml (deleted)"
+  ],
+  "open_questions": [
+    "Does the project.godot / .tscn / .tres syntax actually import clean in real Godot 4.7, or are there hand-authoring mistakes that only surface on first open? Nothing here was ever engine-verified.",
+    "Does the Web export actually succeed and produce a playable index.html + wasm + pck once templates are installed locally?",
+    "Is movement feel (the three exported constants) in the right starting ballpark, or does it need a first tuning pass before it's even close to 'weighty, not floaty'?",
+    "Should the cloud environment's network egress policy be changed (github.com / godotengine.org allowlisted) so future slices can go back to the original cloud-verifies model, or is the Windows-verifies split now the permanent norm for this project?"
+  ],
+  "intent": "Stopped here because the plan's own verification split assigns headless import, Web export, and movement-feel tuning to the human on Windows -- there is nothing further this session can responsibly verify without engine access, and continuing to author beyond Slice 1's locked scope would violate the plan's explicit out-of-scope list.",
+  "next_task": "On Windows: install Godot 4.7 stable, pull claude/slice-1-godot-toolchain-ij6e9w, run `godot --headless --path . --quit` to confirm clean import, then open the editor and run main.tscn to check movement feel and camera clamping.",
+  "blockers": "Slice 1 cannot be verified further until Chris runs the headless import + Web export + in-editor playtest locally -- the cloud session has no path to install Godot 4.7 (github.com and godotengine.org are both blocked by this environment's egress policy, confirmed not transient).",
+  "resume_minutes": 15,
+  "dont_retry": [
+    "Don't retry downloading Godot from github.com or godotengine.org in this cloud session -- confirmed stable 403 policy denial, not a flaky network error.",
+    "Don't look for the Godot engine binary on PyPI or npm -- swept both, nothing vendors it; all matching packages either are unrelated or re-download from the blocked host at install time.",
+    "Don't use git checkout -b for a branch name that might already exist in this harness without first checking git branch -a -- use git branch -f + checkout instead, or verify immediately after."
+  ],
+  "session_id": "session_01PyCWLhnuhoW79J25QhMwPD"
+}
