@@ -59,7 +59,7 @@ func load_state() -> bool:
 
 func _apply(text: String) -> bool:
 	var parsed: Variant = JSON.parse_string(text) if text != "" else null
-	var ok := parsed is Dictionary and parsed.get("v") == SAVE_VERSION
+	var ok: bool = parsed is Dictionary and parsed.get("v") == SAVE_VERSION
 	if ok:
 		checkpoint = int(parsed.get("checkpoint", 0))
 		player_count = clampi(int(parsed.get("player_count", 1)), 1, 2)
