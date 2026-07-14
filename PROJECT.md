@@ -14,11 +14,14 @@ is learning the engine end-to-end, not shipping commercially.
   village with farm pens), `-3` (wild garden) — with animals (cow/pig/sheep +
   Ariana's chicken), lamp posts, rocks, stumps, wildflowers, garden flowers, a
   veg patch, and a chest, all aligned to the brief (see
-  `docs/world-options/README.md`). **The live map (`scripts/island_map.gd`) is
-  still untouched** per Chris's hold. Applying the winner is now a bigger build
-  step: drop its `.txt` into `island_map.gd` AND teach `level.gd`/`main.gd` the
-  new symbols (`L` library + `o p e r u w f v i x` props — sprite + collision
-  each). Still deferred, awaiting playtest: the 2P camera rule.
+  `docs/world-options/README.md`). Latest pass (3b) added **farmland fields**,
+  signs, wheat, mushrooms and dialed back trees/rocks for texture variety.
+  **The live map (`scripts/island_map.gd`) is still untouched** per Chris's
+  hold. Applying the winner is now a bigger build step: drop its `.txt` into
+  `island_map.gd` AND teach `level.gd`/`main.gd` the new symbols (`L` +
+  `D o p e r u w f v i x n q m` — sprite/terrain + collision each). For varied
+  buildings + a horse (absent from the free pack), Chris to buy the $2.99 full
+  Cute Fantasy pack (`docs/asset-sourcing.md`). Still deferred: the 2P camera rule.
 
 ### v1 scope (the whole build — nothing beyond this without asking)
 
@@ -50,7 +53,8 @@ screen, and their progress survives a refresh.
 | Level-design contract | `docs/level-design.md` (legend, palette, rules, brief template) |
 | World brief (story session fills) | `docs/world-brief.md` |
 | Map preview image | `docs/island-preview.png` (regenerate: `python tools/preview_map.py`) |
-| Candidate layouts (awaiting pick) | `docs/world-options/` — option-{a,b,c}.{txt,png} + README |
+| Candidate layouts (awaiting pick) | `docs/world-options/` — option/cove/cove3-rich-*.{txt,png} + README |
+| Asset sourcing (buildings/horse) | `docs/asset-sourcing.md` — buy the $2.99 full Cute Fantasy pack |
 | Web build | (HTML5 export → `export/web/` once Slice 1 lands; browser link TBD) |
 
 **On-disk standard:** code repos live under the code root `E:\code\<name>`.

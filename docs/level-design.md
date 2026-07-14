@@ -38,6 +38,7 @@ One character = one 16px tile. The current map is **70 wide × 45 tall**.
 |---|---|---|
 | `.` | grass | yes |
 | `#` | path | yes |
+| `D` | farmland (tilled dirt field) | yes |
 | `~` | water | no (collides) |
 | `B` | bridge (water tile you can cross) | yes |
 | `T` | big oak tree | no (trunk collides) |
@@ -57,6 +58,9 @@ One character = one 16px tile. The current map is **70 wide × 45 tall**.
 | `v` | veg / carrot plant | (decor) |
 | `i` | lamp post (tall) | (decor) |
 | `x` | chest | (decor) |
+| `n` | wooden sign | (decor) |
+| `q` | wheat / grain | (decor) |
+| `m` | mushroom | (decor) |
 
 *(decor)* = whether each animal/prop collides is a build-time choice made when a
 layout goes live; the preview renders them regardless.
@@ -66,8 +70,12 @@ layout goes live; the preview renders them regardless.
 Design **within this set** (Cute Fantasy Free pack). Asking for something not
 here means it can't be built without sourcing new art.
 
-- **Ground:** grass, dirt path, water. (Also unused: beach/sand, farmland,
-  cliff — available if a brief wants them, needs a build pass to wire in.)
+- **Ground:** grass, dirt path, water, farmland (tilled dirt fields). *(Still
+  unused: beach/sand and cliff — sand's art is for water edges not grass, and
+  cliffs imply elevation, so both need a dedicated pass.)* Farmland fields must
+  be **solid rectangles ≥2 wide** — its 3×3 tile sheet can't tile a field with
+  prop-holes punched in it, so put crops/animals on grass beside the field, not
+  on the dirt.
 - **Nature:** oak trees (big + small), rocks, tree stumps, wildflowers, potted
   garden flowers, carrot/veg plants. *(No round bushes — the pack's "bushes"
   are tiny sprigs that vanish on grass, so they're dropped.)*

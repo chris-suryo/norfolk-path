@@ -44,6 +44,8 @@ def terrain_of(ch):
         return "water"
     if ch in "#S":
         return "path"
+    if ch == "D":
+        return "farm"
     return "grass"
 
 
@@ -125,12 +127,11 @@ def cell(rows, x, y):
     return rows[y][x]
 
 
-def land_mask(rows, x, y, water):
-    """Land-neighbor bitmask (N=1 S=2 E=4 W=8) for a water/path cell."""
+def land_mask(rows, x, y, kind):
+    """Non-`kind`-neighbor bitmask (N=1 S=2 E=4 W=8) for a terrain cell."""
 
     def is_same(dx, dy):
-        t = terrain_of(cell(rows, x + dx, y + dy))
-        return (t == "water") if water else (t == "path")
+        return terrain_of(cell(rows, x + dx, y + dy)) == kind
 
     mask = 0
     if not is_same(0, -1):
@@ -144,20 +145,21 @@ def land_mask(rows, x, y, water):
     return mask
 
 
-def edge_pick(rows, x, y, water):
-    """Atlas cell for a water/path cell (mirror of level.gd)."""
+def edge_pick(rows, x, y, kind, has_inner=True):
+    """Atlas cell for a terrain cell. `has_inner`=False for 3-row sheets
+    (farmland/sand) that only have the 3x3 blob, no inner-corner/variant rows."""
 
     def is_same(dx, dy):
-        t = terrain_of(cell(rows, x + dx, y + dy))
-        return (t == "water") if water else (t == "path")
+        return terrain_of(cell(rows, x + dx, y + dy)) == kind
 
-    mask = land_mask(rows, x, y, water)
+    mask = land_mask(rows, x, y, kind)
     if mask == 0:
-        for dx, dy, res in ((1, 1, (0, 3)), (-1, 1, (1, 3)), (1, -1, (0, 4)), (-1, -1, (1, 4))):
-            if not is_same(dx, dy):
-                return res
-        if (x * 7 + y * 13) % 17 == 0:
-            return ((x + y) % 3, 5)
+        if has_inner:
+            for dx, dy, res in ((1, 1, (0, 3)), (-1, 1, (1, 3)), (1, -1, (0, 4)), (-1, -1, (1, 4))):
+                if not is_same(dx, dy):
+                    return res
+            if (x * 7 + y * 13) % 17 == 0:
+                return ((x + y) % 3, 5)
         return CENTER
     return EDGE_BY_LAND_MASK.get(mask, CENTER)
 
@@ -198,6 +200,7 @@ def render(rows, out_path):
     grass = tex("Tiles/Grass_Middle.png")
     path_sheet = tex("Tiles/Path_Tile.png")
     water_sheet = tex("Tiles/Water_Tile.png")
+    farm_sheet = tex("Tiles/FarmLand_Tile.png")
     oak = tex("Outdoor decoration/Oak_Tree.png")
     oak_s = tex("Outdoor decoration/Oak_Tree_Small.png")
     fences = tex("Outdoor decoration/Fences.png")
@@ -219,6 +222,9 @@ def render(rows, out_path):
         "f": (32, 176, 16, 16),  # garden flowers (potted, upright)
         "v": (64, 32, 16, 16),   # carrot / veg plant
         "i": (64, 64, 16, 64),   # tall lamp post
+        "n": (48, 0, 16, 16),    # wooden sign
+        "q": (96, 32, 16, 16),   # wheat / grain
+        "m": (32, 112, 16, 16),  # mushroom
     }
 
     # terrain: grass under everything, then water/path edge tiles.
@@ -227,11 +233,14 @@ def render(rows, out_path):
             blit(canvas, cw, ch, grass, 0, 0, TILE, TILE, x * TILE, y * TILE)
             t = terrain_of(rows[y][x])
             if t == "water":
-                cx, cy = edge_pick(rows, x, y, True)
+                cx, cy = edge_pick(rows, x, y, "water")
                 blit(canvas, cw, ch, water_sheet, cx * TILE, cy * TILE, TILE, TILE, x * TILE, y * TILE)
             elif t == "path":
-                cx, cy = edge_pick(rows, x, y, False)
+                cx, cy = edge_pick(rows, x, y, "path")
                 blit(canvas, cw, ch, path_sheet, cx * TILE, cy * TILE, TILE, TILE, x * TILE, y * TILE)
+            elif t == "farm":
+                cx, cy = edge_pick(rows, x, y, "farm", has_inner=False)
+                blit(canvas, cw, ch, farm_sheet, cx * TILE, cy * TILE, TILE, TILE, x * TILE, y * TILE)
 
     # bridge sits under all props (engine: unsorted GroundProps).
     bcells = [(x, y) for y in range(h) for x in range(w) if rows[y][x] == "B"]
@@ -304,9 +313,9 @@ def validate(rows):
     for y in range(len(rows)):
         for x in range(len(rows[y])):
             t = terrain_of(rows[y][x])
-            if t not in ("water", "path"):
+            if t not in ("water", "path", "farm"):
                 continue
-            mask = land_mask(rows, x, y, t == "water")
+            mask = land_mask(rows, x, y, t)
             if mask and mask not in EDGE_BY_LAND_MASK:
                 problems.append(
                     f"({x},{y}) '{rows[y][x]}' {t}: region too thin / pinched "

@@ -1,6 +1,15 @@
 # Candidate island layouts
 
-**Round 3 (current): cove-3 enriched — variety, density, animals, character.**
+**Round 3b (current): more textures, fewer trees/rocks.** The `cove3-rich-*`
+renders now use the pack's fuller texture set — **plowed farmland fields**, a
+grass pasture with animals, **signs**, wheat, mushrooms, lamp-lit path — with
+tree/rock density dialed back so the island reads as varied, not just wooded.
+For BUILDINGS and a HORSE (not in the free pack), see
+[`../asset-sourcing.md`](../asset-sourcing.md) — short version: the $2.99 full
+Cute Fantasy pack has a horse, stables, a barn, and ~52 buildings in this exact
+style.
+
+**Round 3 (below): cove-3 enriched — variety, density, animals, character.**
 Chris picked cove-3 and asked to fill it with detail aligned to the story. These
 build on cove-3's geography (lagoon, library peninsula, fenced garden campus,
 single 2-wide crescent path) and add the pack's wider art set — animals, lamp
