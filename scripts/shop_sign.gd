@@ -11,6 +11,10 @@ extends StaticBody2D
 ## The line shown when the player is near.
 @export var line: String = "Toasted, or the old way?"
 
+## How many players are currently in range — with 2P, the label stays up
+## until BOTH walk away.
+var _players_near := 0
+
 @onready var _label: Label = $CanvasLayer/Label
 @onready var _area: Area2D = $Area2D
 
@@ -24,9 +28,11 @@ func _ready() -> void:
 
 func _on_body_entered(body: Node2D) -> void:
 	if body is Player:
+		_players_near += 1
 		_label.visible = true
 
 
 func _on_body_exited(body: Node2D) -> void:
 	if body is Player:
-		_label.visible = false
+		_players_near = maxi(0, _players_near - 1)
+		_label.visible = _players_near > 0

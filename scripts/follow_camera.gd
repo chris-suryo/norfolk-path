@@ -10,9 +10,12 @@ extends Camera2D
 ## reference) so a bad path fails loudly instead of leaving the camera
 ## silently parked at its own default (0, 0) position with no visible error.
 
-## Path to the node this camera tracks (assigned in the scene — the player in
-## Slice 1).
+## Path to the node this camera tracks (the players' midpoint node).
 @export var target_path: NodePath
+
+## Camera magnification: higher = closer. 3.0 felt too tight in the first
+## browser test; tune live in the Inspector while the game runs.
+@export var zoom_level := 2.5
 
 ## Path to the TileMapLayer whose painted bounds clamp the camera. Empty path
 ## = no clamping.
@@ -23,8 +26,7 @@ var _bounds_source: TileMapLayer
 
 
 func _ready() -> void:
-	# zoom > 1 magnifies: 3x makes the 16px pixel art read big and crisp.
-	zoom = Vector2(3, 3)
+	zoom = Vector2(zoom_level, zoom_level)
 
 	if target_path.is_empty():
 		push_error("FollowCamera: target_path is unset — camera will not follow anything.")
