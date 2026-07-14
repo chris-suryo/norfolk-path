@@ -82,11 +82,13 @@ from the paid pack. `H` is now **Evan's Market_Stalls** and `L` is now a
 | `c` | cobble (path apron / spur) | | | |
 
 **Procedural density (no symbols).** `tools/preview_map.py` also layers, keyed off
-terrain only: grass-shade patches + a dense tuft/flower/pebble scatter on open
-grass; a sand shore + reeds/lily-pads/rocks along every waterline; crop rows on
-`D` farmland. These are render overlays (they don't change map classification, so
-they never pinch water/path). Applying live would port them as a ground-detail /
-autotile pass in `level.gd`.
+terrain only: grass-shade patches + a *clustered* tuft/flower/pebble scatter on
+open grass (coarse "bed" hash — lush flowerbeds with barer grass between, rock
+pebbles only in occasional clumps); sparse reeds + lily-pads at the waterline
+(the Full-pack water autotile bakes in the shore edge, so no sand ring or shore
+rocks); crop rows on `D` farmland. These are render overlays (they don't change
+map classification, so they never pinch water/path). Applying live would port
+them as a ground-detail / autotile pass in `level.gd`.
 
 These are preview-only until a layout is applied live; making one live still
 needs `level.gd`/`main.gd` taught each symbol (sprite + collision).

@@ -1,6 +1,6 @@
 # Candidate world layouts
 
-# Norfolk Path valley — the expanded first level (Round 5 = DENSITY PASS, CURRENT)
+# Norfolk Path valley — the expanded first level (Round 6 = REFINE PASS, CURRENT)
 
 A fresh, ~2×-longer world (**144 wide**) replacing the small coves, re-rendered
 to match the Stardew **references/** density (round 1 was flat green with
@@ -8,39 +8,56 @@ floating objects). **One golden path west→east through 4 regions** — a busy
 **Village** (spawn) → **Path & Evan's Stall** → **Woods** → **Library & Lake**
 climax. **Preview only — `scripts/island_map.gd` is untouched.**
 
-**What changed (the density pass).** `tools/preview_map.py` now *procedurally
-layers* the lushness so the ground reads worked, not flat: grass-shade patches +
-a dense scatter of tufts/flowers/pebbles on every open cell; **organic
-lakeshores** with a sand edge + reeds + lily-pads + shore rocks; **crop rows** on
-the tilled plots. `tools/gen_valley.py` gives every **building context** — a
-cobble apron at the door, a cobble spur to the road, flanking lamps, a fenced
-yard, flowerbeds — plus an **organic (elliptic) library lake**, a bridged brook,
-and **dense tree borders** framing the valley. See the close-ups
-(`valley-1-village.png`, `valley-1-library.png`) for the texture + shore detail.
+**What changed (round 6, Chris's density-pass notes).** Four fixes on top of the
+approved density look:
+- **Undulating path.** The golden path was dead-straight; it now gently
+  *meanders* (a two-sine curve, thickness 4, slope ≤1/col so it still validates),
+  held flat only across the brook so it meets the bridge as a clean rectangle.
+- **Smooth shoreline.** Dropped the hard per-cell sand ring and the plain Free
+  water tile; the lake now renders with the **Full-pack `Water_Tile_1`** autotile
+  (integrated shore edge baked in) over a **rounded-rectangle** lake shape (long
+  flat sides + rounded corners), so the water edge reads smooth, not stair-stepped.
+- **No rocks in the water.** Shore rocks removed entirely; only sparse reeds +
+  lily-pads sit at the waterline now.
+- **Sparser, grouped flowers + rocks.** The ground scatter was an even per-cell
+  sprinkle; it's now driven off a coarse 5×5 "bed" hash — a minority of patches
+  are lush flowerbeds, the grass between is mostly bare with the odd subtle tuft.
+  Rocks appear only in occasional small clumps, never near the water. **Trees are
+  now clustered into groves** (village→woods density gradient) rather than evenly
+  scattered.
+
+**Carried over from the density pass.** Every **building has context** — a cobble
+apron at the door, a cobble spur to the road, flanking lamps, a fenced yard,
+flowerbeds — plus a bridged brook and **dense tree borders** framing the valley.
+See the close-ups (`valley-1-village.png`, `valley-1-library.png`) for the
+grouped-flower texture + the smooth shore.
 
 All buildings are **real pack art**: **Inn** = library, **Market_Stalls** =
 Evan, plus barn/coop/silo/cottages/well. Ambient **villagers** use `Farmer_Bob`
 as a placeholder; **ducks + capybara + Ariana** are real animal sprites on the
 grass shoreline. Named cast + the 5 dialogue lines unchanged.
 
+All three share the same **undulating golden path** and the same smooth
+rounded lake; they differ in how the *village* and the *woods* are dressed.
+
 ## valley-1 — Balanced (recommended) (`valley-1.png`)
 The even read: a tidy village (cottages, barn, wells, a fenced pasture, two crop
-plots), Evan's roadside stall, a stream + wooden bridge, a wood where the path
-**S-bends south** through the skeleton clearing, and a grand lakeside library
-with a lamp-lit reading garden and pond life. Every region dressed without
-tipping into clutter.
+plots), Evan's roadside stall, a stream + wooden bridge, a wood of clustered
+tree groves with the skeleton clearing, and a grand lakeside library with a
+lamp-lit reading garden and pond life. Every region dressed without tipping into
+clutter.
 
 ## valley-2 — Working Homestead (`valley-2.png`)
 Leans into the village: adds a **chicken coop, a silo, a second livestock pen**
 and more cottages + crop rows, so the opening reads as a real farming settlement
-— the strongest "people live here" moment. The road runs **straight** (no wood
-detour), keeping the journey brisk toward the library.
+— the strongest "people live here" moment. The woods stay lighter, keeping the
+journey brisk toward the library.
 
 ## valley-3 — Wild Valley (`valley-3.png`)
-Thins the village (fewer houses) and lets **trees reclaim the whole valley** —
-wildflowers, mushrooms and oak/birch creeping along the path and verges — for an
-overgrown, naturalistic feel. The bent path threads a denser wood; the lakeside
-library reads as a secret clearing at the end of a wild road.
+Thins the village (fewer houses) and lets **tree groves reclaim the whole
+valley** — wildflowers, mushrooms and oak/birch clustering along the path and
+verges — for an overgrown, naturalistic feel. The path threads a denser wood;
+the lakeside library reads as a secret clearing at the end of a wild road.
 
 ---
 

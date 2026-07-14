@@ -42,13 +42,30 @@ def ellipse(g, cx, cy, rx, ry, ch, only=None):
                     g[y][x] = ch
 
 
+def rrect(g, x0, y0, x1, y1, r, ch, only="."):
+    """Rounded-rectangle fill — long flat sides + rounded corners, so shores
+    read smooth (few 45-degree stair runs) rather than a stair-stepped ellipse."""
+    for y in range(max(0, y0), min(H, y1 + 1)):
+        for x in range(max(0, x0), min(W, x1 + 1)):
+            dx = max(0, (x0 + r) - x, x - (x1 - r))
+            dy = max(0, (y0 + r) - y, y - (y1 - r))
+            if dx * dx + dy * dy <= r * r and (only is None or g[y][x] == only):
+                g[y][x] = ch
+
+
 EDGE_MASKS = {1, 2, 4, 8, 5, 9, 6, 10}
 
 
-def path_y(_x):
-    """Straight 3-wide golden path (organic feel comes from trees/spurs/density;
-    a truly curved path fights the edge autotiler)."""
-    return PY
+BROOK_X = (64, 65, 66)  # the stream columns; path crosses on a bridge here
+
+
+def path_y(x):
+    """Gently undulating golden path. Combined slope stays < 1 tile/col so a
+    thick (4-wide) band never pinches the edge autotiler. The path is held
+    flat across the brook (cols 62-68) so its 4-thick band meets the bridge as
+    a clean rectangle instead of a diagonal 1-wide nub at the water lip."""
+    xc = 65 if 62 <= x <= 68 else x
+    return PY + int(round(3.5 * math.sin((xc - 4) / 19.0) + 1.5 * math.sin((xc - 4) / 8.0)))
 
 
 def _is_water(g, x, y):
@@ -80,11 +97,21 @@ def fix_water(g):
                     changed = True
 
 
-def draw_path(g, x0, x1, thick=3):
+def draw_path(g, x0, x1, thick=4):
     for x in range(x0, x1 + 1):
         y = path_y(x)
         for t in range(thick):
             put(g, x, y + t, "#")
+
+
+def grove(g, cx, cy, n, spread=4, salt=0):
+    """A cluster of trees around (cx, cy) — reads as a natural grove."""
+    for i in range(n):
+        r = (i * 7 + salt * 13) % 97 / 97.0
+        r2 = (i * 11 + salt * 5) % 89 / 89.0
+        gx = cx + int((r - 0.5) * 2 * spread)
+        gy = cy + int((r2 - 0.5) * 2 * spread)
+        putg(g, gx, gy, "T" if (gx + gy) % 3 else "t")
 
 
 def spur(g, bx, by, ch="c"):
@@ -132,9 +159,10 @@ def tree_border(g):
 
 
 def make_water(g, variant):
-    # organic library lake (ellipse) in the SE, south of the path
-    ellipse(g, 126, 40, 20 if variant != 3 else 26, 9, "~", only=".")
-    ellipse(g, 112, 43, 12, 5, "~", only=".")          # lobe reaching west
+    # library lake in the SE, south of the path — a rounded rectangle so the
+    # shore reads as long smooth runs (few 45-degree stairs) not a stepped ellipse
+    x0 = 100 if variant == 3 else 104
+    rrect(g, x0, 30, W - 1, H - 3, 6, "~")
     # straight brook (3-wide) crossing the path with a clean bridge
     for y in range(3, H - 3):
         for x in (64, 65, 66):
@@ -180,28 +208,29 @@ def build(variant):
     scatter(g, [(51, 30), (58, 18), (63, 31), (48, 17)], "t")
     scatter(g, [(56, 20), (59, 21), (56, 30), (59, 31)], "F")   # slime clearing frame
 
-    # ===== REGION 3: WOODS (cols 68-100) =====
-    scatter(g, [(70, 17), (74, 31), (78, 16), (84, 17), (88, 30), (92, 16),
-                (96, 31), (72, 33), (99, 16), (94, 33), (76, 33), (69, 31),
-                (82, 15), (90, 33), (100, 31), (86, 34)], "T")
-    scatter(g, [(83, 31), (89, 17), (93, 33), (97, 16), (71, 18), (79, 34),
-                (85, 33), (95, 34)], "t")
+    # ===== REGION 3: WOODS (cols 68-100) — trees clustered into groves =====
+    grove(g, 72, 17, 7, spread=4, salt=1)       # north-side groves
+    grove(g, 84, 16, 8, spread=5, salt=2)
+    grove(g, 97, 17, 7, spread=4, salt=3)
+    grove(g, 74, 32, 7, spread=4, salt=4)       # south-side groves
+    grove(g, 96, 32, 8, spread=5, salt=5)
+    grove(g, 70, 31, 5, spread=3, salt=6)
     scatter(g, [(83, 20), (91, 20), (83, 30), (91, 30)], "F")   # skeleton pocket
     scatter(g, [(80, 22), (88, 22), (85, 35)], "m")
 
-    # ===== REGION 4: LIBRARY & LAKE (cols 104-128) =====
+    # ===== REGION 4: LIBRARY & LAKE (cols 104-143, lake top at row 30) =====
     building(g, 114, 17, "L", fence=False)     # Inn = library, above its lake
     put(g, 118, 20, "N")                        # Irene
-    scatter(g, [(108, 22), (120, 22), (108, 28), (121, 28)], "i")   # lamp posts
-    scatter(g, [(110, 27), (118, 27), (112, 29), (116, 29)], "b")   # benches
-    scatter(g, [(110, 24), (118, 24), (114, 30), (122, 26), (106, 26)], "f")
-    put(g, 123, 24, "x")                        # chest
-    scatter(g, [(106, 20), (124, 18), (128, 22), (105, 30), (130, 26)], "T")
-    scatter(g, [(108, 18), (126, 20), (131, 24)], "t")
-    # pond life on the grass shoreline (drawn just above the lake)
-    scatter(g, [(112, 31), (120, 31), (108, 32), (124, 31)], "d")
-    putg(g, 116, 31, "d")                        # Ariana (grass shoreline only)
-    putg(g, 110, 31, "k")                        # capybara (grass shoreline only)
+    scatter(g, [(108, 22), (120, 22), (108, 27), (122, 27)], "i")   # lamp posts
+    scatter(g, [(110, 26), (118, 26), (114, 28), (124, 26)], "b")   # benches
+    scatter(g, [(110, 24), (118, 24), (116, 28), (122, 24), (106, 26)], "f")
+    put(g, 123, 22, "x")                        # chest
+    grove(g, 106, 22, 5, spread=3, salt=41)     # groves framing the reading garden
+    grove(g, 132, 24, 6, spread=4, salt=42)
+    # pond life on the grass shoreline (row 29, just above the lake top)
+    scatter(g, [(112, 29), (120, 29), (126, 29)], "d")
+    putg(g, 116, 29, "d")                        # Ariana (grass shoreline only)
+    putg(g, 109, 29, "k")                        # capybara (grass shoreline only)
 
     # ===== VARIANT EMPHASIS =====
     if variant == 2:
@@ -213,9 +242,9 @@ def build(variant):
     if variant == 3:
         for bx, by in ((24, 11), (30, 35)):     # thin the village
             put(g, bx, by, ".")
-        scatter(g, [(8, 12), (40, 14), (46, 33), (64, 12), (100, 12), (58, 34),
-                    (72, 12), (90, 12), (33, 8), (18, 8)], "T")
-        scatter(g, [(10, 14), (38, 16), (62, 34), (48, 33)], "t")
+        for i, (cx, cy) in enumerate(((8, 12), (40, 14), (46, 33), (58, 34),
+                                      (72, 13), (90, 13), (33, 9), (18, 9))):
+            grove(g, cx, cy, 5, spread=3, salt=70 + i)   # trees reclaim the valley
         scatter(g, [(42, 20), (68, 34), (52, 33)], "m")
 
     return "\n".join("".join(r) for r in g) + "\n"

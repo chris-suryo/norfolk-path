@@ -190,8 +190,6 @@ def edge_pick(rows, x, y, kind, has_inner=True):
             for dx, dy, res in ((1, 1, (0, 3)), (-1, 1, (1, 3)), (1, -1, (0, 4)), (-1, -1, (1, 4))):
                 if not same(dx, dy):
                     return res
-            if (x * 7 + y * 13) % 17 == 0:
-                return ((x + y) % 3, 5)
         return CENTER
     return EDGE_BY_LAND_MASK.get(mask, CENTER)
 
@@ -239,7 +237,7 @@ def render(rows, out_path, scale=1, crop_box=None):
 
     # --- terrain + autotile sheets (FREE pack, proven autotiler) ---
     path_sheet = tex("Tiles/Path_Tile.png")
-    water_sheet = tex("Tiles/Water_Tile.png")
+    water_sheet = tex2("Tiles/Water/Water_Tile_1.png")  # integrated shore edge
     farm_sheet = tex("Tiles/FarmLand_Tile.png")
     # --- ground texture + detail (FULL pack) ---
     grasses = [tex2("Tiles/Grass/Grass_%d_Middle.png" % i) for i in (1, 2, 3, 4)]
@@ -319,17 +317,15 @@ def render(rows, out_path, scale=1, crop_box=None):
                 p = rng(x // 3, y // 3, 5)
                 g = grasses[0 if p < 0.74 else 1]  # subtle 2-shade patches
                 blit(canvas, cw, ch, g, 0, 0, TILE, TILE, gx, gy)
-                if near_water(x, y):  # sandy shore ring on the land side
-                    blit(canvas, cw, ch, sand, 48, 0, TILE, TILE, gx, gy)
 
     # ---- pass 2: ground/shore detail (procedural overlays; no symbol change) ----
     for y in range(h):
         for x in range(w):
             t = terrain_of(rows[y][x])
             cx_, cy_ = x * TILE + 8, y * TILE + 8
-            if t == "water":
-                if near_water_land(rows, x, y) and rng(x, y, 11) < 0.5:
-                    if rng(x, y, 12) < 0.5:
+            if t == "water":  # sparse reeds / lily-pads only right at the shoreline
+                if near_water_land(rows, x, y) and rng(x, y, 11) < 0.3:
+                    if rng(x, y, 12) < 0.45:
                         blit(canvas, cw, ch, waterdec, (int(rng(x, y, 13) * 3) % 3) * 16, 0,
                              16, 16, cx_ - 8, cy_ - 8)
                     else:
@@ -340,26 +336,33 @@ def render(rows, out_path, scale=1, crop_box=None):
                     reg = (64, 32) if (x + y) % 2 == 0 else (96, 32)
                     blit(canvas, cw, ch, decor, reg[0], reg[1], 16, 16, cx_ - 8, cy_ - 9)
             elif t == "grass":
-                if near_water(x, y):  # sand shore: occasional rocks / reeds
-                    if rng(x, y, 21) < 0.2:
-                        blit(canvas, cw, ch, ores, 0, (int(rng(x, y, 22) * 4) % 4) * 16,
-                             16, 16, cx_ - 8, cy_ - 10)
-                    continue
-                r = rng(x, y, 31)
+                # CLUSTERED, sparser detail: ~30% of 4x4 "beds" are lush, rest bare;
+                # rocks only in rare clumps, never near the water (per Chris's notes).
                 jx = int(rng(x, y, 32) * 6) - 3
                 jy = int(rng(x, y, 33) * 6) - 3
-                if r < 0.34:
-                    tu = tufts[int(rng(x, y, 34) * 3) % 3]
-                    blit(canvas, cw, ch, tu, 0, 0, 16, 16, cx_ - 8 + jx, cy_ - 8 + jy)
-                elif r < 0.52:
-                    fg = fgrass[int(rng(x, y, 35) * len(fgrass)) % len(fgrass)]
-                    blit(canvas, cw, ch, fg, 0, 0, 16, 16, cx_ - 8 + jx, cy_ - 8 + jy)
-                elif r < 0.66:
-                    fc = flower_cells[int(rng(x, y, 36) * len(flower_cells)) % len(flower_cells)]
-                    blit(canvas, cw, ch, flowers, fc[0] * 16, fc[1] * 16, 16, 16,
-                         cx_ - 8 + jx, cy_ - 8 + jy)
-                elif r < 0.69:
-                    blit(canvas, cw, ch, ores, 0, (int(rng(x, y, 37) * 4) % 4) * 16, 16, 16,
+                # coarse 5x5 "beds": a minority are lush flowerbeds; between them
+                # the grass is mostly bare with the odd subtle tuft, so flowers
+                # read as grouped clumps rather than an even per-cell sprinkle.
+                dense = rng(x // 5, y // 5, 50) < 0.22
+                if rng(x, y, 31) < (0.55 if dense else 0.07):
+                    p = rng(x, y, 34)
+                    if dense:
+                        cut_t, cut_g = 0.30, 0.60   # beds skew floral
+                    else:
+                        cut_t, cut_g = 0.62, 0.86   # between-bed specks skew grassy
+                    if p < cut_t:
+                        tu = tufts[int(rng(x, y, 35) * 3) % 3]
+                        blit(canvas, cw, ch, tu, 0, 0, 16, 16, cx_ - 8 + jx, cy_ - 8 + jy)
+                    elif p < cut_g:
+                        fg = fgrass[int(rng(x, y, 36) * len(fgrass)) % len(fgrass)]
+                        blit(canvas, cw, ch, fg, 0, 0, 16, 16, cx_ - 8 + jx, cy_ - 8 + jy)
+                    else:
+                        fc = flower_cells[int(rng(x, y, 37) * len(flower_cells)) % len(flower_cells)]
+                        blit(canvas, cw, ch, flowers, fc[0] * 16, fc[1] * 16, 16, 16,
+                             cx_ - 8 + jx, cy_ - 8 + jy)
+                elif (not near_water(x, y) and rng(x // 3, y // 3, 60) < 0.05
+                      and rng(x, y, 61) < 0.6):
+                    blit(canvas, cw, ch, ores, 0, (int(rng(x, y, 62) * 4) % 4) * 16, 16, 16,
                          cx_ - 8 + jx, cy_ - 6)
 
     # bridge under props
