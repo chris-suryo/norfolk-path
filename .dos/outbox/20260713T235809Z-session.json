@@ -1,0 +1,48 @@
+{
+  "goal": "Orient on the fresh norfolk-path repo, then grill + plan the first Godot build slice and prep PROJECT.md for handoff to a separate build session.",
+  "completed": [
+    "Oriented: repo was a blank dos-new *Python* CLI scaffold, not a Godot project as the spec requires",
+    "Ran /grill and resolved 7 design decisions for the game's first slice, one at a time",
+    "Wrote the approved Slice 1 'walking skeleton' plan and committed it into the repo as docs/slice-1-plan.md",
+    "Filled in PROJECT.md: real identity, v1 scope, Locations, Godot 4.7 command block",
+    "Committed and pushed both to branch claude/next-steps-repo-overview-iiyh7z"
+  ],
+  "discovered": [
+    "The scaffold (typer/pydantic, uv/pytest/ruff, Python-matrix CI) fundamentally mismatches a Godot 4 game; the global CLAUDE.md 'standard scaffold' does not apply here",
+    "Godot projects are text files (project.godot/.tscn/.gd), so a cloud agent can author the whole project headless without the editor GUI",
+    "Movement 'feel' cannot be verified headless - it is a human-in-editor task on Windows; only runs/exports are agent-verifiable",
+    "The session-local plan file under /root/.claude/plans does not travel to a separate clone, so the plan had to be committed into the repo for the build session to see it"
+  ],
+  "decisions": [
+    "Rip out the Python scaffold entirely; clean Godot project at repo root; keep .claude/, CLAUDE.md, PROJECT.md, session hook",
+    "Pin Godot 4.7 stable (June 2026) on both the cloud build and the Windows playtest ends",
+    "Slice 1 = walking skeleton: one player, free 8-directional movement with accel/friction weight, placeholder TileMapLayer level, target-agnostic follow camera (3x zoom, 640x360), both input maps defined but only P1 spawned",
+    "Prove the HTML5 Web export in Slice 1 to de-risk the browser pipeline early; Step 0 = install Godot 4.7 headless + prove a trivial export BEFORE authoring the project",
+    "Build/verify split: build session authors files + headless sanity-check; Chris pulls to Windows and owns movement-feel tuning via exported constants"
+  ],
+  "lessons": [
+    "When handing off to a separate cloud session, commit the plan INTO the repo - the session-local plan file does not travel to a fresh clone",
+    "On a scaffold/domain mismatch, make it the very first grill question: it is the root dependency that project structure, CI, and commands all hang off",
+    "Spike the riskiest unknown (toolchain install + export) before authoring a full slice, not after"
+  ],
+  "files_changed": [
+    "PROJECT.md",
+    "docs/slice-1-plan.md",
+    ".dos/outbox/20260713T235809Z-session.json"
+  ],
+  "open_questions": [
+    "Will Godot 4.7 headless + Web export templates install cleanly in the cloud env through the agent proxy? (the Step 0 spike answers this)",
+    "Web threads-on (needs COOP/COEP serve headers) vs threads-off for Slice 1 - to be decided during the build",
+    "Which friends are allies vs comic villains, and the actual quest/story beats - still unwritten (v1, not Slice 1)",
+    "Hours/week is still unsized for pacing expectations"
+  ],
+  "intent": "This was the planning/handoff session; the actual Godot build is deliberately deferred to a separate session (Vela). Ended once the repo was prepped (PROJECT.md + committed plan) and pushed so Vela picks up cleanly on a fresh clone.",
+  "next_task": "Kick off Vela on branch claude/next-steps-repo-overview-iiyh7z to build Slice 1 per docs/slice-1-plan.md, starting with the Step 0 Godot 4.7 toolchain spike.",
+  "blockers": null,
+  "resume_minutes": 10,
+  "dont_retry": [
+    "Keeping the Python scaffold or its uv/pytest/ruff CI for this Godot project",
+    "Authoring the full slice before proving the Godot install + Web export works (Step 0 must come first)"
+  ],
+  "session_id": "session_017KFbUpiU9utqMm3es9bF7o"
+}
