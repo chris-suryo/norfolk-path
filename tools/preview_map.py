@@ -17,6 +17,7 @@ Usage:
 
 KEEP IN SYNC: terrain classification + EDGE_BY_LAND_MASK mirror scripts/level.gd.
 """
+import math
 import os
 import re
 import struct
@@ -37,9 +38,9 @@ EDGE_BY_LAND_MASK = {
 }
 CENTER = (1, 1)
 
-WATER_SYMS = "~B"
+WATER_SYMS = "~BOk"  # O = boat, k = capybara: both sit ON water (keep the lake tile under)
 PATH_SYMS = "#S"
-FARM_SYMS = "D"
+FARM_SYMS = "DQ"  # D = carrot field, Q = wheat field (both tile as farmland)
 
 
 def terrain_of(ch):
@@ -60,6 +61,27 @@ def rng(x, y, salt=0):
     n = (n ^ (n >> 13)) & 0xFFFFFFFF
     n = (n * 1274126177) & 0xFFFFFFFF
     return n / 0xFFFFFFFF
+
+
+def _vnoise1(x, y, salt, period):
+    """One octave of smooth value noise: bilinear (smoothstep) blend of a coarse
+    `rng` lattice sampled every `period` tiles."""
+    fx, fy = x / period, y / period
+    x0, y0 = math.floor(fx), math.floor(fy)
+    tx, ty = fx - x0, fy - y0
+    sx = tx * tx * (3 - 2 * tx)
+    sy = ty * ty * (3 - 2 * ty)
+    v00, v10 = rng(x0, y0, salt), rng(x0 + 1, y0, salt)
+    v01, v11 = rng(x0, y0 + 1, salt), rng(x0 + 1, y0 + 1, salt)
+    a = v00 + (v10 - v00) * sx
+    b = v01 + (v11 - v01) * sx
+    return a + (b - a) * sy
+
+
+def vnoise(x, y, salt=0):
+    """Two-octave value noise in [0,1). Thresholding it gives irregular, organic
+    patches (no grid alignment) — unlike a per-block hash, which checkerboards."""
+    return 0.65 * _vnoise1(x, y, salt, 6) + 0.35 * _vnoise1(x, y, salt + 101, 3)
 
 
 # --- PNG stdlib codec ---------------------------------------------------------
@@ -217,6 +239,33 @@ def blit(canvas, cw, ch, src, sx, sy, sw, sh, dx, dy):
                 canvas[d + 3] = 255
 
 
+def blit_scaled(canvas, cw, ch, src, sx, sy, sw, sh, dx, dy, dw, dh):
+    """Nearest-neighbour scaled blit — used to size the bridge sprite to cover the
+    whole crossing so no water/gap shows around it (the 'two bridges' fix)."""
+    w, _, px = src
+    for yy in range(dh):
+        ty = dy + yy
+        if ty < 0 or ty >= ch:
+            continue
+        syy = sy + (yy * sh) // dh
+        for xx in range(dw):
+            tx = dx + xx
+            if tx < 0 or tx >= cw:
+                continue
+            sxx = sx + (xx * sw) // dw
+            o = (syy * w + sxx) * 4
+            a = px[o + 3]
+            if a == 0:
+                continue
+            d = (ty * cw + tx) * 4
+            if a == 255:
+                canvas[d : d + 4] = px[o : o + 4]
+            else:
+                for k in range(3):
+                    canvas[d + k] = (px[o + k] * a + canvas[d + k] * (255 - a)) // 255
+                canvas[d + 3] = 255
+
+
 def tex(rel):
     return decode_png(os.path.join(PACK, rel))
 
@@ -265,11 +314,12 @@ def render(rows, out_path, scale=1, crop_box=None):
     chest = tex("Outdoor decoration/Chest.png")
     player = tex("Player/Player.png")
     stall = tex2("Buildings/Buildings/Unique_Buildings/Stalls/Market_Stalls.png")
-    inn = tex2("Buildings/Buildings/Unique_Buildings/Inn/Inn_Blue.png")
+    inn = tex2("Buildings/Buildings/Unique_Buildings/Inn/Inn_Black.png")  # darker library (Chris's pick)
     barn = tex2("Buildings/Buildings/Unique_Buildings/Barn/Barn_Base_Red.png")
     house_a = tex2("Buildings/Buildings/Houses/Wood/House_1_Wood_Base_Blue.png")
     house_g = tex2("Buildings/Buildings/Houses/Wood/House_2_Wood_Base_Red.png")
     house_j = tex2("Buildings/Buildings/Houses/Stone/House_4_Stone_Base_Blue.png")
+    house_e = tex2("Buildings/Buildings/Houses/Limestone/House_3_Limestone_Base_Red.png")
     coop = tex2("Buildings/Buildings/Unique_Buildings/Coop/Coop_Base_Blue.png")
     silo = tex2("Buildings/Buildings/Unique_Buildings/Silo/Silo.png")
     well = tex2("Outdoor decoration/Well.png")
@@ -279,14 +329,29 @@ def render(rows, out_path, scale=1, crop_box=None):
     capy = tex2("Animals/Kapybara/Static/Kapybara_Idle.png")
     villager = tex2("NPCs (Premade)/Farmer_Bob.png")
 
+    # --- round-4 additions: distinct shop, crops, waterlife, more animals, boat ---
+    shop = tex2("Buildings/Buildings/Unique_Buildings/Fisherman_House/Fisherman_House_Base_Red.png")
+    awning = stall                                            # one 48x48 stall = storefront canopy
+    scarecrow = tex2("Outdoor decoration/Scarecrows.png")    # 5 x 32x32
+    haybale = tex2("Outdoor decoration/Hay_Bales.png")       # 3 x 16x16
+    barrels = tex2("Outdoor decoration/barrels.png")         # 96x64 grid
+    boat = tex2("Outdoor decoration/Boat.png")               # 48x48
+    goose = tex2("Animals/Goose/Goose_01.png")               # 32px frames
+    swan = tex2("Animals/Swan/Swan_01.png")
+    frog = tex2("Animals/Frog/Frog_01.png")
+    butterfly = tex2("Animals/Butterfly/Butterfly.png")      # 16px frames
+    mouse = tex2("Animals/Mouse/Mouse_01.png")
+    cattail = tex2(wp + "Cattail_1_Anim.png")                # 128x16 -> 16x16 frame 0
+    lily = tex2(wp + "Lillypad_Green_1_Anim.png")            # 128x16 -> 16x16 frame 0
+
     decor_region = {
         "r": (0, 48, 16, 16), "u": (0, 32, 16, 16), "w": (0, 16, 16, 16),
         "f": (32, 176, 16, 16), "v": (64, 32, 16, 16), "i": (64, 64, 16, 64),
         "n": (48, 0, 16, 16), "q": (96, 32, 16, 16), "m": (32, 112, 16, 16),
     }
-    buildings = {"H": (stall, 8), "L": (inn, 8), "A": (house_a, 8), "G": (house_g, 8),
-                 "J": (house_j, 8), "Y": (barn, 8), "W": (well, 6), "P": (coop, 8),
-                 "Z": (silo, 6)}
+    buildings = {"H": (shop, 8), "L": (inn, 8), "A": (house_a, 8), "G": (house_g, 8),
+                 "J": (house_j, 8), "E": (house_e, 8), "Y": (barn, 8), "W": (well, 6),
+                 "P": (coop, 8), "Z": (silo, 6)}
     flower_cells = [(0, 0), (2, 0), (4, 0), (1, 2), (3, 2), (0, 4), (2, 4), (4, 4), (1, 8), (3, 8)]
 
     def is_water(x, y):
@@ -294,6 +359,27 @@ def render(rows, out_path, scale=1, crop_box=None):
 
     def near_water(x, y):
         return is_water(x - 1, y) or is_water(x + 1, y) or is_water(x, y - 1) or is_water(x, y + 1)
+
+    # connected water-region sizes: dress only LARGE bodies (the lake), so the
+    # narrow brook doesn't get a busy reed/lily fringe.
+    region_size = {}
+    seen = set()
+    for sy in range(h):
+        for sx in range(w):
+            if is_water(sx, sy) and (sx, sy) not in seen:
+                stack, comp = [(sx, sy)], []
+                seen.add((sx, sy))
+                while stack:
+                    ax, ay = stack.pop()
+                    comp.append((ax, ay))
+                    for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                        bx, by = ax + dx, ay + dy
+                        if 0 <= bx < w and 0 <= by < h and is_water(bx, by) and (bx, by) not in seen:
+                            seen.add((bx, by))
+                            stack.append((bx, by))
+                for c in comp:
+                    region_size[c] = len(comp)
+    BIG_WATER = 250  # lake ~600 cells; brook ~130 -> only the lake is dressed
 
     # ---- pass 1: base terrain (grass shade / path / water / farm / cobble / sand) ----
     for y in range(h):
@@ -312,10 +398,11 @@ def render(rows, out_path, scale=1, crop_box=None):
             elif t == "cobble":
                 blit(canvas, cw, ch, cobble_t, 16, 16, TILE, TILE, gx, gy)
             else:
-                # soft grass-shade PATCHES (3x3, biased to one base shade) rather
-                # than per-cell random, so it reads textured not checkerboarded.
-                p = rng(x // 3, y // 3, 5)
-                g = grasses[0 if p < 0.74 else 1]  # subtle 2-shade patches
+                # ORGANIC grass-shade patches: threshold value-noise (not a block
+                # hash) across 3 shades so patches are irregular blobs, biased to
+                # the base shade — never a visible grid/checkerboard.
+                n = vnoise(x, y, 5)
+                g = grasses[0] if n < 0.54 else (grasses[1] if n < 0.78 else grasses[2])
                 blit(canvas, cw, ch, g, 0, 0, TILE, TILE, gx, gy)
 
     # ---- pass 2: ground/shore detail (procedural overlays; no symbol change) ----
@@ -323,18 +410,20 @@ def render(rows, out_path, scale=1, crop_box=None):
         for x in range(w):
             t = terrain_of(rows[y][x])
             cx_, cy_ = x * TILE + 8, y * TILE + 8
-            if t == "water":  # sparse reeds / lily-pads only right at the shoreline
-                if near_water_land(rows, x, y) and rng(x, y, 11) < 0.3:
-                    if rng(x, y, 12) < 0.45:
-                        blit(canvas, cw, ch, waterdec, (int(rng(x, y, 13) * 3) % 3) * 16, 0,
-                             16, 16, cx_ - 8, cy_ - 8)
-                    else:
-                        rd = reeds[int(rng(x, y, 14) * 2) % 2]
-                        blit(canvas, cw, ch, rd, 0, 0, 16, 16, cx_ - 8, cy_ - 10)
-            elif t == "farm":  # crop rows on the tilled plots (so they aren't bare)
-                if rng(x, y, 41) < 0.72:
-                    reg = (64, 32) if (x + y) % 2 == 0 else (96, 32)
-                    blit(canvas, cw, ch, decor, reg[0], reg[1], 16, 16, cx_ - 8, cy_ - 9)
+            if t == "water" and region_size.get((x, y), 0) >= BIG_WATER:
+                # dress ONLY the lake shore, in CLUMPS (value-noise patches) so reeds
+                # and lily-pads cluster rather than ring the shore evenly. Brook stays clean.
+                if near_water_land(rows, x, y):
+                    if vnoise(x, y, 80) < 0.44 and rng(x, y, 11) < 0.55:
+                        blit(canvas, cw, ch, cattail, 0, 0, 16, 16, cx_ - 8, cy_ - 12)
+                elif vnoise(x, y, 81) > 0.60 and rng(x, y, 15) < 0.4:   # lily-pad rafts
+                    blit(canvas, cw, ch, lily, 0, 0, 16, 16, cx_ - 8, cy_ - 8)
+            elif t == "farm":  # crops on the tilled plots (so they aren't bare)
+                if rows[y][x] == "Q":          # wheat field: golden grain (FREE decor q)
+                    if rng(x, y, 42) < 0.85:
+                        blit(canvas, cw, ch, decor, 96, 32, 16, 16, cx_ - 8, cy_ - 10)
+                elif rng(x, y, 41) < 0.80:     # carrot field: green carrot tops only
+                    blit(canvas, cw, ch, decor, 64, 32, 16, 16, cx_ - 8, cy_ - 9)
             elif t == "grass":
                 # CLUSTERED, sparser detail: ~30% of 4x4 "beds" are lush, rest bare;
                 # rocks only in rare clumps, never near the water (per Chris's notes).
@@ -365,12 +454,18 @@ def render(rows, out_path, scale=1, crop_box=None):
                     blit(canvas, cw, ch, ores, 0, (int(rng(x, y, 62) * 4) % 4) * 16, 16, 16,
                          cx_ - 8 + jx, cy_ - 6)
 
-    # bridge under props
+    # bridge under props — one clean span covering the WHOLE crossing (bbox of all
+    # B cells + a tile of overhang), scaled from the east-west bridge piece
+    # (sheet cols 5-42) so no water/gap shows around it. Fixes the "two bridges".
     bcells = [(x, y) for y in range(h) for x in range(w) if rows[y][x] == "B"]
     if bcells:
-        bx = (sum(p[0] for p in bcells) / len(bcells) + 0.5) * TILE
-        by = (sum(p[1] for p in bcells) / len(bcells) + 0.5) * TILE
-        blit(canvas, cw, ch, bridge, 5, 0, 38, 54, int(bx) - 19, int(by) - 27)
+        bx0 = min(p[0] for p in bcells) * TILE - 4
+        bx1 = (max(p[0] for p in bcells) + 1) * TILE + 4
+        by0 = min(p[1] for p in bcells) * TILE - 2
+        by1 = (max(p[1] for p in bcells) + 1) * TILE + 2
+        # east-west bridge piece (round log-ends at the banks) scaled to span the
+        # water crossing; the deck runs the way the player walks (east-west).
+        blit_scaled(canvas, cw, ch, bridge, 106, 21, 28, 38, bx0, by0, bx1 - bx0, by1 - by0)
 
     # ---- pass 3: props/buildings, painter-sorted by base Y ----
     items = [(y, rows[y][x], x) for y in range(h) for x in range(w)]
@@ -404,6 +499,21 @@ def render(rows, out_path, scale=1, crop_box=None):
         elif sym in "ope":
             sheet = {"o": cow, "p": pig, "e": sheep}[sym]
             blit(canvas, cw, ch, sheet, 0, 0, 32, 32, px_ - 16, py_ - 26)
+        elif sym in "UVRj":                              # goose / swan / frog / mouse
+            sheet = {"U": goose, "V": swan, "R": frog, "j": mouse}[sym]
+            blit(canvas, cw, ch, sheet, 0, 0, 32, 32, px_ - 16, py_ - 22)
+        elif sym == "y":                                 # butterfly (flits above grass)
+            blit(canvas, cw, ch, butterfly, 0, 0, 16, 16, px_ - 8, py_ - 20)
+        elif sym == "O":                                 # boat moored at the shore
+            blit(canvas, cw, ch, boat, 0, 0, 48, 48, px_ - 24, py_ - 34)
+        elif sym == "M":                                 # market awning / storefront canopy
+            blit(canvas, cw, ch, awning, 0, 0, 48, 48, px_ - 24, py_ + 8 - 48)
+        elif sym == "K":                                 # scarecrow (wheat field)
+            blit(canvas, cw, ch, scarecrow, 0, 0, 32, 32, px_ - 16, py_ + 8 - 32)
+        elif sym == "2":                                 # hay bale
+            blit(canvas, cw, ch, haybale, 0, 0, 16, 16, px_ - 8, py_ - 8)
+        elif sym == "3":                                 # barrel / crate of goods
+            blit(canvas, cw, ch, barrels, 0, 0, 16, 16, px_ - 8, py_ - 10)
         elif sym == "x":
             blit(canvas, cw, ch, chest, 0, 0, 16, 16, px_ - 8, py_ - 12)
         elif sym in decor_region:

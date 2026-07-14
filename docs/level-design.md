@@ -73,13 +73,28 @@ from the paid pack. `H` is now **Evan's Market_Stalls** and `L` is now a
 
 | Symbol | Meaning | | Symbol | Meaning |
 |---|---|---|---|---|
-| `H` | Evan's Market_Stalls (the one shop) | | `A`/`G`/`J` | cottages (wood/wood/stone) |
-| `L` | Inn = the library | | `Y` | barn |
+| `H` | Evan's shop (distinct fisherman-house building) | | `A`/`G`/`J`/`E` | cottages (wood/wood/stone/limestone) |
+| `L` | Inn = the library (`Inn_Black`, darker) | | `Y` | barn |
 | `P` | chicken coop | | `Z` | silo |
 | `W` | well | | `b` | bench |
-| `d` | duck (ambient + Ariana) | | `k` | capybara |
+| `d` | duck (ambient + Ariana) | | `k` | capybara (sits ON lake water) |
 | `h` | horse | | `N` | ambient villager (placeholder sprite) |
-| `c` | cobble (path apron / spur) | | | |
+| `c` | cobble (path apron / spur) | | `M` | market awning / storefront canopy |
+
+**Round-7 additions (de-AI + variety).** New symbols the valley generator uses:
+
+| Symbol | Meaning | | Symbol | Meaning |
+|---|---|---|---|---|
+| `Q` | wheat field (tills like farmland `D`) | | `K` | scarecrow |
+| `2` | hay bale | | `3` | barrel / crate of goods |
+| `U` | goose | | `V` | swan |
+| `R` | frog | | `j` | mouse |
+| `y` | butterfly | | `O` | boat (moored, sits ON lake water) |
+
+`O`, `k` are classified as **water** by the preview tool (`WATER_SYMS`) so the lake
+tile is kept under them; everything else sits on grass. The tool now also renders
+**organic (value-noise) grass shades**, a **varied tree border**, and **clumped
+shore reeds/lily-pads gated to the lake** (the brook stays clean).
 
 **Procedural density (no symbols).** `tools/preview_map.py` also layers, keyed off
 terrain only: grass-shade patches + a *clustered* tuft/flower/pebble scatter on

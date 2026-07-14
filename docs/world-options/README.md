@@ -1,36 +1,54 @@
 # Candidate world layouts
 
-# Norfolk Path valley — the expanded first level (Round 6 = REFINE PASS, CURRENT)
+# Norfolk Path valley — the expanded first level (Round 7 = DE-AI + VARIETY, CURRENT)
 
 A fresh, ~2×-longer world (**144 wide**) replacing the small coves, re-rendered
 to match the Stardew **references/** density (round 1 was flat green with
 floating objects). **One golden path west→east through 4 regions** — a busy
-**Village** (spawn) → **Path & Evan's Stall** → **Woods** → **Library & Lake**
+**Village** (spawn) → **Path & Evan's Shop** → **Woods** → **Library & Lake**
 climax. **Preview only — `scripts/island_map.gd` is untouched.**
 
-**What changed (round 6, Chris's density-pass notes).** Four fixes on top of the
-approved density look:
-- **Undulating path.** The golden path was dead-straight; it now gently
-  *meanders* (a two-sine curve, thickness 4, slope ≤1/col so it still validates),
-  held flat only across the brook so it meets the bridge as a clean rectangle.
-- **Smooth shoreline.** Dropped the hard per-cell sand ring and the plain Free
-  water tile; the lake now renders with the **Full-pack `Water_Tile_1`** autotile
-  (integrated shore edge baked in) over a **rounded-rectangle** lake shape (long
-  flat sides + rounded corners), so the water edge reads smooth, not stair-stepped.
-- **No rocks in the water.** Shore rocks removed entirely; only sparse reeds +
-  lily-pads sit at the waterline now.
-- **Sparser, grouped flowers + rocks.** The ground scatter was an even per-cell
-  sprinkle; it's now driven off a coarse 5×5 "bed" hash — a minority of patches
-  are lush flowerbeds, the grass between is mostly bare with the odd subtle tuft.
-  Rocks appear only in occasional small clumps, never near the water. **Trees are
-  now clustered into groves** (village→woods density gradient) rather than evenly
-  scattered.
+**What changed (round 7 — Chris + a second review LLM: kill the "AI-generated"
+tells, fix bugs, add variety).**
 
-**Carried over from the density pass.** Every **building has context** — a cobble
-apron at the door, a cobble spur to the road, flanking lamps, a fenced yard,
-flowerbeds — plus a bridged brook and **dense tree borders** framing the valley.
+*Bugs fixed:*
+- **Cobble spurs now reach the door.** The apron ran a tile short; the spur is a
+  continuous cobble ribbon from each door to the road (and houses sit nearer the
+  path, so spurs are short, not long grey ribbons).
+- **One clean bridge.** The crossing drew a doubled/mis-oriented bridge; it now
+  scales the correct east-west bridge piece to cover the whole crossing — a single
+  span with log-ends at both banks.
+- **Shoreline dressed all the way round.** The lake was pulled *up off the map
+  bottom* so its south + corner shores land on visible grass, and reeds now clump
+  around the entire boundary (not just the north edge).
+- **Capybara sits in the real lake** (water-backed), not an isolated 1-tile pool.
+
+*"Looks AI-generated" tells removed:*
+- **Grass no longer checkerboards.** The block-hash shade was replaced with
+  **value-noise** across 3 grass shades — irregular organic patches, no grid.
+- **Tree border is varied.** Uneven band depth (0–4 tiles) with occasional gaps
+  and denser clumps, a big/small oak mix, and a scrubby buffer of stray trees just
+  inside — not one mechanical wall.
+- **Brook reads like a stream.** It bends gently (held straight only at the
+  bridge) and its busy in-water reeds were removed (shore dressing is gated to the
+  large lake only).
+- **Animals cluster, not rows.** A `flock()` helper jitters ducks/geese/livestock
+  into loose clumps; reeds + lily-pads cluster in value-noise rafts.
+
+*Variety added:*
+- **Evan's shop is one distinct building** (a fisherman's-house sprite) with a
+  market awning, a hanging sign, crates of goods, and Evan at the counter — a
+  designed storefront, not four repeated stall tiles.
+- **Village:** more cottages in **varied sprites** (wood / limestone / stone,
+  different roof + base colours) and **staggered** spacing.
+- **Two distinct farms:** a green **carrot** field and a golden **wheat** field
+  with a **scarecrow** + hay bales.
+- **More characters:** geese, a swan, frogs and a moored **boat** at the lake;
+  butterflies over the meadows; a mouse in the woods; extra villagers.
+- **Library reads darker** (`Inn_Black`) — Chris's call for an imposing boss home.
+
 See the close-ups (`valley-1-village.png`, `valley-1-library.png`) for the
-grouped-flower texture + the smooth shore.
+organic grass, the reached-door spurs, the two farms, and the dressed lake.
 
 All buildings are **real pack art**: **Inn** = library, **Market_Stalls** =
 Evan, plus barn/coop/silo/cottages/well. Ambient **villagers** use `Farmer_Bob`
