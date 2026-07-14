@@ -1,0 +1,22 @@
+# Godot 4 project.
+#
+# Godot's binary/text resource formats (.tscn, .tres, project.godot) are
+# plain text and fine to normalize. Image/audio/font assets are NOT text —
+# without an explicit `binary` rule here, a Windows client with
+# core.autocrlf=true can rewrite lone LF bytes inside them as CRLF on
+# checkout, corrupting the file silently (this bit us once: PNGs that were
+# byte-correct in the repo failed to load on a Windows checkout with
+# "No loader found for resource").
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ogg binary
+*.wav binary
+*.mp3 binary
+*.ttf binary
+*.otf binary
+*.woff binary
+*.woff2 binary
