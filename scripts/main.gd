@@ -27,8 +27,13 @@ func _ready() -> void:
 	var spawn := IslandMap.cell_center(IslandMap.find_one("S"))
 	$World/Player.position = spawn
 	$World/Player.respawn_point = spawn
-	$World/Player2.position = spawn + Vector2(18, 0)
-	$World/Player2.respawn_point = spawn + Vector2(18, 0)
+	# 1P: drop the second player; the midpoint camera falls back to Player1
+	# (midpoint.gd guards with is_instance_valid).
+	if Game.player_count >= 2:
+		$World/Player2.position = spawn + Vector2(18, 0)
+		$World/Player2.respawn_point = spawn + Vector2(18, 0)
+	else:
+		$World/Player2.queue_free()
 	$World/Shop.position = IslandMap.cell_center(IslandMap.find_one("H"))
 	$World/Ariana.position = IslandMap.cell_center(IslandMap.find_one("C"))
 	_spawn_trees()

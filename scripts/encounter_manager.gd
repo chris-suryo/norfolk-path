@@ -16,6 +16,10 @@ const SLIME_SCENE := preload("res://scenes/enemy_slime.tscn")
 const SKELETON_SCENE := preload("res://scenes/enemy_skeleton.tscn")
 const TRIGGER_RADIUS := 40.0
 
+## Co-op: a downed teammate revives once no live enemy is within this radius of
+## any player (the fight around them is cleared).
+const REVIVE_RADIUS := 130.0
+
 var _areas: Array = []
 var _world: Node2D
 
@@ -27,7 +31,7 @@ func setup() -> void:
 		_spawn_area(area)
 	_make_triggers()
 	for player in get_tree().get_nodes_in_group("players"):
-		player.downed.connect(_on_player_downed.bind(player))
+		player.downed.connect(_on_downed)
 	_apply_resume()
 
 
@@ -42,6 +46,8 @@ func _process(_delta: float) -> void:
 		area.instances = alive
 		if alive.is_empty():
 			area.cleared = true
+	if Game.player_count >= 2:
+		_update_coop_revive()
 
 
 func _build_areas() -> void:
@@ -94,7 +100,11 @@ func _make_triggers() -> void:
 
 
 func _apply_resume() -> void:
+	# The player-select choice wins over the saved player_count; the rest of the
+	# save (checkpoint / boss_defeated) is what we resume from.
+	var chosen := Game.player_count
 	Game.load_state()
+	Game.player_count = chosen
 	if Game.checkpoint <= 0:
 		return
 	var area := _area_by_id(Game.checkpoint)
@@ -116,10 +126,47 @@ func _on_area_entered(body: Node, area: Dictionary) -> void:
 		player.respawn_point = area.center
 
 
-func _on_player_downed(player: Node) -> void:
+func _on_downed() -> void:
+	# Solo, or co-op with everyone down: respawn all at the checkpoint + reset
+	# the area. Co-op with a survivor: the downed player waits for a clear-revive.
+	if not _all_players_down():
+		return
 	var area := _area_by_id(Game.checkpoint)
-	player.respawn_at(area.center)
+	for player in get_tree().get_nodes_in_group("players"):
+		player.respawn_at(area.center)
 	_reset_area(area)
+
+
+func _update_coop_revive() -> void:
+	var downed: Array = []
+	var any_up := false
+	for player in get_tree().get_nodes_in_group("players"):
+		if player.is_targetable():
+			any_up = true
+		else:
+			downed.append(player)
+	if not any_up or downed.is_empty() or _enemies_near_players(REVIVE_RADIUS):
+		return
+	for player in downed:
+		player.respawn_at(player.global_position)
+
+
+func _all_players_down() -> bool:
+	for player in get_tree().get_nodes_in_group("players"):
+		if player.is_targetable():
+			return false
+	return true
+
+
+func _enemies_near_players(radius: float) -> bool:
+	var players := get_tree().get_nodes_in_group("players")
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(enemy):
+			continue
+		for player in players:
+			if enemy.global_position.distance_to(player.global_position) <= radius:
+				return true
+	return false
 
 
 func _reset_area(area: Dictionary) -> void:

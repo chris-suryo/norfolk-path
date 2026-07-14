@@ -27,7 +27,9 @@ func _physics_process(_delta: float) -> void:
 
 
 func _update_position() -> void:
-	if _a != null and _b != null:
+	# is_instance_valid (not != null) so 1P — where main frees Player2 after this
+	# node has already resolved _b — falls back to tracking Player1 alone.
+	if is_instance_valid(_a) and is_instance_valid(_b):
 		global_position = (_a.global_position + _b.global_position) / 2.0
-	elif _a != null:
+	elif is_instance_valid(_a):
 		global_position = _a.global_position
