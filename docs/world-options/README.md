@@ -1,62 +1,53 @@
 # Candidate world layouts
 
-# Norfolk Path valley — the expanded first level (Round 7 = DE-AI + VARIETY, CURRENT)
+# Norfolk Path valley — the expanded first level (Round 8 = RIVER + LONG WALK, CURRENT)
 
-A fresh, ~2×-longer world (**144 wide**) replacing the small coves, re-rendered
-to match the Stardew **references/** density (round 1 was flat green with
-floating objects). **One golden path west→east through 4 regions** — a busy
-**Village** (spawn) → **Path & Evan's Shop** → **Woods** → **Library & Lake**
-climax. **Preview only — `scripts/island_map.gd` is untouched.**
+Now **192 wide** (a third longer than round 7 — the first level *feels* like a
+journey). **One golden path west→east through 4 regions** — a busy **Village**
+(spawn) → **Path & Evan's Shop** → over a **stone bridge + real river** → a deep
+**Forest** with a camp clearing → **Library & Lake** climax. **Preview only —
+`scripts/island_map.gd` is untouched.**
 
-**What changed (round 7 — Chris + a second review LLM: kill the "AI-generated"
-tells, fix bugs, add variety).**
-
-*Bugs fixed:*
-- **Cobble spurs now reach the door.** The apron ran a tile short; the spur is a
-  continuous cobble ribbon from each door to the road (and houses sit nearer the
-  path, so spurs are short, not long grey ribbons).
-- **One clean bridge.** The crossing drew a doubled/mis-oriented bridge; it now
-  scales the correct east-west bridge piece to cover the whole crossing — a single
-  span with log-ends at both banks.
-- **Shoreline dressed all the way round.** The lake was pulled *up off the map
-  bottom* so its south + corner shores land on visible grass, and reeds now clump
-  around the entire boundary (not just the north edge).
-- **Capybara sits in the real lake** (water-backed), not an isolated 1-tile pool.
-
-*"Looks AI-generated" tells removed:*
-- **Grass no longer checkerboards.** The block-hash shade was replaced with
-  **value-noise** across 3 grass shades — irregular organic patches, no grid.
-- **Tree border is varied.** Uneven band depth (0–4 tiles) with occasional gaps
-  and denser clumps, a big/small oak mix, and a scrubby buffer of stray trees just
-  inside — not one mechanical wall.
-- **Brook reads like a stream.** It bends gently (held straight only at the
-  bridge) and its busy in-water reeds were removed (shore dressing is gated to the
-  large lake only).
-- **Animals cluster, not rows.** A `flock()` helper jitters ducks/geese/livestock
-  into loose clumps; reeds + lily-pads cluster in value-noise rafts.
-
-*Variety added:*
-- **Evan's shop is one distinct building** (a fisherman's-house sprite) with a
-  market awning, a hanging sign, crates of goods, and Evan at the counter — a
-  designed storefront, not four repeated stall tiles.
-- **Village:** more cottages in **varied sprites** (wood / limestone / stone,
-  different roof + base colours) and **staggered** spacing.
-- **Two distinct farms:** a green **carrot** field and a golden **wheat** field
-  with a **scarecrow** + hay bales.
-- **More characters:** geese, a swan, frogs and a moored **boat** at the lake;
-  butterflies over the meadows; a mouse in the woods; extra villagers.
-- **Library reads darker** (`Inn_Black`) — Chris's call for an imposing boss home.
+**What changed (round 8 — Chris's notes + the pack's own promo art as target).**
+- **A real RIVER.** The 3-wide canal segment is now a **6-wide river running
+  edge-to-edge top-to-bottom**, gently bending, with lily pads, fish shadows,
+  water rocks and a swan — crossed by a proper **STONE bridge** (composed from
+  the pack's stone-bridge sheet: parapet / deck slabs / parapet).
+- **A real FOREST.** The woods region doubled in depth and gained a clustered
+  tree FILL (oak + golden birch + spruce, all sizes) over the groves, with a
+  clear corridor along the road — dense forest, not parkland. Understory:
+  stumps, berry bushes, mushrooms, boulders, mice, frogs, butterflies.
+- **The CAMP CLEARING** (promo look): tent + campfire + log seats + stumps in an
+  open clearing off the road at ~2/3 forest depth — the future skeleton arena,
+  dressed now, mobs next slice.
+- **Region gates:** grape-bower arches over the path at the village exit and the
+  forest entrance; a trailhead signpost; a **lamp-lined straight avenue** as the
+  final approach to the library.
+- **Village upgrades:** a cobbled **well plaza** (village centre), a **windmill**
+  over the wheat, fruit-tree **orchard**, white **picket garden**, crop **signs**
+  on both fields (each field's own sign sprite), beehives + bees, a **second pen**
+  (horse paddock with troughs + hay) — and fence corners now CLOSE (corner
+  pieces mapped), so pens read as pens.
+- **Lake life:** swimming ducks + swan **in the water** (real swim frames), both
+  capybaras (incl. the albino) wading, a fisherman villager, the boat, floating
+  log, water rocks, fish shadows.
+- **Climax palette shift:** the pack's birch IS its golden tree — golden birch +
+  fruit trees cluster around the dark library so the ending reads autumnal.
+  (No dedicated autumn-tree asset exists; birch carries it.)
+- **Cobble connectivity is now GUARANTEED:** the generator flood-fills from the
+  road and refuses to emit a map where any building's door ribbon doesn't reach
+  it (fails at generation, not in the eyeball pass).
 
 See the close-ups (`valley-1-village.png`, `valley-1-library.png`) for the
-organic grass, the reached-door spurs, the two farms, and the dressed lake.
+plaza/pens/windmill and the golden-birch lake climax. Round-7 history (de-AI
+pass: organic value-noise grass, varied border, clustered flocks, distinct shop,
+dark `Inn_Black` library) is folded in and kept.
 
-All buildings are **real pack art**: **Inn** = library, **Market_Stalls** =
-Evan, plus barn/coop/silo/cottages/well. Ambient **villagers** use `Farmer_Bob`
-as a placeholder; **ducks + capybara + Ariana** are real animal sprites on the
-grass shoreline. Named cast + the 5 dialogue lines unchanged.
+All buildings are **real pack art**; ambient **villagers** use `Farmer_Bob` as a
+placeholder. Named cast + the 5 dialogue lines unchanged.
 
-All three share the same **undulating golden path** and the same smooth
-rounded lake; they differ in how the *village* and the *woods* are dressed.
+All three variants share the river/bridge/forest/lake arc; they differ in how
+the *village* and the *woods* are dressed.
 
 ## valley-1 — Balanced (recommended) (`valley-1.png`)
 The even read: a tidy village (cottages, barn, wells, a fenced pasture, two crop

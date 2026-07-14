@@ -38,9 +38,9 @@ EDGE_BY_LAND_MASK = {
 }
 CENTER = (1, 1)
 
-WATER_SYMS = "~BOk"  # O = boat, k = capybara: both sit ON water (keep the lake tile under)
-PATH_SYMS = "#S"
-FARM_SYMS = "DQ"  # D = carrot field, Q = wheat field (both tile as farmland)
+WATER_SYMS = "~BOkal@"  # boat / capybaras / swimming duck+swan sit ON water (tile kept under)
+PATH_SYMS = "#Sg"  # g = grape-bower arch OVER the path (path continues underneath)
+FARM_SYMS = "DQ"  # D = mixed veggie field (carrot/beet/turnip rows), Q = wheat field
 
 
 def terrain_of(ch):
@@ -344,6 +344,33 @@ def render(rows, out_path, scale=1, crop_box=None):
     cattail = tex2(wp + "Cattail_1_Anim.png")                # 128x16 -> 16x16 frame 0
     lily = tex2(wp + "Lillypad_Green_1_Anim.png")            # 128x16 -> 16x16 frame 0
 
+    # --- round-5 additions: promo-look variety (trees, river life, camp, farms) ---
+    birch_s = tex2("Trees/Small_Birch_Tree.png")             # golden birch, (32,0,32,64)
+    birch_b = tex2("Trees/Big_Birch_Tree.png")               # (32,0,32,80)
+    spruce_s = tex2("Trees/Small_Spruce_Tree.png")           # (32,0,32,64)
+    spruce_b = tex2("Trees/Big_Spruce_tree.png")             # (64,0,64,80) [sic lowercase]
+    apple_t = tex2("Crops/Apple_Tree.png")                   # 32x64 fruit trees
+    cherry_t = tex2("Crops/Cherry_Tree.png")
+    crops_sheet = tex2("Crops/Crops.png")                    # 16x32 blocks; col5 = mature, col0 = crop sign
+    bower = tex2("Crops/Grapes_Bower.png")                   # mature grape arch = (96,80,96,80)
+    windmill = tex2("Buildings/Buildings/Unique_Buildings/Windmill/Windmill.png")  # 2 aligned 64x112 halves
+    tent = tex2("Buildings/Buildings/Tent/Tent_Small.png")   # 48x96
+    oa = "Outdoor decoration/Outdoor_Decor_Animations/Other_Animations/"
+    campfire = tex2(oa + "Campfire_Anim.png")                # 8 frames of 16x32
+    campdecor = tex2("Outdoor decoration/Camp_Decor.png")    # 5 x 16x16 camp props
+    berries2 = tex2("Crops/Berries.png")                     # (0,0)/(32,0) full bushes
+    beehive = tex2("Animals/Bee/Bee_Hive.png")               # 16x16
+    trough = tex2("Outdoor decoration/Water_Troughs.png")    # (16,0,32,32) filled horizontal
+    lamp2 = tex2("Outdoor decoration/Lanter_Posts.png")      # [sic] 16x48 cells
+    wfence = tex2("Outdoor decoration/White_Fence.png")      # picket pieces, 16px grid
+    stone_bridge = tex2("Tiles/Bridge/Bridge_Stone_Horizontal.png")  # deck = (0,0,128,48)
+    wd = "Outdoor decoration/Outdoor_Decor_Animations/Water_Decor_Animations/"
+    wlog = tex2(wd + "Other_Water_Decor/Log_1_Water_Anim.png")   # 8 frames of 32x16
+    wrock = tex2(wd + "Water_Rocks/Rock_3_Water_Anim.png")       # frames of 16x16
+    fish = tex2("Tiles/Water/Fish_Animated_Tile.png")            # 16 frames of 16x16
+    rooster = tex2("Animals/Chicken/Rooster.png")                # 32x32 frames
+    capy2 = tex2("Animals/Kapybara/Static/Albino_Kapybara_Idle.png")  # 32x32 frames
+
     decor_region = {
         "r": (0, 48, 16, 16), "u": (0, 32, 16, 16), "w": (0, 16, 16, 16),
         "f": (32, 176, 16, 16), "v": (64, 32, 16, 16), "i": (64, 64, 16, 64),
@@ -411,19 +438,35 @@ def render(rows, out_path, scale=1, crop_box=None):
             t = terrain_of(rows[y][x])
             cx_, cy_ = x * TILE + 8, y * TILE + 8
             if t == "water" and region_size.get((x, y), 0) >= BIG_WATER:
-                # dress ONLY the lake shore, in CLUMPS (value-noise patches) so reeds
-                # and lily-pads cluster rather than ring the shore evenly. Brook stays clean.
+                # dress BIG water (lake + river) in CLUMPS: cattails at the banks,
+                # lily rafts + sparse fish shadows / water rocks / a floating log in
+                # the open water (the promo look). Tiny puddles stay clean.
                 if near_water_land(rows, x, y):
                     if vnoise(x, y, 80) < 0.44 and rng(x, y, 11) < 0.55:
                         blit(canvas, cw, ch, cattail, 0, 0, 16, 16, cx_ - 8, cy_ - 12)
                 elif vnoise(x, y, 81) > 0.60 and rng(x, y, 15) < 0.4:   # lily-pad rafts
                     blit(canvas, cw, ch, lily, 0, 0, 16, 16, cx_ - 8, cy_ - 8)
-            elif t == "farm":  # crops on the tilled plots (so they aren't bare)
-                if rows[y][x] == "Q":          # wheat field: golden grain (FREE decor q)
-                    if rng(x, y, 42) < 0.85:
-                        blit(canvas, cw, ch, decor, 96, 32, 16, 16, cx_ - 8, cy_ - 10)
-                elif rng(x, y, 41) < 0.80:     # carrot field: green carrot tops only
-                    blit(canvas, cw, ch, decor, 64, 32, 16, 16, cx_ - 8, cy_ - 9)
+                elif rng(x, y, 90) < 0.02:                               # fish shadow
+                    blit(canvas, cw, ch, fish, 0, 0, 16, 16, cx_ - 8, cy_ - 8)
+                elif rng(x, y, 91) < 0.012:                              # water rock
+                    blit(canvas, cw, ch, wrock, 0, 0, 16, 16, cx_ - 8, cy_ - 8)
+                elif rng(x, y, 92) < 0.005:                              # floating log
+                    blit(canvas, cw, ch, wlog, 0, 0, 32, 16, cx_ - 16, cy_ - 8)
+            elif t == "farm":
+                # real crop sprites from the FULL Crops.png (16x32 blocks: col5 =
+                # mature plant, col0 = that crop's own little sign). Each field gets
+                # its sign at the bottom-left corner cell (the promo-5 look).
+                def farm_at(ax, ay):
+                    return terrain_of(cell(rows, ax, ay)) == "farm"
+                if rows[y][x] == "Q":          # wheat field: golden grain rows
+                    crop_by = 0
+                else:                           # mixed veggie field: carrot/beet/turnip rows
+                    crop_by = (64, 576, 192)[y % 3]
+                if not farm_at(x - 1, y) and not farm_at(x, y + 1):
+                    blit(canvas, cw, ch, crops_sheet, 0, crop_by, 16, 32, cx_ - 8, cy_ - 24)
+                elif rng(x, y, 42) < 0.88:
+                    sx_ = 80 if rng(x, y, 43) < 0.8 else 64   # mostly mature, some younger
+                    blit(canvas, cw, ch, crops_sheet, sx_, crop_by, 16, 32, cx_ - 8, cy_ - 24)
             elif t == "grass":
                 # CLUSTERED, sparser detail: ~30% of 4x4 "beds" are lush, rest bare;
                 # rocks only in rare clumps, never near the water (per Chris's notes).
@@ -459,13 +502,17 @@ def render(rows, out_path, scale=1, crop_box=None):
     # (sheet cols 5-42) so no water/gap shows around it. Fixes the "two bridges".
     bcells = [(x, y) for y in range(h) for x in range(w) if rows[y][x] == "B"]
     if bcells:
-        bx0 = min(p[0] for p in bcells) * TILE - 4
-        bx1 = (max(p[0] for p in bcells) + 1) * TILE + 4
-        by0 = min(p[1] for p in bcells) * TILE - 2
-        by1 = (max(p[1] for p in bcells) + 1) * TILE + 2
-        # east-west bridge piece (round log-ends at the banks) scaled to span the
-        # water crossing; the deck runs the way the player walks (east-west).
-        blit_scaled(canvas, cw, ch, bridge, 106, 21, 28, 38, bx0, by0, bx1 - bx0, by1 - by0)
+        bx0 = min(p[0] for p in bcells) * TILE - 6
+        bx1 = (max(p[0] for p in bcells) + 1) * TILE + 6
+        by0 = min(p[1] for p in bcells) * TILE - 6
+        by1 = (max(p[1] for p in bcells) + 1) * TILE + 6
+        # STONE bridge (the pack-promo hero look), composed from the sheet's three
+        # bands — parapet rail / stone deck slabs / parapet rail — so only the slab
+        # band stretches vertically and the rails keep their real proportions.
+        dw, dh = bx1 - bx0, by1 - by0
+        blit_scaled(canvas, cw, ch, stone_bridge, 0, 0, 128, 16, bx0, by0, dw, 16)
+        blit_scaled(canvas, cw, ch, stone_bridge, 0, 16, 128, 32, bx0, by0 + 16, dw, dh - 32)
+        blit_scaled(canvas, cw, ch, stone_bridge, 0, 48, 128, 16, bx0, by0 + dh - 16, dw, 16)
 
     # ---- pass 3: props/buildings, painter-sorted by base Y ----
     items = [(y, rows[y][x], x) for y in range(h) for x in range(w)]
@@ -502,6 +549,49 @@ def render(rows, out_path, scale=1, crop_box=None):
         elif sym in "UVRj":                              # goose / swan / frog / mouse
             sheet = {"U": goose, "V": swan, "R": frog, "j": mouse}[sym]
             blit(canvas, cw, ch, sheet, 0, 0, 32, 32, px_ - 16, py_ - 22)
+        elif sym in "al":                                # SWIMMING duck / swan (row 8 = on-water pose)
+            sheet = duck if sym == "a" else swan
+            blit(canvas, cw, ch, sheet, 0, 256, 32, 32, px_ - 16, py_ - 20)
+        elif sym == "@":                                 # albino capybara (in the lake)
+            blit(canvas, cw, ch, capy2, 0, 0, 32, 32, px_ - 16, py_ - 18)
+        elif sym == "4":                                 # small golden birch
+            blit(canvas, cw, ch, birch_s, 32, 0, 32, 64, px_ - 16, py_ - 56)
+        elif sym == "5":                                 # big golden birch
+            blit(canvas, cw, ch, birch_b, 32, 0, 32, 80, px_ - 16, py_ - 70)
+        elif sym == "6":                                 # small spruce
+            blit(canvas, cw, ch, spruce_s, 32, 0, 32, 64, px_ - 16, py_ - 56)
+        elif sym == "7":                                 # big spruce
+            blit(canvas, cw, ch, spruce_b, 64, 0, 64, 80, px_ - 32, py_ - 70)
+        elif sym == "8":                                 # apple tree
+            blit(canvas, cw, ch, apple_t, 0, 0, 32, 64, px_ - 16, py_ - 56)
+        elif sym == "9":                                 # cherry tree
+            blit(canvas, cw, ch, cherry_t, 0, 0, 32, 64, px_ - 16, py_ - 56)
+        elif sym == "g":                                 # grape-bower arch over the path
+            blit(canvas, cw, ch, bower, 96, 80, 96, 80, px_ - 48, py_ + 16 - 80)
+        elif sym == "z":                                 # windmill (two pre-aligned halves)
+            blit(canvas, cw, ch, windmill, 0, 0, 64, 112, px_ - 32, py_ + 8 - 112)
+            blit(canvas, cw, ch, windmill, 64, 0, 64, 112, px_ - 32, py_ + 8 - 112)
+        elif sym == "s":                                 # small camp tent
+            blit(canvas, cw, ch, tent, 0, 0, 48, 96, px_ - 24, py_ + 8 - 96)
+        elif sym == "0":                                 # campfire
+            blit(canvas, cw, ch, campfire, 0, 0, 16, 32, px_ - 8, py_ + 8 - 32)
+        elif sym == "1":                                 # camp prop (log seat / pot / pack)
+            blit(canvas, cw, ch, campdecor, (int(rng(x, y, 70) * 5) % 5) * 16, 0, 16, 16,
+                 px_ - 8, py_ - 8)
+        elif sym == "%":                                 # beehive
+            blit(canvas, cw, ch, beehive, 0, 0, 16, 16, px_ - 8, py_ - 10)
+        elif sym == "&":                                 # berry bush (red / purple)
+            blit(canvas, cw, ch, berries2, 0 if rng(x, y, 71) < 0.6 else 32, 0, 16, 16,
+                 px_ - 8, py_ - 8)
+        elif sym == "=":                                 # water trough (filled)
+            blit(canvas, cw, ch, trough, 16, 0, 32, 32, px_ - 16, py_ + 8 - 32)
+        elif sym == "+":                                 # lamp post variant (library avenue)
+            blit(canvas, cw, ch, lamp2, 0 if rng(x, y, 72) < 0.5 else 16, 0, 16, 48,
+                 px_ - 8, py_ + 8 - 48)
+        elif sym == "^":                                 # rooster
+            blit(canvas, cw, ch, rooster, 0, 0, 32, 32, px_ - 16, py_ - 26)
+        elif sym == "|":                                 # white picket fence (garden run)
+            blit(canvas, cw, ch, wfence, 16, 0, 16, 16, px_ - 8, py_ - 8)
         elif sym == "y":                                 # butterfly (flits above grass)
             blit(canvas, cw, ch, butterfly, 0, 0, 16, 16, px_ - 8, py_ - 20)
         elif sym == "O":                                 # boat moored at the shore
@@ -538,10 +628,21 @@ def near_water_land(rows, x, y):
 
 
 def _fence_piece(rows, x, y):
+    """Pick the fence cell from the FREE Fences.png 4x4 sheet, INCLUDING the
+    corner pieces (cols 1-3 x rows 0/3 form a closed frame) so pens close at
+    the corners instead of reading as dashed lines."""
     left = cell(rows, x - 1, y) == "F"
     right = cell(rows, x + 1, y) == "F"
     up = cell(rows, x, y - 1) == "F"
     down = cell(rows, x, y + 1) == "F"
+    if down and right and not left and not up:
+        return (1, 0)                                   # top-left corner
+    if down and left and not right and not up:
+        return (3, 0)                                   # top-right corner
+    if up and right and not left and not down:
+        return (1, 3)                                   # bottom-left corner
+    if up and left and not right and not down:
+        return (3, 3)                                   # bottom-right corner
     if left or right:
         return (2, 0) if (left and right) else ((1, 0) if right else (3, 0))
     if up or down:

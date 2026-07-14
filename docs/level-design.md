@@ -91,10 +91,29 @@ from the paid pack. `H` is now **Evan's Market_Stalls** and `L` is now a
 | `R` | frog | | `j` | mouse |
 | `y` | butterfly | | `O` | boat (moored, sits ON lake water) |
 
-`O`, `k` are classified as **water** by the preview tool (`WATER_SYMS`) so the lake
-tile is kept under them; everything else sits on grass. The tool now also renders
-**organic (value-noise) grass shades**, a **varied tree border**, and **clumped
-shore reeds/lily-pads gated to the lake** (the brook stays clean).
+**Round-8 additions (river + long walk + promo variety):**
+
+| Symbol | Meaning | | Symbol | Meaning |
+|---|---|---|---|---|
+| `4`/`5` | small / big **golden birch** | | `6`/`7` | small / big **spruce** |
+| `8`/`9` | apple / cherry **fruit tree** | | `g` | **grape-bower arch** (over the path) |
+| `z` | **windmill** | | `s` | camp **tent** |
+| `0` | **campfire** | | `1` | camp prop (log seat / pot / pack) |
+| `%` | beehive | | `&` | berry bush |
+| `=` | water trough | | `+` | lamp-post variant (library avenue) |
+| `^` | rooster | | `|` | white picket fence |
+| `a` | **swimming duck** (on water) | | `l` | **swimming swan** (on water) |
+| `@` | albino capybara (on water) | | | |
+
+`O`, `k`, `a`, `l`, `@` are classified as **water** by the preview tool
+(`WATER_SYMS`) so the lake tile is kept under them; `g` is classified as **path**
+(the arch spans the road). Everything else sits on grass. The tool also renders
+**organic (value-noise) grass shades**, a **varied tree border**, clumped
+shore reeds/lily-pads plus **fish shadows / water rocks / floating logs** gated
+to big water bodies (lake + river), a **stone bridge** composed from the pack's
+parapet/deck bands, **real crop sprites + per-field crop signs** on `D`/`Q`
+fields, and **fence corner pieces** so pens close. The generator additionally
+**asserts every building's cobble ribbon reaches the road** before writing a map.
 
 **Procedural density (no symbols).** `tools/preview_map.py` also layers, keyed off
 terrain only: grass-shade patches + a *clustered* tuft/flower/pebble scatter on
