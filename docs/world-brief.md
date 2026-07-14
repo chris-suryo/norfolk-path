@@ -1,53 +1,70 @@
-# World brief — Norfolk Path (level 1)
+# norfolk-path — World Brief
 
-> **Story session: fill this in.** Describe intent, not tiles — the build
-> session turns it into the map. Read `docs/level-design.md` first for the
-> legend, the available art palette, and the hard rules (esp. water/path ≥ 2
-> tiles wide, one level → one boss). Flag anything we have no art for as
-> `[NEEDS ART]`. When this is ready, hand it back and the build session maps it.
+## Overall arc
 
-## Premise
+Spawn on the west path → walk east past Evan's shop (a checkpoint beat, no
+gate) → the path continues to the library at the east end, whose reading
+garden borders the pond → Ariana (currently a chicken stand-in, should be a
+duck) is at the pond → Irene, the library's keeper, is the final
+confrontation, at or just outside the library itself.
 
-_One or two lines: what is the Norfolk Path, and what is the player doing on
-this island?_
+This is a single, linear, unhurried walk — not a maze, not multiple routes.
+The point is a short, complete quest arc a player can finish in one sitting.
 
-## The arc
+## Zone: Spawn / West Path
 
-_The through-line, spawn to boss. e.g. "start at the west shore → find Evan →
-he sends you to Irene across the bridge → … → the boss at ___."_
+- **Purpose:** establish "you're on a path, in a pleasant place, headed
+  somewhere with intent."
+- **Who/what lives here:** nobody yet — quiet, calm.
+- **Connects to:** the path leading east toward Evan's shop.
+- **Feeling/pacing:** slow, safe, orienting. No urgency.
 
-- Start:
-- …
-- Boss:
+## Zone: Evan's Shop
 
-## Cast (known, from the story session)
+- **Purpose:** the game's first character beat and its first joke — a
+  completely modern Subway sandwich shop dropped into an old-world village,
+  run with total sincerity.
+- **Who/what lives here:** Evan. One proximity line: *"Toasted, or the old
+  way?"* No gate, no requirement to interact — walking near just triggers
+  the line.
+- **Asset note:** reuse the same house building already in the level (no
+  second building asset exists in the pack) — the anachronism is carried by
+  the *dialogue*, not a mismatched modern tileset. This is deliberate, not a
+  placeholder shortcut.
+- **Connects to:** path continuing east.
+- **Feeling/pacing:** a quick, dry laugh. Don't linger here — one beat, then
+  move on.
 
-| Character | Who they are | Ally / villain | Roughly where |
-|---|---|---|---|
-| **Evan** | _(shopkeeper — his line today is "Toasted, or the old way?")_ | | shop (west) |
-| **Irene** | | | _(not placed yet)_ |
-| **Ariana** | _(currently the chicken by the pond — should be a duck)_ | | pond (east) |
-| _(add rows as needed)_ | | | |
+## Zone: The Library & Reading Garden Pond (east end)
 
-## Zones
+- **Purpose:** the emotional and mechanical destination — this is where the
+  quest resolves.
+- **Who/what lives here:**
+  - **Ariana**, at the pond in the reading garden just outside the library
+    (currently the chicken stand-in — flagged in PROJECT.md to become a duck
+    once sourced). Visually present now; in a later slice, defeating Irene
+    restores her here and she delivers the closing line: *"Message received.
+    I'm still renting it again."*
+  - **Irene**, the library's keeper — final boss. Warm, sincere, completely
+    convinced turning Ariana into a duck over an unreturned DVD rental
+    ("Peep and the Big Wide World") was the correct, caring resolution.
+    Combat is her normal Attack stat, reflavored through dialogue (no new
+    mechanics): *"Oh — you're here about the DVD. I really am sorry it came
+    to this,"* then mid-fight, *"This is for your own good, I promise."*
+- **Asset note:** same reused building as Evan's shop (no separate "library"
+  sprite exists in the pack) — differentiate it from the shop entirely
+  through position (it's the far-end destination, not a mid-path beat),
+  dialogue, and its adjacency to the pond. The pond itself already exists
+  in the current map; the library building should be sited directly beside
+  it, not elsewhere.
+- **Connects to:** the path from Evan's shop; this is the end of the line,
+  no further zones past it.
+- **Feeling/pacing:** this is the destination — give it more visual weight
+  than the spawn or shop zones (more decoration density, the pond as a focal
+  point) so it reads as "you've arrived," not just another waypoint.
 
-_Repeat this block per distinct place. Order them roughly along the arc._
+## Not yet placed (future slices, not this brief)
 
-### Zone: _name_
-
-- **Purpose:**
-- **Who / what is here:**
-- **Connections:** _(borders which zones, and how — path / bridge / clearing)_
-- **Feeling / pacing:** _(open & safe / dense & tense / quiet corner; where in
-  the arc)_
-
-### Zone: _name_
-
-- **Purpose:**
-- **Who / what is here:**
-- **Connections:**
-- **Feeling / pacing:**
-
-## Open questions / notes for the build session
-
-- _(anything uncertain, any `[NEEDS ART]` flags, any "does this fit v1 scope?")_
+Combat encounters along the path, any wandering NPCs beyond Evan/Irene/Ariana,
+save points, the player-select screen. This brief only covers what should
+physically exist on the map itself.
