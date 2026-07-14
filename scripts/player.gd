@@ -17,6 +17,11 @@ extends CharacterBody2D
 ## dedicated roll frames, so the roll reads through a dash + an alpha flash;
 ## a real roll animation is a later art swap (premium sheet / Player Generator).
 
+## Emitted once when HP hits 0 and the collapse animation finishes. The
+## EncounterManager decides what happens next (solo respawn, or co-op wait for a
+## revive) — the player does not respawn itself.
+signal downed
+
 enum State { NORMAL, ATTACK, ROLL, HURT, DOWN }
 
 const IDLE_ROW_DOWN := 0
@@ -73,6 +78,7 @@ var _invuln_time := 0.0
 var _roll_cd := 0.0
 var _hp: int = 6
 var _hit_this_swing: Array = []
+var _downed_emitted := false
 
 @onready var _sprite: Sprite2D = $Sprite2D
 @onready var _sword: Area2D = $SwordHitbox
@@ -170,12 +176,13 @@ func _process_hurt(delta: float) -> void:
 		_enter_normal()
 
 
-func _process_down(_delta: float) -> void:
-	velocity = velocity.move_toward(Vector2.ZERO, friction * _delta)
+func _process_down(delta: float) -> void:
+	velocity = velocity.move_toward(Vector2.ZERO, friction * delta)
 	var column := mini(ATTACK_FRAMES - 1, int(_state_time / DEATH_DURATION * ATTACK_FRAMES))
 	_set_frame(DEATH_ROW, column)
-	if _state_time >= DEATH_DURATION:
-		_respawn()
+	if _state_time >= DEATH_DURATION and not _downed_emitted:
+		_downed_emitted = true
+		downed.emit()
 
 
 func _move_input() -> Vector2:
@@ -231,11 +238,15 @@ func _enter_down() -> void:
 	_sword_shape.disabled = true
 
 
-func _respawn() -> void:
-	position = respawn_point
+## Full-HP revive at a position. Called by the EncounterManager for both a solo
+## checkpoint respawn and a co-op in-place revive.
+func respawn_at(pos: Vector2) -> void:
+	position = pos
 	_hp = max_hp
 	_invuln_time = INVULN_AFTER_HURT
+	_downed_emitted = false
 	_sprite.modulate = Color.WHITE
+	_sword_shape.disabled = true
 	_enter_normal()
 
 
