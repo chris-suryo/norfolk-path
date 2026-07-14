@@ -15,7 +15,9 @@ extends Node
 const SLIME_SCENE := preload("res://scenes/enemy_slime.tscn")
 const SKELETON_SCENE := preload("res://scenes/enemy_skeleton.tscn")
 const BOSS_SCENE := preload("res://scenes/boss_irene.tscn")
+const WIN_SCENE := "res://scenes/win_screen.tscn"
 const TRIGGER_RADIUS := 40.0
+const WIN_DELAY := 3.0
 
 ## Co-op: a downed teammate revives once no live enemy is within this radius of
 ## any player (the fight around them is cleared).
@@ -80,6 +82,8 @@ func _spawn_area(area: Dictionary) -> void:
 	for spec in area.specs:
 		var enemy := (spec.scene as PackedScene).instantiate()
 		enemy.position = spec.pos
+		if enemy.has_signal("defeated"):
+			enemy.defeated.connect(_on_boss_defeated)
 		_world.add_child(enemy)
 		area.instances.append(enemy)
 	area.spawned = true
@@ -106,6 +110,8 @@ func _apply_resume() -> void:
 	var chosen := Game.player_count
 	Game.load_state()
 	Game.player_count = chosen
+	if Game.boss_defeated:
+		_clear_area(_area_by_id(2))
 	if Game.checkpoint <= 0:
 		return
 	var area := _area_by_id(Game.checkpoint)
@@ -151,6 +157,12 @@ func _update_coop_revive() -> void:
 		return
 	for player in downed:
 		player.respawn_at(player.global_position)
+
+
+func _on_boss_defeated() -> void:
+	# Let her defeat line + fade play, then the quest-complete screen.
+	await get_tree().create_timer(WIN_DELAY).timeout
+	get_tree().change_scene_to_file(WIN_SCENE)
 
 
 func _all_players_down() -> bool:
