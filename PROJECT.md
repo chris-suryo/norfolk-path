@@ -8,15 +8,16 @@ is learning the engine end-to-end, not shipping commercially.
 
 ## Status
 
-- next: **Story session writes `docs/world-brief.md`.** Slice 2 (world
-  pipeline) is playtested and looks great. The level-design handoff kit now
-  exists so a *second* session (the story/character one — Evan, Irene, Ariana,
-  the Norfolk Path premise) can drive the world: `docs/level-design.md` is the
-  contract (legend, art palette, rules, brief template), `docs/world-brief.md`
-  is the stub it fills in, and `tools/preview_map.py` renders any map to
-  `docs/island-preview.png` with validation. **The build session will NOT touch
-  the map layout until the filled brief comes back** (Chris's hold). Deferred
-  and awaiting Chris's playtest feedback: the 2P camera rule (leash/zoom/clamp).
+- next: **Chris picks a layout from `docs/world-options/`.** The world brief is
+  filled in (spawn → Evan's Subway-in-a-village shop → library-by-the-pond where
+  Ariana the duck-stand-in sits and Irene is the boss). Three distinct candidate
+  full-island layouts are rendered for review — A (straight ceremonial avenue),
+  B (winding woods with a hidden-then-revealed library), C (lakeside crescent,
+  library on a point). Each is a validated ASCII map + preview PNG; see
+  `docs/world-options/README.md`. **The live map (`scripts/island_map.gd`) is
+  still untouched** per Chris's hold. Once he picks: drop that option's `.txt`
+  into `island_map.gd` and add `L` (library) handling to `level.gd` + `main.gd`
+  (small build follow-up). Still deferred, awaiting playtest: the 2P camera rule.
 
 ### v1 scope (the whole build — nothing beyond this without asking)
 
@@ -48,6 +49,7 @@ screen, and their progress survives a refresh.
 | Level-design contract | `docs/level-design.md` (legend, palette, rules, brief template) |
 | World brief (story session fills) | `docs/world-brief.md` |
 | Map preview image | `docs/island-preview.png` (regenerate: `python tools/preview_map.py`) |
+| Candidate layouts (awaiting pick) | `docs/world-options/` — option-{a,b,c}.{txt,png} + README |
 | Web build | (HTML5 export → `export/web/` once Slice 1 lands; browser link TBD) |
 
 **On-disk standard:** code repos live under the code root `E:\code\<name>`.

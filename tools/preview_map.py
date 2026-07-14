@@ -110,12 +110,12 @@ def encode_png(w, h, rgba, path):
 
 
 # --- map loading --------------------------------------------------------------
-def load_map():
-    src = open(MAP_GD, encoding="utf-8").read()
+def load_map(path=MAP_GD):
+    """Load an ASCII map from a .gd (const MAP block) or a raw .txt file."""
+    src = open(path, encoding="utf-8").read()
     m = re.search(r'const MAP :=\s*"""\n(.*?)"""', src, re.S)
-    if not m:
-        sys.exit("could not find `const MAP := \"\"\"...\"\"\"` in island_map.gd")
-    return m.group(1).strip("\n").split("\n")
+    body = m.group(1) if m else src
+    return body.strip("\n").split("\n")
 
 
 # --- autotiling (mirror of level.gd) -----------------------------------------
@@ -190,7 +190,7 @@ def tex(rel):
     return decode_png(os.path.join(PACK, rel))
 
 
-def render(rows):
+def render(rows, out_path):
     w, h = len(rows[0]), len(rows)
     cw, ch = w * TILE, h * TILE
     canvas = bytearray(cw * ch * 4)
@@ -236,7 +236,10 @@ def render(rows):
             blit(canvas, cw, ch, oak, 0, 0, 64, 80, px_ - 32, py_ - 70)
         elif sym == "t":
             blit(canvas, cw, ch, oak_s, 32, 0, 32, 48, px_ - 16, py_ - 40)
-        elif sym == "H":
+        elif sym in "HL":
+            # H = Evan's shop, L = the library — same house sprite (only
+            # building art in the pack); the brief differentiates them by
+            # position, not tileset.
             blit(canvas, cw, ch, house, 0, 0, 96, 128, px_ - 48, py_ - 120)
         elif sym == "C":
             blit(canvas, cw, ch, chicken, 0, 0, 32, 32, px_ - 16, py_ - 26)
@@ -247,7 +250,7 @@ def render(rows):
             piece = _fence_piece(rows, x, y)
             blit(canvas, cw, ch, fences, piece[0] * 16, piece[1] * 16, 16, 16, px_ - 8, py_ - 8)
 
-    encode_png(cw, ch, canvas, OUT)
+    encode_png(cw, ch, canvas, out_path)
     return cw, ch
 
 
@@ -289,27 +292,31 @@ def validate(rows):
     def count(sym):
         return sum(r.count(sym) for r in rows)
 
-    for sym, want, name in (("S", "path", "spawn"), ("H", "grass", "shop"), ("C", "grass", "chicken")):
-        for cy in range(len(rows)):
-            for cx in range(len(rows[cy])):
-                if rows[cy][cx] != sym:
-                    continue
-                # terrain_of counts S as path and H/C as grass by definition,
-                # so check the *neighbourhood* isn't water-locked instead.
-                if want == "grass" and terrain_of(rows[cy][cx]) != "grass":
-                    problems.append(f"({cx},{cy}) {name} '{sym}' is not on grass")
+    # (terrain_of already classes S as path and H/L/C as grass by definition;
+    # the singleton counts below are the real guardrail.)
     if count("S") != 1:
         problems.append(f"expected exactly one spawn 'S', found {count('S')}")
     if count("H") != 1:
         problems.append(f"expected exactly one shop 'H', found {count('H')}")
+    if count("L") not in (0, 1):
+        problems.append(f"expected at most one library 'L', found {count('L')}")
     return problems
 
 
 def main():
-    rows = load_map()
+    import argparse
+
+    ap = argparse.ArgumentParser(description="Render + validate an island map.")
+    ap.add_argument(
+        "--map", default=MAP_GD, help="map source (.gd with a const MAP block, or a raw .txt); default: island_map.gd"
+    )
+    ap.add_argument("--out", default=OUT, help="output PNG path; default: docs/island-preview.png")
+    args = ap.parse_args()
+
+    rows = load_map(args.map)
     problems = validate(rows)
-    cw, ch = render(rows)
-    print(f"rendered {cw}x{ch}px -> {os.path.relpath(OUT, REPO)}")
+    cw, ch = render(rows, args.out)
+    print(f"rendered {cw}x{ch}px -> {os.path.relpath(args.out, REPO)}")
     if problems:
         print(f"\n{len(problems)} validation problem(s):")
         for p in problems:
