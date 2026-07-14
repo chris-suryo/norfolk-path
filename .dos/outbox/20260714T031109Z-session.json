@@ -1,0 +1,60 @@
+{
+  "goal": "Answer Chris's strategic questions about level-design workflow, then build the handoff kit so a second (story) session can drive the world.",
+  "completed": [
+    "Answered the strategy questions directly: diffusion/image models are the WRONG tool for level generation (flat raster, no grid/collision/tileset link -- good for mood boards only); the right engine is narrative brief -> ASCII map -> preview render -> critique, iterated fast rather than one-shot.",
+    "Chris chose the division of labor: story session writes the vision (brief), build session translates it to the map. Built the kit for exactly that flow (commit d336f9a). No gameplay or map-layout change this slice.",
+    "tools/preview_map.py: committed dependency-free renderer + validator. Reads the map from island_map.gd (single source of truth), composites the real Cute Fantasy tiles the way the engine lays them out (same autotile mask table as level.gd, same y-sort order), writes docs/island-preview.png, and reports rule violations. Ran it in-sandbox: 1120x720, 0 violations on the current map.",
+    "docs/level-design.md: the contract -- legend, the art palette we actually have AND what we lack, hard geometry rules (>=2 tile widths, one level -> one boss), a brief template, and the current island written up in that template as a worked example. Records diffusion-is-out and why.",
+    "docs/world-brief.md: the stub the story session fills, pre-seeded with the known cast (Evan, Irene, Ariana) and per-zone template.",
+    "docs/.gdignore + tools/.gdignore so Godot doesn't import/pack the preview image or the Python tool into the game build; added __pycache__ to .gitignore.",
+    "PROJECT.md: the two-session design-flow decision, Locations rows for the new docs, the preview command, status -> 'story session writes the brief'.",
+    "Earlier in the same session: got Chris's Windows verification loop fully green (fixed wrong-dir/placeholder-path commands, the Export Template Manager Offline-mode blocker), confirmed the 'invisible player/no stretch' bugs were a stale browser cache of the already-fixed build, and shipped Slice 2 (ASCII map pipeline, autotiled edges, props, 2P) -- all playtested and confirmed good via screenshots."
+  ],
+  "discovered": [
+    "Chris now has the duck: assets/ducky/ is on his machine (uncommitted) with usable idle/walk frames but platformer-moveset extras and __MACOSX/._* junk -- needs cleanup before it's committed and swapped in for the chicken (Ariana).",
+    "The story session already has Evan, Irene, Ariana, and the Norfolk Path premise locked -- Evan = the shop (in), Ariana = the pond critter (chicken stand-in), Irene = not yet placed.",
+    "A committed Python preview tool that reads island_map.gd and composites the real art is the single highest-leverage artifact for cross-session level design -- it makes the design loop portable and self-checking instead of living in one session's ephemeral scratchpad.",
+    "This slice was the most self-verifiable yet: the deliverable is a Python tool + docs, so the cloud session could actually run it end-to-end (unlike engine-side work), leaving Chris only a trivial pull + optional local run."
+  ],
+  "decisions": [
+    "Level design is a two-session handoff: story session owns the vision (docs/world-brief.md), build session owns the geometry (scripts/island_map.gd). docs/level-design.md is the contract between them.",
+    "Image/diffusion models are explicitly NOT in the level pipeline -- recorded in level-design.md and PROJECT.md. Cohesion comes from story-driven layout + fast preview iteration.",
+    "tools/preview_map.py is the shared 'eyes': faithful composite (engine autotile + y-sort mirrored) plus rule validation, run before any map reaches the engine. Its mask table must stay in sync with level.gd (documented sync point).",
+    "HOLD in effect: the build session will not change the map layout until the filled world-brief.md comes back from the story session (Chris's explicit instruction).",
+    "docs/ and tools/ carry .gdignore so design artifacts never enter the game's import/export."
+  ],
+  "lessons": [
+    "When a user reaches for a diffusion/vision model to 'design' a structured artifact (a tile+collision level), name the category error plainly: raster generators can't produce grid/collision data. Redirect to the text+preview iteration loop instead of hedging.",
+    "Promote proven scratchpad tooling into the repo once a second collaborator needs it -- an ephemeral, session-local renderer can't anchor a cross-session workflow.",
+    "A committed .png under a Godot res:// path gets imported and packed into the build unless the folder has a .gdignore -- add one for any docs/asset-preview directory.",
+    "py_compile drops a __pycache__ next to the tool; git-ignore it and don't stage it."
+  ],
+  "files_changed": [
+    "tools/preview_map.py (new)",
+    "tools/.gdignore (new)",
+    "docs/level-design.md (new)",
+    "docs/world-brief.md (new)",
+    "docs/island-preview.png (new, generated)",
+    "docs/.gdignore (new)",
+    ".gitignore (add __pycache__/*.pyc)",
+    "PROJECT.md (design-flow decision, Locations rows, status)"
+  ],
+  "open_questions": [
+    "What does the story session put in world-brief.md -- the Norfolk Path premise, the arc to the boss, and where Irene lives? That brief drives the next map pass.",
+    "2P camera rule, still awaiting Chris's felt playtest: leash players to view, dynamic zoom-out, or clamp distance?",
+    "Duck swap: clean assets/ducky/ (__MACOSX junk), commit, and replace the chicken -- which of its sheets reads best top-down?",
+    "Does tools/preview_map.py run cleanly on Chris's Windows Python (py tools\\preview_map.py)? Verified on the cloud Python only.",
+    "Repo public/private -- Cute Fantasy license forbids redistribution; the committed preview PNG is composited from the pack (design-internal, same caveat)."
+  ],
+  "intent": "Stopped after shipping the handoff kit because the next step is explicitly the story session's -- Chris asked the build session to hold all map changes until the filled brief returns. Everything else (2P camera, duck, NPC/combat) is either awaiting his playtest or deferred scope.",
+  "next_task": "Chris: git pull, hand docs/level-design.md + docs/island-preview.png to the story session, and have it fill docs/world-brief.md; bring that brief back for the build session to translate into the map.",
+  "blockers": null,
+  "resume_minutes": 10,
+  "dont_retry": [
+    "Don't route level design through an image/diffusion model -- it can't emit tile-grid + collision data; use the ASCII map + preview loop.",
+    "Don't leave the preview renderer in ephemeral scratchpad if another session needs it -- it must be committed under tools/.",
+    "Don't put preview/design PNGs in a Godot res:// folder without a .gdignore, or they get packed into the game build.",
+    "Don't touch the map layout before the story brief returns (Chris's hold)."
+  ],
+  "session_id": "session_01PyCWLhnuhoW79J25QhMwPD"
+}
