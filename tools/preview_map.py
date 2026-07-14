@@ -1,22 +1,21 @@
 #!/usr/bin/env python3
-"""Render scripts/island_map.gd to a full-island preview PNG + validate it.
+"""Render an ASCII world map to a preview PNG + validate it.
 
-This is a DEV-ONLY tool (never part of the game build — see tools/.gdignore).
-It is the design loop's eyes: it turns the ASCII map into a picture composited
-from the real Cute Fantasy tiles, laid out exactly the way the engine renders
-them, so a level can be seen and checked before it ever runs in Godot.
+DEV-ONLY tool (never part of the game build — see tools/.gdignore). It is the
+design loop's eyes: it turns the ASCII map into a picture composited from the
+real Cute Fantasy tiles, laid out the way the engine renders them, so a level
+can be seen and checked before it ever runs in Godot.
 
-Usage (from anywhere):
-    python tools/preview_map.py
+Usage:
+    python tools/preview_map.py                                  # current island
+    python tools/preview_map.py --map foo.txt --out foo.png --scale 3
 
-Outputs:
-    docs/island-preview.png   full composite of the current map
-    a validation report to stdout (0 problems = the map obeys the design rules)
+Sprites come from two roots: the committed FREE pack (terrain, base props) and
+the paid FULL pack library (buildings + extra animals) — the tool reads PNGs
+directly, so the FULL pack's .gdignore is irrelevant here. No third-party deps.
 
-No third-party deps — pure stdlib PNG decode/encode.
-
-KEEP IN SYNC: the terrain classification and EDGE_BY_LAND_MASK table below
-mirror scripts/level.gd. If you change autotiling there, change it here too.
+KEEP IN SYNC: the terrain classification + EDGE_BY_LAND_MASK table mirror
+scripts/level.gd. Legend lives in docs/level-design.md.
 """
 import os
 import re
@@ -27,6 +26,7 @@ import zlib
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MAP_GD = os.path.join(REPO, "scripts", "island_map.gd")
 PACK = os.path.join(REPO, "assets", "cute_fantasy", "Cute_Fantasy_Free")
+FULL = os.path.join(REPO, "assets", "cute_fantasy", "packs", "Cute_Fantasy", "Cute_Fantasy")
 OUT = os.path.join(REPO, "docs", "island-preview.png")
 
 TILE = 16
@@ -38,13 +38,18 @@ EDGE_BY_LAND_MASK = {  # land-neighbor bitmask N=1 S=2 E=4 W=8 -> atlas cell
 }
 CENTER = (1, 1)
 
+# Terrain symbols (everything else is grass, incl. all the building/prop chars).
+WATER_SYMS = "~B"
+PATH_SYMS = "#S"
+FARM_SYMS = "D"
+
 
 def terrain_of(ch):
-    if ch in "~B":
+    if ch in WATER_SYMS:
         return "water"
-    if ch in "#S":
+    if ch in PATH_SYMS:
         return "path"
-    if ch == "D":
+    if ch in FARM_SYMS:
         return "farm"
     return "grass"
 
@@ -106,9 +111,26 @@ def encode_png(w, h, rgba, path):
 
     png = b"\x89PNG\r\n\x1a\n"
     png += chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 6, 0, 0, 0))
-    png += chunk(b"IDAT", zlib.compress(bytes(raw), 9))
+    png += chunk(b"IDAT", zlib.compress(bytes(raw), 6))
     png += chunk(b"IEND", b"")
     open(path, "wb").write(png)
+
+
+def upscale(w, h, rgba, factor):
+    if factor <= 1:
+        return w, h, rgba
+    nw, nh = w * factor, h * factor
+    out = bytearray(nw * nh * 4)
+    for y in range(h):
+        for f in range(factor):
+            drow = (y * factor + f) * nw * 4
+            for x in range(w):
+                s = (y * w + x) * 4
+                px = rgba[s : s + 4]
+                base = drow + x * factor * 4
+                for g in range(factor):
+                    out[base + g * 4 : base + g * 4 + 4] = px
+    return nw, nh, out
 
 
 # --- map loading --------------------------------------------------------------
@@ -128,8 +150,6 @@ def cell(rows, x, y):
 
 
 def land_mask(rows, x, y, kind):
-    """Non-`kind`-neighbor bitmask (N=1 S=2 E=4 W=8) for a terrain cell."""
-
     def is_same(dx, dy):
         return terrain_of(cell(rows, x + dx, y + dy)) == kind
 
@@ -146,9 +166,6 @@ def land_mask(rows, x, y, kind):
 
 
 def edge_pick(rows, x, y, kind, has_inner=True):
-    """Atlas cell for a terrain cell. `has_inner`=False for 3-row sheets
-    (farmland/sand) that only have the 3x3 blob, no inner-corner/variant rows."""
-
     def is_same(dx, dy):
         return terrain_of(cell(rows, x + dx, y + dy)) == kind
 
@@ -192,7 +209,18 @@ def tex(rel):
     return decode_png(os.path.join(PACK, rel))
 
 
-def render(rows, out_path):
+def tex2(rel):
+    return decode_png(os.path.join(FULL, rel))
+
+
+def blit_building(canvas, cw, ch, src, px_, py_, foot=8):
+    """Draw a whole building centered on px_ with its base ~foot px below the
+    cell center (so it sits on the ground and Y-sorts by its base)."""
+    w, h, _ = src
+    blit(canvas, cw, ch, src, 0, 0, w, h, px_ - w // 2, py_ + foot - h)
+
+
+def render(rows, out_path, scale=1):
     w, h = len(rows[0]), len(rows)
     cw, ch = w * TILE, h * TILE
     canvas = bytearray(cw * ch * 4)
@@ -205,7 +233,6 @@ def render(rows, out_path):
     oak_s = tex("Outdoor decoration/Oak_Tree_Small.png")
     fences = tex("Outdoor decoration/Fences.png")
     bridge = tex("Outdoor decoration/Bridge_Wood.png")
-    house = tex("Outdoor decoration/House_1_Wood_Base_Blue.png")
     chicken = tex("Animals/Chicken/Chicken.png")
     cow = tex("Animals/Cow/Cow.png")
     pig = tex("Animals/Pig/Pig.png")
@@ -213,8 +240,24 @@ def render(rows, out_path):
     decor = tex("Outdoor decoration/Outdoor_Decor_Free.png")
     chest = tex("Outdoor decoration/Chest.png")
     player = tex("Player/Player.png")
-    # Decoration atlas regions (16px grid in Outdoor_Decor_Free.png). Chosen to
-    # read clearly on grass at zoom (tiny sprigs were invisible, so dropped).
+
+    # FULL-pack buildings + extra fauna (whole sprites unless noted).
+    stall = tex2("Buildings/Buildings/Unique_Buildings/Stalls/Market_Stalls.png")
+    inn = tex2("Buildings/Buildings/Unique_Buildings/Inn/Inn_Blue.png")
+    barn = tex2("Buildings/Buildings/Unique_Buildings/Barn/Barn_Base_Red.png")
+    house_a = tex2("Buildings/Buildings/Houses/Wood/House_1_Wood_Base_Blue.png")
+    house_g = tex2("Buildings/Buildings/Houses/Wood/House_2_Wood_Base_Red.png")
+    house_j = tex2("Buildings/Buildings/Houses/Stone/House_4_Stone_Base_Blue.png")
+    coop = tex2("Buildings/Buildings/Unique_Buildings/Coop/Coop_Base_Blue.png")
+    silo = tex2("Buildings/Buildings/Unique_Buildings/Silo/Silo.png")
+    well = tex2("Outdoor decoration/Well.png")
+    bench = tex2("Outdoor decoration/Benches.png")
+    duck = tex2("Animals/Duck/Duck_01.png")
+    horse = tex2("Animals/Horse/Horse_01.png")
+    capy = tex2("Animals/Kapybara/Static/Kapybara_Idle.png")
+    villager = tex2("NPCs (Premade)/Farmer_Bob.png")
+
+    # Decoration atlas regions (16px grid in Outdoor_Decor_Free.png).
     decor_region = {
         "r": (0, 48, 16, 16),    # grey rock
         "u": (0, 32, 16, 16),    # tree stump
@@ -226,8 +269,11 @@ def render(rows, out_path):
         "q": (96, 32, 16, 16),   # wheat / grain
         "m": (32, 112, 16, 16),  # mushroom
     }
+    buildings = {"H": (stall, 8), "L": (inn, 8), "A": (house_a, 8), "G": (house_g, 8),
+                 "J": (house_j, 8), "Y": (barn, 8), "W": (well, 6), "P": (coop, 8),
+                 "Z": (silo, 6)}
 
-    # terrain: grass under everything, then water/path edge tiles.
+    # terrain: grass under everything, then water/path/farm edge tiles.
     for y in range(h):
         for x in range(w):
             blit(canvas, cw, ch, grass, 0, 0, TILE, TILE, x * TILE, y * TILE)
@@ -260,13 +306,21 @@ def render(rows, out_path):
             blit(canvas, cw, ch, oak, 0, 0, 64, 80, px_ - 32, py_ - 70)
         elif sym == "t":
             blit(canvas, cw, ch, oak_s, 32, 0, 32, 48, px_ - 16, py_ - 40)
-        elif sym in "HL":
-            # H = Evan's shop, L = the library — same house sprite (only
-            # building art in the pack); the brief differentiates them by
-            # position, not tileset.
-            blit(canvas, cw, ch, house, 0, 0, 96, 128, px_ - 48, py_ - 120)
+        elif sym in buildings:
+            src, foot = buildings[sym]
+            blit_building(canvas, cw, ch, src, px_, py_, foot)
+        elif sym == "b":
+            blit(canvas, cw, ch, bench, 0, 0, 32, 32, px_ - 16, py_ - 18)
         elif sym == "C":
             blit(canvas, cw, ch, chicken, 0, 0, 32, 32, px_ - 16, py_ - 26)
+        elif sym == "d":
+            blit(canvas, cw, ch, duck, 0, 0, 32, 32, px_ - 16, py_ - 22)
+        elif sym == "k":
+            blit(canvas, cw, ch, capy, 0, 0, 32, 32, px_ - 16, py_ - 18)
+        elif sym == "h":
+            blit(canvas, cw, ch, horse, 0, 0, 32, 32, px_ - 16, py_ - 26)
+        elif sym == "N":
+            blit(canvas, cw, ch, villager, 0, 0, 64, 64, px_ - 32, py_ - 54)
         elif sym == "S":
             blit(canvas, cw, ch, player, 0, 0, 32, 32, px_ - 16, py_ - 24)
             blit(canvas, cw, ch, player, 0, 0, 32, 32, px_ - 16 + 18, py_ - 24)
@@ -274,16 +328,15 @@ def render(rows, out_path):
             piece = _fence_piece(rows, x, y)
             blit(canvas, cw, ch, fences, piece[0] * 16, piece[1] * 16, 16, 16, px_ - 8, py_ - 8)
         elif sym in "ope":
-            # Farm animals (2x2 sheets, frame 0). o=cow, p=pig, e=sheep.
             sheet = {"o": cow, "p": pig, "e": sheep}[sym]
             blit(canvas, cw, ch, sheet, 0, 0, 32, 32, px_ - 16, py_ - 26)
         elif sym == "x":
             blit(canvas, cw, ch, chest, 0, 0, 16, 16, px_ - 8, py_ - 12)
         elif sym in decor_region:
             rx, ry, rw, rh = decor_region[sym]
-            # Anchor each prop's base near the cell (tall lamp hangs upward).
             blit(canvas, cw, ch, decor, rx, ry, rw, rh, px_ - rw // 2, py_ + 8 - rh)
 
+    cw, ch, canvas = upscale(cw, ch, canvas, scale)
     encode_png(cw, ch, canvas, out_path)
     return cw, ch
 
@@ -308,8 +361,6 @@ def validate(rows):
         if len(row) != w:
             problems.append(f"row {y}: width {len(row)} != {w} (map must be rectangular)")
 
-    # thin channels: a water/path cell with a land cardinal neighbor whose
-    # mask isn't in the edge table (strips / 3-sided pinches the art can't tile)
     for y in range(len(rows)):
         for x in range(len(rows[y])):
             t = terrain_of(rows[y][x])
@@ -322,12 +373,9 @@ def validate(rows):
                     f"(land-mask {mask} has no edge tile — widen to >= 2)"
                 )
 
-    # entity symbols land on the terrain they expect
     def count(sym):
         return sum(r.count(sym) for r in rows)
 
-    # (terrain_of already classes S as path and H/L/C as grass by definition;
-    # the singleton counts below are the real guardrail.)
     if count("S") != 1:
         problems.append(f"expected exactly one spawn 'S', found {count('S')}")
     if count("H") != 1:
@@ -340,16 +388,15 @@ def validate(rows):
 def main():
     import argparse
 
-    ap = argparse.ArgumentParser(description="Render + validate an island map.")
-    ap.add_argument(
-        "--map", default=MAP_GD, help="map source (.gd with a const MAP block, or a raw .txt); default: island_map.gd"
-    )
-    ap.add_argument("--out", default=OUT, help="output PNG path; default: docs/island-preview.png")
+    ap = argparse.ArgumentParser(description="Render + validate an island/world map.")
+    ap.add_argument("--map", default=MAP_GD, help="map source (.gd const MAP block, or a .txt)")
+    ap.add_argument("--out", default=OUT, help="output PNG path")
+    ap.add_argument("--scale", type=int, default=1, help="integer upscale factor (default 1)")
     args = ap.parse_args()
 
     rows = load_map(args.map)
     problems = validate(rows)
-    cw, ch = render(rows, args.out)
+    cw, ch = render(rows, args.out, args.scale)
     print(f"rendered {cw}x{ch}px -> {os.path.relpath(args.out, REPO)}")
     if problems:
         print(f"\n{len(problems)} validation problem(s):")

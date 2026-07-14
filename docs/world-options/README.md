@@ -1,6 +1,45 @@
-# Candidate island layouts
+# Candidate world layouts
 
-**Round 3b (current): more textures, fewer trees/rocks.** The `cove3-rich-*`
+# Norfolk Path valley — the expanded first level (Round 4, CURRENT)
+
+A fresh, ~2×-longer world (**140 wide**) replacing the small coves, per Chris's
+brief: **one golden path west→east escalating through 4 regions** — a busy
+**Village** (spawn) → **Path & Evan's Stall** → **Woods** → **Library & Lake**
+climax, with tree-lined corridors linking bounded encounter pockets and
+decoration ramping toward the library. Rendered large (`tools/preview_map.py
+--scale 3`, ~6700px wide) from the real pack tiles. **Preview only —
+`scripts/island_map.gd` is untouched; pick/iterate before anything goes live.**
+
+All buildings are **real pack art** (no stand-ins needed): **Inn** = the library,
+**Market_Stalls** = Evan's shop, plus barn / coop / silo / cottages / well.
+Ambient **villagers** use the `Farmer_Bob` sprite as a generic placeholder
+(final villager sprites TBD); **ducks + capybara + Ariana** are the real animal
+sprites, sat on the grass shoreline. Named cast + the 5 dialogue lines unchanged.
+
+## valley-1 — Balanced (recommended) (`valley-1.png`)
+The even read: a tidy village (cottages, barn, wells, a fenced pasture, two crop
+plots), Evan's roadside stall, a stream + wooden bridge, a wood where the path
+**S-bends south** through the skeleton clearing, and a grand lakeside library
+with a lamp-lit reading garden and pond life. Every region dressed without
+tipping into clutter.
+
+## valley-2 — Working Homestead (`valley-2.png`)
+Leans into the village: adds a **chicken coop, a silo, a second livestock pen**
+and more cottages + crop rows, so the opening reads as a real farming settlement
+— the strongest "people live here" moment. The road runs **straight** (no wood
+detour), keeping the journey brisk toward the library.
+
+## valley-3 — Wild Valley (`valley-3.png`)
+Thins the village (fewer houses) and lets **trees reclaim the whole valley** —
+wildflowers, mushrooms and oak/birch creeping along the path and verges — for an
+overgrown, naturalistic feel. The bent path threads a denser wood; the lakeside
+library reads as a secret clearing at the end of a wild road.
+
+---
+
+# Earlier rounds (history)
+
+**Round 3b: more textures, fewer trees/rocks.** The `cove3-rich-*`
 renders now use the pack's fuller texture set — **plowed farmland fields**, a
 grass pasture with animals, **signs**, wheat, mushrooms, lamp-lit path — with
 tree/rock density dialed back so the island reads as varied, not just wooded.
