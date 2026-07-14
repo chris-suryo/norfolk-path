@@ -1,15 +1,33 @@
 name: ci
 on: [push, pull_request]
 
+# Godot-shaped CI for a GDScript project. This replaces the original Python
+# (uv/pytest) scaffold CI, which no longer fits the codebase.
+#
+# DECISION (Slice 1): this gate lints GDScript with gdtoolkit rather than
+# running a full headless Godot import + Web export. Rationale:
+#   - The Slice 1 build session runs in a sandbox whose egress policy blocks
+#     github.com / godotengine.org, so it could not download Godot 4.7 or the
+#     ~500 MB Web export templates to prove the export end-to-end. A CI job it
+#     cannot itself validate would be a guess, and the project rule is that CI
+#     stays green on every push.
+#   - gdtoolkit is pip-installable from PyPI (reachable), so the lint is real,
+#     reproducible, and was verified locally before this file was committed.
+# The authoritative "project imports clean + Web export succeeds" verification
+# is the human-in-editor step on Windows (see PROJECT.md / docs/slice-1-plan.md).
+# Promote a headless-Godot import/export job here once it's validated locally.
+
 jobs:
-  test:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+  lint:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-      - run: uv sync
-      - run: uv run pytest -q
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install gdtoolkit
+        run: pip install "gdtoolkit==4.5.0"
+      - name: Check GDScript formatting
+        run: gdformat --check scripts/
+      - name: Lint GDScript
+        run: gdlint scripts/
