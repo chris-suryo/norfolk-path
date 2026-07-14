@@ -65,6 +65,24 @@ One character = one 16px tile. The current map is **70 wide × 45 tall**.
 *(decor)* = whether each animal/prop collides is a build-time choice made when a
 layout goes live; the preview renders them regardless.
 
+### Full-pack symbols (valley previews)
+
+Added for the Norfolk Path valley preview round; drawn by `tools/preview_map.py`
+from the paid pack. `H` is now **Evan's Market_Stalls** and `L` is now a
+**distinct Inn** (the library), not the reused house.
+
+| Symbol | Meaning | | Symbol | Meaning |
+|---|---|---|---|---|
+| `H` | Evan's Market_Stalls (the one shop) | | `A`/`G`/`J` | cottages (wood/wood/stone) |
+| `L` | Inn = the library | | `Y` | barn |
+| `P` | chicken coop | | `Z` | silo |
+| `W` | well | | `b` | bench |
+| `d` | duck (ambient + Ariana) | | `k` | capybara |
+| `h` | horse | | `N` | ambient villager (placeholder sprite) |
+
+These are preview-only until a layout is applied live; making one live still
+needs `level.gd`/`main.gd` taught each symbol (sprite + collision).
+
 ## The palette — what art we actually have
 
 Design **within this set** (Cute Fantasy Free pack). Asking for something not
