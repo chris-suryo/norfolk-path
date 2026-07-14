@@ -1,0 +1,70 @@
+{
+  "goal": "Verify the art pass in-browser with Chris, analyze how to build out the world efficiently, and ship Slice 2: a data-driven level-design pipeline.",
+  "completed": [
+    "Debugged Chris's Windows verification loop live: fixed wrong-directory + placeholder-path command issues, diagnosed the Export Template Manager 'Offline mode' blocker (Go Online + install templates), and got the full loop green -- headless import, Web export, and the game running in a browser tab.",
+    "Confirmed the two reported browser bugs (invisible player, no stretch) were the already-pushed dcc1cad fixes viewed through a stale cached build -- no further code change needed, hard-refresh resolved it.",
+    "Delivered the capability/process analysis Chris asked for (what I can build headlessly, v1 sequencing, efficient world-design path) as an approved plan.",
+    "Built the world pipeline (Slice 2, commit deaf324): scripts/island_map.gd ASCII map as single source of truth; level.gd autotiles shorelines/path edges from the pack's 3x6 edge sheets via land-neighbor bitmask; tileset.tres gained edge-sheet sources incl. a collision-free water source for bridge cells.",
+    "Designed a new 70x45 island (winding coast, east pond bay, stream with bridge crossing, fenced shop yard, tree clusters) using a scratchpad real-art preview renderer that composites the actual PNGs with the same mask algorithm -- layout iterated and verified visually in-sandbox, then byte-verified against the embedded GDScript const.",
+    "Added props with collision (oak trees, fences with piece-selection by neighbor, bridge sprite at exact alpha-scanned region (5,0,38,54)), a y-sorted World node so players walk in front of/behind props, shop re-anchored to base for correct sorting.",
+    "Made camera zoom an exported var (zoom_level, default 2.5 -- 3x read too tight in browser) per Chris's request.",
+    "Spawned BOTH players (WASD + arrows) with a midpoint camera target and deliberately no leash logic -- the 2P framing problem is meant to be felt in playtest before designing the camera rule.",
+    "Chicken now pecks (critter.gd 2-frame cycle); shop label counts nearby players so one leaving doesn't hide the other's line.",
+    "Fixed real authoring mistakes before push: undeclared camera script resource in main.tscn, gdlint max-returns and definitions-order violations, and a first bridge-region guess that the preview renderer exposed as wrong.",
+    "PROJECT.md updated: how-to-edit-the-level row, zoom note, 2P status, map design rules."
+  ],
+  "discovered": [
+    "Godot's editor can sit in Offline mode (bottom of Export Template Manager) which silently prevents template downloads -- the 'Go Online' link fixes it; templates for 4.7 resolve to web_nothreads_*.zip, confirming the threads-off preset took effect.",
+    "The Cute Fantasy edge sheets (Water_Tile/Path_Tile, 48x96) share one layout: rows 0-2 = 3x3 blob corners/edges/center, rows 3-4 = four inner-corner tiles, row 5 = three decorative center variants; there are NO strip tiles, so 1-tile-wide water/path channels cannot render correctly -- a real design constraint now documented.",
+    "Bridge_Wood.png is not 16px-grid-aligned: three discrete sprites at alpha-scanned boxes x5-42 (E-W walkway 38x54), x58-85 and x106-133 (N-S bridges 28x38). Eyeballing the grid twice gave wrong regions; scanning the alpha channel gave the right one instantly.",
+    "The Web export preset (export_filter=all_resources) packs only Godot resources -- a .txt level map would silently vanish from browser builds, which is why the ASCII map lives in a .gd const.",
+    "Chris's machine now has an uncommitted assets/ducky/ sprite pack (the duck download worked after all) -- but it's platformer-moveset frames (idle/walk are usable) and carries __MACOSX/._* junk that got baked into his local export; needs cleanup before committing.",
+    "The preview-render-before-push workflow caught two real bugs this session (a map symbol punching a grass hole in the pond, and the wrong bridge region) that headless linting could never catch -- it is now the proven level-design loop."
+  ],
+  "decisions": [
+    "Level design is data-driven from an ASCII map in scripts/island_map.gd -- terrain, props, and spawns all derive from one string; editing the string reshapes the world. This is the standing world-building pipeline.",
+    "Autotiling is done in code by neighbor bitmask, not editor terrain sets -- keeps authoring headless and previewable in-sandbox.",
+    "Map design rule: water/path regions >= 2 tiles wide (edge sheets have no strip tiles); generator asserts entity symbols land on the terrain they expect.",
+    "2P co-op ships enabled with a midpoint camera and NO leash on purpose: Chris should feel the walk-apart framing problem in playtest before we design the camera rule (leash / zoom-out / clamp are the candidate responses).",
+    "Camera zoom default 2.5 (was 3.0), exported for Inspector tuning.",
+    "Y-sorting: props and entities live under a y-sorted World node; terrain and the bridge draw beneath (bridge in unsorted GroundProps)."
+  ],
+  "lessons": [
+    "Render before you push: compositing the real art in the sandbox (pnglib.py + island_gen.py in scratchpad) is the difference between guessing and knowing for headless level design -- both bridge-region errors and the pond-hole bug were caught this way.",
+    "Never eyeball sprite-sheet regions twice: if the first grid-aligned guess is wrong, alpha-scan the sheet for opaque bounding boxes instead of squinting harder.",
+    "When a user reports bugs already fixed on the branch, check commit ancestry + client caching before touching code -- both 'bugs' this session were a stale browser cache of the pre-fix build.",
+    "gdlint's max-returns and definitions-order rules bite mechanical if/return chains; a const lookup table keyed by bitmask is both compliant and clearer.",
+    "PowerShell users pasting given commands: never leave 'C:\\...' placeholder paths in instructions -- spell out the real path or provide a $PROFILE function."
+  ],
+  "files_changed": [
+    "scripts/island_map.gd (new)",
+    "scripts/main.gd (new)",
+    "scripts/critter.gd (new)",
+    "scripts/midpoint.gd (new)",
+    "scripts/level.gd (rewritten: map-driven + autotile)",
+    "scripts/follow_camera.gd (zoom_level export)",
+    "scripts/shop_sign.gd (2P-aware label)",
+    "scenes/main.tscn (y-sorted World, 2 players, midpoint camera target)",
+    "scenes/shop.tscn (base-anchored for y-sort)",
+    "assets/tileset.tres (edge-sheet sources, bridge water source)",
+    "PROJECT.md (level-editing how-to, zoom, 2P status)"
+  ],
+  "open_questions": [
+    "Does the Slice 2 build import + export + play correctly on Windows? (Same trust ladder as before -- authored headlessly, engine-verified by Chris.)",
+    "2P camera rule after Chris feels the walk-apart problem: leash players to the view, zoom out dynamically, or clamp distance?",
+    "Do the y-sort anchors (tree trunk base, house base, player torso) look right in motion, or do offsets need in-editor tuning?",
+    "Commit the ducky pack (after __MACOSX cleanup) and swap the chicken for Ariana-the-duck -- which of its platformer sheets (idle/walk) reads best top-down?",
+    "Is the repo private? The Cute Fantasy license forbids redistribution -- standing caution recorded in PROJECT.md."
+  ],
+  "intent": "Stopped after shipping the pipeline slice because everything further (camera rule, duck swap, NPC/combat slices) is either gated on Chris's playtest feedback or explicitly deferred scope -- the next design decision is his to feel, not mine to guess.",
+  "next_task": "Chris: pull, first-time import (--editor --quit), Web export, serve, hard-refresh; walk the new island (shorelines, bridge, fences, trees, shop line, pecking chicken) and playtest 2P to feel the camera problem; tune zoom_level in the Inspector.",
+  "blockers": null,
+  "resume_minutes": 20,
+  "dont_retry": [
+    "Don't guess sprite regions from grid assumptions in Cute Fantasy decoration sheets -- Bridge_Wood.png is not 16px-aligned; alpha-scan for opaque boxes.",
+    "Don't put level data in .txt files -- the Web export only packs Godot resources; use .gd consts.",
+    "Don't design 1-tile-wide water or path channels -- the edge sheets have no strip tiles.",
+    "Don't re-diagnose the 'invisible player / no stretch' bugs -- they were a stale browser cache of the pre-dcc1cad build; always hard-refresh (Ctrl+Shift+R) after re-exporting."
+  ],
+  "session_id": "session_01PyCWLhnuhoW79J25QhMwPD"
+}
