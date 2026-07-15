@@ -24,12 +24,23 @@ is learning the engine end-to-end, not shipping commercially.
   respawn rearms survivors (killed enemies stay dead), boss retries to full. The
   "no camp skeletons on Continue" was expected (a save past the camp clears it as
   already-done); a New Game keeps them.
-- **Queued (Slice C):** the remaining playtest items — remove the baked
-  procedural ore scatter (fixes walk-through + duplicated near-house rocks) +
-  re-bake; flower foot-offset + de-dupe the `$`/Ariana double duck; disable the
-  pixel-font sub-pixel positioning that smears the boss "Icene" (and would smear
-  the big title); shorten the dash; animal idle+wander; 1-2 more Irene lines.
-  **Still deferred:** distinct P1/P2 sprites, boss Phase 2.
+- **Slice C — built & pushed (verify on Windows):** SAVE_VERSION bumped (old
+  saves auto-invalidate to a clean New Game); font sub-pixel positioning disabled
+  via a committed `.ttf.import` (fixes the boss "Icene" smear + all centered
+  text — the one item that may need an editor re-import if the hand-authored
+  `.import` is rejected); dash 150→105; two more Irene taunts (¾/¼ HP). Collision
+  audit (beyond rocks): dropped the procedural ore scatter + re-baked (fixes
+  walk-through AND duplicated near-house rocks); added colliders to berry bush &
+  camp keg; widened under-sized building colliders (inn/cottages/barn were
+  walk-through). Fixed the doubled duck (`$` removed, Ariana is the node) and the
+  one flower-on-goose adjacency (relocated). **Animals now idle-bob + wander**
+  (`scripts/ambient_animal.gd`; land animals stroll, water animals bob in place);
+  also fixed Ariana rendering as 4 ducks (mis-framed 64px). Animation feel / font
+  render are Chris's import gate.
+- **Prep (not wired):** distinct P1/P2 sprites — the modular 64×64 sheet is now
+  confidently mapped (`docs/player-modular-mapping.md`); idle/walk/attack/roll +
+  a black/brown hair overlay for P1/P2, awaiting Chris's approval + live
+  per-animation verification. **Still deferred:** boss Phase 2.
 - earlier next: **Chris verifies the combat slice on Windows** (see
   `docs/combat-slice.md`). The whole real-time game loop is built headlessly
   (Stages 0–5, lint-clean, pushed): player-select (1P/2P) → walk the path →
