@@ -5,8 +5,23 @@
 Every push to `claude/slice-1-godot-toolchain-ij6e9w` triggers
 `.github/workflows/deploy-web.yml`: it headlessly exports the Godot **Web**
 preset and deploys straight to the existing Vercel project's **production**
-URL. No local export, no manual drag-and-drop — push and it's live in a couple
-of minutes.
+URL, **https://norfolk-path.vercel.app**. No local export, no manual
+drag-and-drop — push and it's live in a couple of minutes. (Verified
+end-to-end: a real run went green with the site aliased to that URL in ~90s.)
+
+**How the deploy avoids a build step:** it ships through Vercel's Build Output
+API — the export is staged into `.vercel/output/static/` and pushed with
+`vercel deploy --prebuilt`, so Vercel serves those files directly and runs
+*no* build. That's deliberate: a plain `vercel deploy <dir>` made this
+Git-imported project run its own build pipeline over the already-exported
+files and hang for 12+ minutes on "Building…". Prebuilt removes that phase
+entirely.
+
+**If the URL shows a Vercel login wall instead of the game:** that's
+**Deployment Protection** (Vercel Authentication), on by default for team
+projects — turn it off at Vercel dashboard → the project → **Settings →
+Deployment Protection → Vercel Authentication → Disable** so anyone with the
+link can play without signing in.
 
 **Why this can run in GitHub Actions but not the cloud build session:** that
 sandbox's egress policy blocks `godotengine.org`/`github.com` release downloads

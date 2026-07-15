@@ -8,17 +8,27 @@ is learning the engine end-to-end, not shipping commercially.
 
 ## Status
 
-- next: **Chris adds 3 GitHub repo secrets to turn on continuous deploy** —
-  `VERCEL_TOKEN` / `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID` (exact steps in
-  `docs/web-deploy.md`). Once set, `.github/workflows/deploy-web.yml`
-  auto-exports the Godot Web preset and deploys to the existing Vercel
-  project's production URL on every push — no manual export needed. Pinned to
-  Godot 4.7-stable (his exact local build) via `firebelley/godot-export@v8.0.0`
-  (a third-party CI action — explicitly approved). The manual drag-and-drop
-  path in `docs/web-deploy.md` still works as a fallback. The build session
-  itself still can't run Godot (network-blocked), but GitHub's own Actions
-  runners aren't, so the build session can verify this pipeline end-to-end via
-  the GitHub Actions API once the secrets exist.
+- **Continuous deploy is LIVE and verified end-to-end.** The 3 repo secrets
+  (`VERCEL_TOKEN` / `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID`) are set, and a real
+  run of `.github/workflows/deploy-web.yml` went fully green: every push to the
+  working branch exports the Godot Web preset and deploys to
+  **https://norfolk-path.vercel.app** in ~90s, no manual export needed. Pinned
+  to Godot 4.7-stable (Chris's exact local build) via
+  `firebelley/godot-export@v8.0.0` (a third-party CI action — explicitly
+  approved). Deploy uses Vercel's **Build Output API + `vercel deploy
+  --prebuilt`**: the first attempt uploaded fine but hung 12+ min on Vercel's
+  "Building…" step (the Git-imported project runs its own build pipeline over
+  our already-exported files); staging the export into `.vercel/output/static`
+  and deploying prebuilt makes Vercel serve the files directly with no build
+  step. The manual drag-and-drop path in `docs/web-deploy.md` still works as a
+  fallback.
+- next: **Chris opens https://norfolk-path.vercel.app from another laptop** to
+  confirm the game actually loads and is publicly reachable. The build session
+  couldn't check this itself — its egress proxy blocks `vercel.app` (CONNECT
+  403), unrelated to Vercel. If a Vercel login/SSO wall appears instead of the
+  game, that's **Deployment Protection** on the project (Vercel dashboard →
+  Project → Settings → Deployment Protection → disable Vercel Authentication);
+  a dashboard-only toggle Chris controls.
 - next: **Chris runs `docs/playtest-checklist.md` top-to-bottom** — one ordered
   pass over everything built while away (title/mouse/backdrop, collision fixes,
   animal wander, bombschroom, Irene's taunts, font fix, pause menu), each with
