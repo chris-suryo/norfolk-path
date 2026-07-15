@@ -5,7 +5,8 @@ map prop as a live y-sorted node, mirroring tools/preview_map.py's pass 3.
 Why generated: the coordinates must match the preview exactly, and this script
 VALIDATES every sheet path + atlas region against the pack on disk (a check that
 runs in the sandbox, unlike the Godot engine). Emits a pure-data GDScript const
-dict; main.gd interprets it. Re-run after changing any pass-3 sprite.
+dict; main.gd interprets it. Re-run after changing any pass-3 sprite, then
+gdformat scripts/prop_table.gd (the emitter is not gdformat-exact).
 
 Placement math: preview blits a sheet region at top-left (px_+ax, py_+ay) where
 (px_,py_) is the cell centre. A Godot Sprite2D (centered=true, region_rect=r) at
