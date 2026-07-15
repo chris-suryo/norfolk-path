@@ -10,6 +10,11 @@ export/
 .env
 .DS_Store
 
+# Vercel CLI's local link (org/project IDs + cache) from `vercel link`/`vercel
+# dev` — not secret on its own, but it's machine-local state, not project
+# source; keeping it out avoids an untracked-file pull conflict later.
+.vercel/
+
 # Python bytecode from tools/
 __pycache__/
 *.pyc

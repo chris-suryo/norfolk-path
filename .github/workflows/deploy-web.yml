@@ -20,6 +20,10 @@ name: deploy-web
 on:
   push:
     branches: [claude/slice-1-godot-toolchain-ij6e9w]
+  # Lets a run be started on demand (GitHub UI "Run workflow" button, or the
+  # API) without needing a throwaway commit — useful for testing right after
+  # the three secrets below are first added.
+  workflow_dispatch: {}
 
 concurrency:
   group: deploy-web
