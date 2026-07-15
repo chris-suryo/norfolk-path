@@ -22,10 +22,10 @@ const DIMMED := Color(0.6, 0.6, 0.6)
 var _stage: int = Stage.COUNT
 var _selected := 1
 
-@onready var _title: Label = $Center/Box/Title
-@onready var _option1: Label = $Center/Box/Option1
-@onready var _option2: Label = $Center/Box/Option2
-@onready var _hint: Label = $Center/Box/Hint
+@onready var _title: Label = $Frame/Box/Title
+@onready var _option1: Label = $Frame/Box/Option1
+@onready var _option2: Label = $Frame/Box/Option2
+@onready var _hint: Label = $Frame/Box/Hint
 
 
 func _ready() -> void:
@@ -85,11 +85,10 @@ func _show_stage() -> void:
 	if _stage == Stage.MODE:
 		_option1.text = "CONTINUE"
 		_option2.text = "NEW GAME"
-		_hint.text = "up / down: choose      enter or space: select"
 	else:
 		_option1.text = "1 PLAYER"
 		_option2.text = "2 PLAYERS"
-		_hint.text = "up / down: choose      enter or space: start"
+	_hint.text = "click or arrows + enter"
 	_refresh()
 
 

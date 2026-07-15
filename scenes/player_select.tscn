@@ -1,51 +1,110 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/player_select.gd" id="1_select"]
+[ext_resource type="Texture2D" path="res://assets/game/UI_Frames.png" id="2_frames"]
+[ext_resource type="FontFile" path="res://assets/game/CuteFantasy-5x9.ttf" id="3_font"]
+[ext_resource type="Texture2D" path="res://assets/generated/valley-1-ground.png" id="4_ground"]
+[ext_resource type="Texture2D" path="res://assets/cute_fantasy/packs/Cute_Fantasy/Cute_Fantasy/Outdoor decoration/Outdoor_Decor_Animations/Other_Animations/Campfire_Anim.png" id="5_fire"]
+[ext_resource type="Script" path="res://scripts/critter.gd" id="6_critter"]
+
+[sub_resource type="Theme" id="theme"]
+default_font = ExtResource("3_font")
+default_font_size = 9
+
+[sub_resource type="AtlasTexture" id="bg"]
+atlas = ExtResource("4_ground")
+region = Rect2(1400, 260, 640, 360)
 
 [node name="PlayerSelect" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+theme = SubResource("theme")
 script = ExtResource("1_select")
 
-[node name="BG" type="ColorRect" parent="."]
+[node name="Backdrop" type="TextureRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-color = Color(0.08, 0.09, 0.12, 1)
+texture = SubResource("bg")
+expand_mode = 1
+stretch_mode = 6
 
-[node name="Center" type="CenterContainer" parent="."]
+[node name="Dim" type="ColorRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+color = Color(0.05, 0.07, 0.1, 0.62)
 
-[node name="Box" type="VBoxContainer" parent="Center"]
-layout_mode = 2
-theme_override_constants/separation = 10
+[node name="Frame" type="NinePatchRect" parent="."]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -128.0
+offset_top = -112.0
+offset_right = 128.0
+offset_bottom = 112.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_frames")
+region_rect = Rect2(10, 10, 28, 28)
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
 
-[node name="Title" type="Label" parent="Center/Box"]
+[node name="Campfire" type="Sprite2D" parent="Frame"]
+position = Vector2(128, 38)
+scale = Vector2(1.5, 1.5)
+texture = ExtResource("5_fire")
+hframes = 4
+script = ExtResource("6_critter")
+fps = 8.0
+frame_count = 4
+first_frame = 0
+
+[node name="Box" type="VBoxContainer" parent="Frame"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 66.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Frame/Box"]
 layout_mode = 2
+theme_override_font_sizes/font_size = 16
 text = "NORFOLK PATH"
 horizontal_alignment = 1
 
-[node name="Spacer" type="Control" parent="Center/Box"]
-custom_minimum_size = Vector2(0, 12)
+[node name="Spacer" type="Control" parent="Frame/Box"]
+custom_minimum_size = Vector2(0, 6)
 layout_mode = 2
 
-[node name="Option1" type="Label" parent="Center/Box"]
+[node name="Option1" type="Label" parent="Frame/Box"]
 layout_mode = 2
 text = "1 PLAYER"
 horizontal_alignment = 1
 
-[node name="Option2" type="Label" parent="Center/Box"]
+[node name="Option2" type="Label" parent="Frame/Box"]
 layout_mode = 2
 text = "2 PLAYERS"
 horizontal_alignment = 1
 
-[node name="Hint" type="Label" parent="Center/Box"]
+[node name="Hint" type="Label" parent="Frame/Box"]
+modulate = Color(0.75, 0.75, 0.75, 1)
 layout_mode = 2
-text = "up / down: choose      enter or space: start"
+theme_override_font_sizes/font_size = 8
+text = "arrows or mouse"
 horizontal_alignment = 1
