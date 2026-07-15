@@ -47,25 +47,31 @@ jobs:
           presets_to_export: Web
           cache: true
 
-      # First real run showed use_preset_export_path nests output one level
-      # deeper than export_presets.cfg's own export_path implies — the action
-      # organizes by preset name, landing at export/web/Web/index.html, not
-      # export/web/index.html. Use the action's own build_directory output as
-      # the source of truth instead of a second guessed path.
-      - name: Confirm export output
-        env:
-          BUILD_DIR: ${{ steps.export.outputs.build_directory }}
+      # Two prior runs each guessed a different fixed path (export/web, then the
+      # action's build_directory output, which turned out to be its pre-move
+      # staging dir, not the final in-repo location) and both were wrong. Stop
+      # guessing: search for the actual index.html under export/web and deploy
+      # from wherever it really landed — self-correcting if the action's
+      # internal layout ever changes again.
+      - name: Locate export output
+        id: locate
         run: |
-          echo "build_directory: $BUILD_DIR"
-          echo "contents:"
-          ls -la "$BUILD_DIR"
-          test -f "$BUILD_DIR/index.html" || (echo "::error::index.html missing from $BUILD_DIR — the export step did not produce the expected output" && exit 1)
+          echo "export/web tree:"
+          find export/web
+          found="$(find export/web -maxdepth 4 -name index.html | head -n1)"
+          if [ -z "$found" ]; then
+            echo "::error::no index.html found anywhere under export/web"
+            exit 1
+          fi
+          dir="$(dirname "$found")"
+          echo "found: $found (deploying from $dir)"
+          echo "dir=$dir" >> "$GITHUB_OUTPUT"
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
       - name: Deploy to Vercel (production)
-        working-directory: ${{ steps.export.outputs.build_directory }}
+        working-directory: ${{ steps.locate.outputs.dir }}
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
