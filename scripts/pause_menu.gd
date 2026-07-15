@@ -50,7 +50,36 @@ func _ready() -> void:
 	_panel.visible = false
 	if camera_path.is_empty() or _camera == null:
 		push_error("PauseMenu: camera_path did not resolve — Zoom presets will be inert.")
+	_wire_mouse()
 	_sync_zoom_label()
+
+
+## Mouse as a second input path (keyboard stays): hover highlights, a click on the
+## highlighted option activates it (same _activate() as the keyboard confirm).
+func _wire_mouse() -> void:
+	for index in _options.size():
+		var label: Label = _options[index]
+		label.mouse_filter = Control.MOUSE_FILTER_STOP
+		label.mouse_entered.connect(_on_option_hover.bind(index))
+		label.gui_input.connect(_on_option_click.bind(index))
+
+
+func _on_option_hover(index: int) -> void:
+	if not _open:
+		return
+	_selected = index
+	_refresh()
+
+
+func _on_option_click(event: InputEvent, index: int) -> void:
+	if not _open:
+		return
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if _selected == index:
+			_activate()
+		else:
+			_selected = index
+			_refresh()
 
 
 func _unhandled_input(event: InputEvent) -> void:

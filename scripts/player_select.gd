@@ -31,7 +31,34 @@ var _selected := 1
 func _ready() -> void:
 	if Game.has_save():
 		_stage = Stage.MODE
+	_wire_mouse()
 	_show_stage()
+
+
+## Mouse as a second input path (keyboard stays): hovering an option highlights
+## it, clicking the highlighted option confirms it (so one click on a hovered
+## option activates; on a no-hover device, first click selects, second confirms).
+func _wire_mouse() -> void:
+	var options := {1: _option1, 2: _option2}
+	for index in options:
+		var label: Label = options[index]
+		label.mouse_filter = Control.MOUSE_FILTER_STOP
+		label.mouse_entered.connect(_on_option_hover.bind(index))
+		label.gui_input.connect(_on_option_click.bind(index))
+
+
+func _on_option_hover(index: int) -> void:
+	_selected = index
+	_refresh()
+
+
+func _on_option_click(event: InputEvent, index: int) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		if _selected == index:
+			_confirm()
+		else:
+			_selected = index
+			_refresh()
 
 
 func _unhandled_input(event: InputEvent) -> void:
