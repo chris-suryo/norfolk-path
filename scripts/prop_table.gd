@@ -101,7 +101,7 @@ const PROPS := {
 	"7": ["spruce_b", Rect2(64, 0, 64, 80), Vector2(0, -30), Vector2(12, 8)],
 	"8": ["apple_t", Rect2(0, 0, 32, 64), Vector2(0, -24), Vector2(8, 6)],
 	"9": ["cherry_t", Rect2(0, 0, 32, 64), Vector2(0, -24), Vector2(8, 6)],
-	"=": ["trough", Rect2(16, 0, 32, 32), Vector2(0, -8), Vector2(28, 10)],
+	"=": ["trough", Rect2(16, 0, 32, 16), Vector2(0, 0), Vector2(28, 8)],
 	"@": ["capy2", Rect2(0, 0, 32, 32), Vector2(0, -2), Vector2(0, 0)],
 	"A": ["house_a", Rect2(0, 0, 96, 128), Vector2(0, -56), Vector2(52, 14)],
 	"C": ["chicken", Rect2(0, 0, 32, 32), Vector2(0, -10), Vector2(0, 0)],

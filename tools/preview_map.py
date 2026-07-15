@@ -588,8 +588,8 @@ def render(rows, out_path, scale=1, crop_box=None, ground_only=False):
         elif sym == "&":                                 # berry bush (red / purple)
             blit(canvas, cw, ch, berries2, 0 if rng(x, y, 71) < 0.6 else 32, 0, 16, 16,
                  px_ - 8, py_ - 8)
-        elif sym == "=":                                 # water trough (filled)
-            blit(canvas, cw, ch, trough, 16, 0, 32, 32, px_ - 16, py_ + 8 - 32)
+        elif sym == "=":                                 # water trough (filled, horizontal)
+            blit(canvas, cw, ch, trough, 16, 0, 32, 16, px_ - 16, py_ - 8)
         elif sym == "+":                                 # lamp post variant (library avenue)
             blit(canvas, cw, ch, lamp2, 0 if rng(x, y, 72) < 0.5 else 16, 0, 16, 48,
                  px_ - 8, py_ + 8 - 48)

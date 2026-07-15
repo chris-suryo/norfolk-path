@@ -356,7 +356,11 @@ def build(variant):
     g[path_y(6)][6] = "S"
 
     # ===== REGION 2: PATH & EVAN'S SHOP (cols 54-72) =====
-    put(g, 55, path_y(55) + 1, "g")            # grape-bower gate: leaving the village
+    put(g, 55, path_y(55) + 2, "g")            # grape-bower gate: leaving the village
+    # a little more life by the north-row village houses (between houses + road)
+    flock(g, 25, 23, ["C", "C", "o"], 3, spread=2, salt=62)
+    flock(g, 16, 22, ["C", "^"], 2, spread=2, salt=63)
+    flock(g, 37, 24, ["C", "e"], 2, spread=2, salt=64)
     put(g, 62, 16, "H")                        # Evan's market STALL (real Market_Stalls sprite)
     put(g, 65, 17, "n")                        # hanging shop sign
     scatter(g, [(59, 17), (66, 18), (60, 19)], "3")    # barrels/crates of goods
@@ -373,7 +377,7 @@ def build(variant):
     putw(g, 77, 8, "l")                        # a swan drifting upriver
 
     # ===== REGION 3: WOODS (cols 82-148) — the long wild stretch =====
-    put(g, 84, path_y(84) + 1, "g")            # bower gate: entering the woods
+    put(g, 84, path_y(84) + 2, "g")            # bower gate: entering the woods
     put(g, 86, path_y(86) - 1, "n")            # trailhead signpost
     grove(g, 86, 16, 7, spread=4, salt=1, kinds="Tt46")
     grove(g, 97, 14, 8, spread=5, salt=2, kinds="TT7t")
@@ -442,7 +446,7 @@ def build(variant):
     putw(g, 170, 33, "a")
     putw(g, 175, 36, "a")
     putw(g, 167, 37, "l")                       # swan
-    putw(g, 155, 32, "k")                       # capybara
+    putw(g, 165, 33, "k")                       # capybara (open water, clear of the shore/boat)
     putw(g, 181, 34, "@")                       # albino capybara
 
     # ===== VARIANT EMPHASIS =====
