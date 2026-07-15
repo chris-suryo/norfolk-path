@@ -1,0 +1,65 @@
+{
+  "goal": "Fix playtest-reported spawn/checkpoint/respawn bugs in isolation first, then add camp enemy variety and menu/title polish, per Chris's explicit sequencing directive.",
+  "completed": [
+    "Diagnosed (3 parallel Explore agents) the root causes behind spawn-near-camp, unfair respawn, and camp skeletons reappearing",
+    "Slice A: New Game / Continue flow on the title (game.gd has_save()/resume_requested; player_select.gd two-stage MODE/COUNT flow)",
+    "Slice A: replaced flaky 40px Area2D checkpoint triggers with progress-based (furthest area walked past, by world-x) checkpointing; moved camp checkpoint to (108,24), west of the camp's aggro radius",
+    "Slice A: fair respawn - Enemy.return_home() resets survivors to their post instead of _reset_area respawning all specs on a partial clear; boss area still fully respawns on death; removed dead respawn_point field",
+    "Verified Slice A confirmed by Chris: 'no skeletons on Continue' traced to _apply_resume clearing already-passed areas - expected, not a bug",
+    "Slice B: new BombEnemy (stationary, wind-up + AoE detonate + gas VFX, defusable) added to the forest camp; camp is now 3 skeletons + 1 bombschroom instead of 4 identical skeletons",
+    "Slice D1: added mouse (hover-highlight + click-activate) as a second input path on the title and pause menus, keyboard untouched",
+    "Slice D2: dressed the title screen - dimmed baked-world backdrop slice, UI_Frames NinePatch panel, pixel font, looping campfire critter - reusing existing assets/idioms only",
+    "Updated PROJECT.md status after each slice; all work gdparse/gdformat/gdlint-clean and check_symbols.py green throughout"
+  ],
+  "discovered": [
+    "player_select never called Game.reset_run() - every launch silently auto-resumed the last save, which is why a stale checkpoint could spawn the player next to the camp",
+    "player.respawn_point was written in three places but never read anywhere - fully dead code masking the real respawn path (Game.checkpoint -> area center)",
+    "_reset_area respawned ALL of an area's enemy specs whenever the area wasn't FULLY cleared, so a partial-clear death repopulated already-killed enemies",
+    "Camp skeletons aggro at 110px while the old checkpoint trigger was only 40px - a player could be killed before the checkpoint registered",
+    "The base paid Cute Fantasy pack (assets/cute_fantasy/packs/Cute_Fantasy/Cute_Fantasy/) is NOT gdignored (only sub-packs like UI/Christmas/Halloween are), so Bombschroom.png, its gas VFX, and Campfire_Anim.png could be referenced directly with zero asset copying",
+    "Bombschroom.png (176x336) is not a clean 32px grid - only row 0 (frames 0-1) reads as a clean idle bob; wind-up/pop are done via code (flash+scale) rather than trusting the messy sheet rows",
+    "assets/generated/valley-1-ground.png (3072x768, the baked world) is safe to reference directly and a cropped AtlasTexture region of it makes a usable, on-theme title backdrop with zero new art"
+  ],
+  "decisions": [
+    "Checkpoints are recorded by player progress (furthest area's road-x walked past), not by trigger volumes - monotonic, immune to trigger-radius/aggro-radius mismatches",
+    "On a wipe, only the boss area gets a full fresh respawn; all other areas rearm surviving enemies in place and leave killed ones dead",
+    "Camp enemy mix is 3 skeletons + 1 bombschroom (not 2 new types) per Chris's explicit choice, keeping the lone path skeleton unchanged as the teaching encounter",
+    "Mouse support is strictly additive (hover-select, click-on-highlighted-to-confirm) - keyboard input paths were not touched or restructured",
+    "Title screen reuses the pause-menu's proven Theme+NinePatch(UI_Frames) idiom rather than inventing a new UI pattern"
+  ],
+  "lessons": [
+    "When multiple 'obviously wrong' bugs are reported together, they're worth diagnosing as one system before patching symptoms - three surface reports (spawn location, respawn destination, enemies reappearing) traced to two root causes (no new-game reset, and re-spawn-on-partial-clear)",
+    "Godot .gdignore is per-directory, not tree-wide from a parent - always check whether the SPECIFIC sub-pack folder actually has a .gdignore before assuming a copy into assets/game/ is required; the base pack here didn't, saving several unnecessary asset copies",
+    "Before wiring hframes/vframes on an unfamiliar spritesheet, render a gridded contact-sheet probe and inspect visually - Bombschroom.png's nominal dimensions implied a clean grid that wasn't actually clean past row 0",
+    "Dead fields (like the old respawn_point) can survive multiple review passes because they compile and 'look' like they're doing something - grep for actual reads, not just writes, when auditing a suspect system"
+  ],
+  "files_changed": [
+    "scripts/game.gd",
+    "scripts/player_select.gd",
+    "scripts/encounter_manager.gd",
+    "scripts/enemy.gd",
+    "scripts/player.gd",
+    "scripts/main.gd",
+    "scripts/bomb_enemy.gd",
+    "scripts/gas_cloud.gd",
+    "scripts/pause_menu.gd",
+    "scenes/enemy_bombschroom.tscn",
+    "scenes/gas_cloud.tscn",
+    "scenes/player_select.tscn",
+    "PROJECT.md"
+  ],
+  "open_questions": [
+    "Is the (108,24) camp checkpoint cell actually a comfortable, non-cramped spot to respawn on once Chris plays it, or does it need nudging?",
+    "Does the bombschroom's balance (22px trigger, 30px blast, 0.6s windup, 3hp) feel fair, or does it need tuning after playtest?",
+    "Will the larger centered title text on the new title screen smear like the boss 'Icene' bug (same root cause, not yet fixed) - flagged but unverified"
+  ],
+  "intent": "Ended the turn after pushing all three approved build items (Slice B bombschroom, D1 mouse menus, D2 title polish) plus a PROJECT.md status update, with the confirmed Slice A fix as the foundation - handing back to Chris for Windows playtest before starting the next queued batch (Slice C: rocks, flowers, font smear, dash tuning, animal wander, extra boss lines).",
+  "next_task": "Chris plays the pushed batch on Windows (camp bombschroom feel, mouse menus, new title screen) and reports back; then start Slice C (remove baked procedural ore scatter to fix walk-through/duplicated rocks, fix flower-on-goose + doubled duck, disable pixel-font sub-pixel positioning, shorten dash, animal idle+wander, extra Irene lines).",
+  "blockers": null,
+  "resume_minutes": 10,
+  "dont_retry": [
+    "Don't assume a pack sub-directory is gdignored just because sibling packs are - check for that specific folder's .gdignore before copying assets into assets/game/",
+    "Don't wire spritesheet hframes/vframes purely from pixel-dimension division without visually inspecting a gridded probe first - some sheets (Bombschroom.png) aren't clean grids past the first few rows"
+  ],
+  "session_id": "session_01PyCWLhnuhoW79J25QhMwPD"
+}
