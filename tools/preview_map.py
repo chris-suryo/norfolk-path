@@ -376,7 +376,7 @@ def render(rows, out_path, scale=1, crop_box=None):
         "f": (32, 176, 16, 16), "v": (64, 32, 16, 16), "i": (64, 64, 16, 64),
         "n": (48, 0, 16, 16), "q": (96, 32, 16, 16), "m": (32, 112, 16, 16),
     }
-    buildings = {"H": (shop, 8), "L": (inn, 8), "A": (house_a, 8), "G": (house_g, 8),
+    buildings = {"L": (inn, 8), "A": (house_a, 8), "G": (house_g, 8),
                  "J": (house_j, 8), "E": (house_e, 8), "Y": (barn, 8), "W": (well, 6),
                  "P": (coop, 8), "Z": (silo, 6)}
     flower_cells = [(0, 0), (2, 0), (4, 0), (1, 2), (3, 2), (0, 4), (2, 4), (4, 4), (1, 8), (3, 8)]
@@ -522,6 +522,8 @@ def render(rows, out_path, scale=1, crop_box=None):
             blit(canvas, cw, ch, oak, 0, 0, 64, 80, px_ - 32, py_ - 70)
         elif sym == "t":
             blit(canvas, cw, ch, oak_s, 32, 0, 32, 48, px_ - 16, py_ - 40)
+        elif sym == "H":                                 # Evan's market stall (blue awning)
+            blit(canvas, cw, ch, stall, 96, 0, 48, 48, px_ - 24, py_ + 8 - 48)
         elif sym in buildings:
             src, foot = buildings[sym]
             blit_building(canvas, cw, ch, src, px_, py_, foot)
@@ -529,7 +531,7 @@ def render(rows, out_path, scale=1, crop_box=None):
             blit(canvas, cw, ch, bench, 0, 0, 32, 32, px_ - 16, py_ - 18)
         elif sym == "C":
             blit(canvas, cw, ch, chicken, 0, 0, 32, 32, px_ - 16, py_ - 26)
-        elif sym == "d":
+        elif sym in "d$":                                # duck (decor) / Ariana ($ = dialogue anchor)
             blit(canvas, cw, ch, duck, 0, 0, 32, 32, px_ - 16, py_ - 22)
         elif sym == "k":
             blit(canvas, cw, ch, capy, 0, 0, 32, 32, px_ - 16, py_ - 18)

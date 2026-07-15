@@ -1,0 +1,5 @@
+# gdtoolkit / gdlint config. Line length is raised from the default 100 to 200
+# because scripts/island_map.gd holds the level as a 192-wide ASCII-map const
+# string (one map row per line) — those data lines cannot be wrapped. Real code
+# should still stay well under 100; 200 only accommodates the map rows.
+max-line-length: 200

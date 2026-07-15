@@ -128,6 +128,30 @@ def fix_water(g):
                     changed = True
 
 
+def sweep_isolated_water(g, min_size=20):
+    """Remove stray disconnected water tiles (the NW-lake-corner bug class):
+    flood-fill every ~/B region; any region smaller than the real lake/river
+    (< min_size cells) is a stray -> convert back to grass."""
+    seen = set()
+    for sy in range(H):
+        for sx in range(W):
+            if g[sy][sx] in "~B" and (sx, sy) not in seen:
+                stack, comp = [(sx, sy)], []
+                seen.add((sx, sy))
+                while stack:
+                    x, y = stack.pop()
+                    comp.append((x, y))
+                    for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                        nx, ny = x + dx, y + dy
+                        if 0 <= nx < W and 0 <= ny < H and g[ny][nx] in "~B" \
+                                and (nx, ny) not in seen:
+                            seen.add((nx, ny))
+                            stack.append((nx, ny))
+                if len(comp) < min_size:
+                    for x, y in comp:
+                        g[y][x] = "."
+
+
 def draw_path(g, x0, x1, thick=4):
     for x in range(x0, x1 + 1):
         y = path_y(x)
@@ -276,6 +300,7 @@ def build(variant):
     draw_path(g, 3, 174)
     make_water(g, variant)
     fix_water(g)
+    sweep_isolated_water(g)        # kill stray disconnected water tiles
     tree_border(g)
 
     # ===== REGION 1: VILLAGE (cols 6-52) =====
@@ -297,6 +322,13 @@ def build(variant):
     for x in list(range(30, 33)) + list(range(35, 38)):
         putg(g, x, 24, "|")
     scatter(g, [(31, 25), (36, 25), (30, 26), (37, 26)], "f")
+    # small kitchen-garden farmstead near spawn (balances the dense SW corner)
+    rect(g, 4, 7, 9, 10, "D")                  # carrot patch
+    put(g, 5, 6, "K")                          # scarecrow
+    scatter(g, [(10, 8), (10, 10)], "2")       # hay bales
+    flock(g, 8, 13, ["C", "C", "^"], 3, spread=2, salt=61)   # chickens + rooster
+    scatter(g, [(11, 7)], "%")                 # beehive
+    scatter(g, [(11, 8), (6, 12)], "y")        # bees
     # orchard corner east of the barn
     scatter(g, [(48, 19), (50, 22), (47, 23)], "8")
     scatter(g, [(52, 20), (49, 26)], "9")
@@ -325,10 +357,9 @@ def build(variant):
 
     # ===== REGION 2: PATH & EVAN'S SHOP (cols 54-72) =====
     put(g, 55, path_y(55) + 1, "g")            # grape-bower gate: leaving the village
-    building(g, 62, 15, "H", fence=False)      # Evan's shop
-    put(g, 62, 16, "M")                        # storefront awning
+    put(g, 62, 16, "H")                        # Evan's market STALL (real Market_Stalls sprite)
     put(g, 65, 17, "n")                        # hanging shop sign
-    scatter(g, [(59, 17), (65, 19), (60, 19)], "3")    # barrels/crates of goods
+    scatter(g, [(59, 17), (66, 18), (60, 19)], "3")    # barrels/crates of goods
     put(g, 63, 19, "N")                        # Evan at the counter
     grove(g, 57, 30, 5, spread=3, salt=21, kinds="Tt4")
     grove(g, 69, 31, 5, spread=3, salt=22, kinds="TtT")
@@ -403,7 +434,7 @@ def build(variant):
     scatter(g, [(153, 28), (175, 22)], "9")
     # lake life: swimmers IN the water, waterfowl + fisherman on the shore
     flock(g, 166, 29, ["d", "d", "U"], 4, spread=4, salt=43)
-    putg(g, 163, 29, "d")                       # Ariana on the shoreline
+    put(g, 163, 29, "$")                        # Ariana (unique dialogue anchor), on the shoreline
     scatter(g, [(157, 29), (178, 29)], "R")
     putg(g, 156, 29, "N")                       # fisherman villager by the boat
     putw(g, 158, 33, "O")                       # moored boat
