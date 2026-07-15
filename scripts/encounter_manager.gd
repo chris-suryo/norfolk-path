@@ -1,7 +1,8 @@
 class_name EncounterManager
 extends Node
 
-## Drives the three path areas: spawn, shop, library-approach. Each area has a
+## Drives the path areas west->east: village slimes, a lone forest skeleton, the
+## forest camp cluster, then the library boss. Each area has a
 ## checkpoint (an Area2D trigger that sets Game.checkpoint + autosaves), a set of
 ## enemies, and a cleared flag. On a player's death the current checkpoint's area
 ## resets (its enemies respawn) unless it was already cleared; a cleared area
@@ -54,16 +55,30 @@ func _process(_delta: float) -> void:
 
 
 func _build_areas() -> void:
-	# center cell (checkpoint) + [scene, cell] enemy specs — all on walkable path
-	# tiles of the valley-1 (192x48) map: spawn/west village -> road+bridge near
-	# Evan -> library approach. Slimes sit at the village exit, the skeleton
-	# further out in the forest. (Camp/forest enemy spawns are the NEXT slice.)
+	# center cell (checkpoint) + [scene, cell] enemy specs — all on walkable tiles
+	# of the valley-1 (192x48) map, west -> east along the road: spawn/west village
+	# (slimes) -> lone forest skeleton (a taste) -> the forest CAMP (a cluster) ->
+	# library approach (boss). The camp skeletons are aggro-gated (see
+	# enemy_skeleton.tscn) so they wake on approach rather than marching from load;
+	# they ring the campfire on hand-verified walkable grass, none on tent/fire/
+	# props. The checkpoint (118,28) sits on the road just before the clearing, so
+	# a wipe respawns you at the camp's edge, not far back.
 	_areas = [
 		_make_area(
 			0, Vector2i(45, 28), [[SLIME_SCENE, Vector2i(50, 28)], [SLIME_SCENE, Vector2i(55, 28)]]
 		),
 		_make_area(1, Vector2i(70, 26), [[SKELETON_SCENE, Vector2i(95, 21)]]),
-		_make_area(2, Vector2i(156, 26), [[BOSS_SCENE, Vector2i(162, 26)]]),
+		_make_area(
+			2,
+			Vector2i(118, 28),
+			[
+				[SKELETON_SCENE, Vector2i(120, 31)],
+				[SKELETON_SCENE, Vector2i(124, 32)],
+				[SKELETON_SCENE, Vector2i(120, 35)],
+				[SKELETON_SCENE, Vector2i(124, 35)],
+			]
+		),
+		_make_area(3, Vector2i(156, 26), [[BOSS_SCENE, Vector2i(162, 26)]]),
 	]
 
 
@@ -114,7 +129,7 @@ func _apply_resume() -> void:
 	Game.load_state()
 	Game.player_count = chosen
 	if Game.boss_defeated:
-		_clear_area(_area_by_id(2))
+		_clear_area(_area_by_id(3))
 	if Game.checkpoint <= 0:
 		return
 	var area := _area_by_id(Game.checkpoint)
