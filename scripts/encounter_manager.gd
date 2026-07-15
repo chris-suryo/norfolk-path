@@ -23,6 +23,7 @@ extends Node
 
 const SLIME_SCENE := preload("res://scenes/enemy_slime.tscn")
 const SKELETON_SCENE := preload("res://scenes/enemy_skeleton.tscn")
+const BOMB_SCENE := preload("res://scenes/enemy_bombschroom.tscn")
 const BOSS_SCENE := preload("res://scenes/boss_irene.tscn")
 const WIN_SCENE := "res://scenes/win_screen.tscn"
 const BOSS_ID := 3
@@ -66,8 +67,9 @@ func _build_areas() -> void:
 	# center cell (checkpoint road spot) + [scene, cell] enemy specs — all on
 	# walkable tiles of the valley-1 (192x48) map, west -> east along the road:
 	# spawn/west village (slimes) -> lone forest skeleton (a taste) -> the forest
-	# CAMP (a cluster) -> library approach (boss). The camp skeletons are
-	# aggro-gated (enemy_skeleton.tscn) so they wake on approach, not at load.
+	# CAMP (3 skeletons + 1 stationary bombschroom guarding the western entry at
+	# (117,33)) -> library approach (boss). The camp skeletons are aggro-gated
+	# (enemy_skeleton.tscn) so they wake on approach, not at load.
 	# The camp checkpoint (108,24) sits on the road WEST of the camp's ~110px
 	# aggro edge (~x1818), so it records before the skeletons wake and a wipe
 	# respawns you on the road, not inside the clearing.
@@ -80,7 +82,7 @@ func _build_areas() -> void:
 			2,
 			Vector2i(108, 24),
 			[
-				[SKELETON_SCENE, Vector2i(120, 31)],
+				[BOMB_SCENE, Vector2i(117, 33)],
 				[SKELETON_SCENE, Vector2i(124, 32)],
 				[SKELETON_SCENE, Vector2i(120, 35)],
 				[SKELETON_SCENE, Vector2i(124, 35)],
