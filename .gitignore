@@ -9,3 +9,22 @@ export/
 *.tmp
 .env
 .DS_Store
+
+# Python bytecode from tools/
+__pycache__/
+*.pyc
+
+# Raw downloaded asset zips — keep the EXTRACTED art in git, not the archives.
+# (Your backup copies stay on disk; git just ignores them.)
+**/All Zip Files/
+*.zip
+
+# macOS archive junk (bit us on the duck download).
+__MACOSX/
+._*
+
+# Aseprite source files — large, not needed by the game build.
+*.aseprite
+
+# Orphaned old placeholder art (replaced by the real Cute Fantasy pack).
+assets/placeholder/

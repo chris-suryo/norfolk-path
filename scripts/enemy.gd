@@ -1,0 +1,162 @@
+class_name Enemy
+extends CharacterBody2D
+
+## A simple melee enemy: walk toward the nearest live player and deal contact
+## damage on a cooldown. No pathfinding (the level is open); on death it plays a
+## collapse frame, leaves the tracking groups so an area reads as "cleared," then
+## frees itself.
+##
+## Animation is data-driven so one script serves several sheets. Two layouts:
+## - non-directional (slime, 8-col sheet): idle_row / move_row / death_row,
+##   cycling anim_frames columns, no flip.
+## - directional (skeleton, Player-layout 6-col sheet): idle rows 0/1/2 and walk
+##   rows 3/4/5 chosen by facing (down/side/up, side flips), death on row 9.
+
+const PLAYER_COLUMNS := 6
+const DIR_IDLE_DOWN := 0
+const DIR_WALK_DOWN := 3
+const DIR_DEATH_ROW := 9
+const DIR_FRAMES := 4
+
+@export var max_hp: int = 3
+@export var move_speed: float = 30.0
+@export var contact_damage: int = 1
+@export var contact_cooldown: float = 0.8
+@export var knockback_speed: float = 90.0
+
+## Animation layout.
+@export var directional: bool = false
+@export var idle_row: int = 0
+@export var move_row: int = 1
+@export var death_row: int = 2
+@export var sheet_columns: int = 8
+@export var anim_frames: int = 4
+@export var anim_fps: float = 6.0
+@export var death_duration: float = 0.6
+
+var _hp: int = 3
+var _dead := false
+var _anim_time := 0.0
+var _death_time := 0.0
+var _contact_cd := 0.0
+var _knockback := Vector2.ZERO
+var _facing := Vector2.DOWN
+
+@onready var _sprite: Sprite2D = $Sprite2D
+@onready var _contact: Area2D = $ContactHitbox
+
+
+func _ready() -> void:
+	_hp = max_hp
+	add_to_group("enemies")
+
+
+func take_damage(amount: int, from: Vector2) -> void:
+	if _dead:
+		return
+	_hp -= amount
+	_knockback = (global_position - from).normalized() * knockback_speed
+	if _hp <= 0:
+		_die()
+	else:
+		_sprite.modulate = Color(1.0, 0.4, 0.4)
+
+
+func _physics_process(delta: float) -> void:
+	_contact_cd = maxf(0.0, _contact_cd - delta)
+	_knockback = _knockback.move_toward(Vector2.ZERO, 400.0 * delta)
+
+	if _dead:
+		velocity = _knockback
+		move_and_slide()
+		_animate_death(delta)
+		return
+
+	var target := _nearest_player()
+	var moving := false
+	if target != null:
+		var to_target := target.global_position - global_position
+		if to_target.length() > 6.0:
+			_facing = to_target.normalized()
+			velocity = _facing * move_speed + _knockback
+			moving = true
+		else:
+			velocity = _knockback
+	else:
+		velocity = _knockback
+
+	move_and_slide()
+	_try_contact_damage()
+	_animate(moving, delta)
+
+
+func _nearest_player() -> Node2D:
+	var best: Node2D = null
+	var best_dist := INF
+	for player in get_tree().get_nodes_in_group("players"):
+		if not (player is Node2D):
+			continue
+		if player.has_method("is_targetable") and not player.is_targetable():
+			continue
+		var dist: float = global_position.distance_squared_to(player.global_position)
+		if dist < best_dist:
+			best_dist = dist
+			best = player
+	return best
+
+
+func _try_contact_damage() -> void:
+	if _contact_cd > 0.0:
+		return
+	for body in _contact.get_overlapping_bodies():
+		if body.has_method("take_damage") and body.is_in_group("players"):
+			body.take_damage(contact_damage, global_position)
+			_contact_cd = contact_cooldown
+			return
+
+
+func _die() -> void:
+	_dead = true
+	_death_time = 0.0
+	_sprite.modulate = Color.WHITE
+	_contact.monitoring = false
+	remove_from_group("enemies")
+	if is_in_group("area_enemies"):
+		remove_from_group("area_enemies")
+	$CollisionShape2D.set_deferred("disabled", true)
+
+
+func _animate(moving: bool, delta: float) -> void:
+	_sprite.modulate = _sprite.modulate.lerp(Color.WHITE, 0.2)
+	_anim_time += delta
+	var column := int(_anim_time * anim_fps)
+	if directional:
+		_animate_directional(moving, column)
+	else:
+		var row := move_row if moving else idle_row
+		_sprite.frame = row * sheet_columns + column % anim_frames
+
+
+func _animate_directional(moving: bool, column: int) -> void:
+	var base := DIR_WALK_DOWN if moving else DIR_IDLE_DOWN
+	var flip := false
+	var row := base
+	if absf(_facing.x) >= absf(_facing.y):
+		row = base + 1
+		flip = _facing.x < 0.0
+	elif _facing.y < 0.0:
+		row = base + 2
+	_sprite.flip_h = flip
+	_sprite.frame = row * PLAYER_COLUMNS + column % DIR_FRAMES
+
+
+func _animate_death(delta: float) -> void:
+	_death_time += delta
+	if directional:
+		var col := mini(DIR_FRAMES - 1, int(_death_time / death_duration * DIR_FRAMES))
+		_sprite.frame = DIR_DEATH_ROW * PLAYER_COLUMNS + col
+	else:
+		var col := mini(anim_frames - 1, int(_death_time / death_duration * anim_frames))
+		_sprite.frame = death_row * sheet_columns + col
+	if _death_time >= death_duration:
+		queue_free()

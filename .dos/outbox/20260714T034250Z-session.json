@@ -1,0 +1,54 @@
+{
+  "goal": "From the filled world-brief, generate 3 distinct candidate island layouts as preview images for Chris to pick from -- no live-map or engine changes.",
+  "completed": [
+    "Read the filled docs/world-brief.md (linear quest: west spawn -> Evan's Subway-in-a-village shop -> library by the pond, where Ariana the chicken/duck sits and Irene is the boss).",
+    "Extended tools/preview_map.py (backward-compatible): --map/--out flags to render any map file to any path, and a new 'L' library symbol (second building, same house sprite -- brief differentiates shop vs library by position). Default run unchanged; regression-checked.",
+    "Generated 3 distinct full-island layouts via a scratchpad generator, each 70x45 and validator-clean (0 problems): A Straight Pilgrimage (dead-straight avenue, library as vanishing point), B Winding Approach (S-bend through hidden woods, reveal at pond), C Lakeside Crescent (lake bites east, path hugs shore, library on a point).",
+    "Wrote each as docs/world-options/option-{a,b,c}.txt (ASCII source) + .png (render), and docs/world-options/README.md with 2-3 sentences per option on intent + how each applies the 5 design principles differently, plus how to apply the pick.",
+    "PROJECT.md: status -> 'Chris picks a layout'; Locations row for docs/world-options/.",
+    "Confirmed scripts/island_map.gd is byte-untouched vs origin; gdformat/gdlint green. Committed + pushed (69e96b7). Surfaced the 3 PNGs to Chris via file delivery.",
+    "Stopped at exactly 3 candidates as instructed."
+  ],
+  "discovered": [
+    "The tileset has no diagonal or 1-wide strip path/water tiles, so 'curves' must be chunky orthogonal L/S bends; the validator (unmapped edge-mask check) enforces this -- it caught a 1-wide water pinch in option B on the first pass.",
+    "Coast-wobble occasionally produces 1-wide water nubs/inlets that fail validation; a smooth_water cleanup (flip unmapped-mask water cells to grass, iterate to fixpoint) reliably fixes them without hand-tuning coordinates.",
+    "Hardcoding entity coordinates is brittle (option A first put the library inside the pond); snapping each entity to the nearest valid cell (grass-by-water for library/chicken, path for spawn) is far more robust.",
+    "The brief needs TWO buildings (shop + library) but the pack has one house sprite -- carried by position + dialogue, not art, exactly as the brief intends. This introduces the 'L' symbol that level.gd/main.gd will need to learn when a layout is applied."
+  ],
+  "decisions": [
+    "Three candidate layouts delivered for Chris to choose; the pick is deferred to him (reviewing on PC).",
+    "New map symbol 'L' = library (renders the house sprite; validated on grass; 0-or-1 allowed so the current live map still validates).",
+    "Candidate ASCII sources (.txt) are committed alongside the .png renders so the chosen one is reproducible -- it drops straight into island_map.gd's MAP const.",
+    "preview_map.py is now the reusable 'generate N candidates' tool via --map/--out, not just a single-map renderer.",
+    "Live map (island_map.gd) left untouched, per Chris's standing hold until a layout is chosen."
+  ],
+  "lessons": [
+    "For headless tile-map design, generate programmatically + validate + render, then iterate on the IMAGE -- three distinct layouts came together fast because the preview tool caught geometry errors (pond-hole, water pinch) before they'd ever reach the engine.",
+    "Snap entities to valid terrain instead of hardcoding coordinates; assert-on-place turns a silent bad map into an immediate, located failure.",
+    "A fixpoint 'smooth' cleanup is the cheap fix for autotiler-illegal nubs from organic coastlines -- don't hand-fix each flagged cell."
+  ],
+  "files_changed": [
+    "tools/preview_map.py (--map/--out flags, 'L' library symbol)",
+    "docs/world-options/option-a.txt + option-a.png (new)",
+    "docs/world-options/option-b.txt + option-b.png (new)",
+    "docs/world-options/option-c.txt + option-c.png (new)",
+    "docs/world-options/README.md (new, the option notes)",
+    "PROJECT.md (status, Locations row)"
+  ],
+  "open_questions": [
+    "Which layout does Chris pick (A straight / B winding / C lakeside)? That choice drives the next build slice.",
+    "Applying the pick: drop its .txt into island_map.gd + teach level.gd and main.gd the 'L' library symbol (a second House prop with collision + Irene's eventual placement).",
+    "Where exactly does Irene stand relative to the library building, and does she reuse a recolored player sprite (no NPC art yet)?",
+    "Still open from before: the 2P camera rule (awaiting Chris's felt playtest), and the duck swap for Ariana (assets/ducky/ still uncommitted with __MACOSX junk)."
+  ],
+  "intent": "Stopped after delivering exactly 3 candidates because the next step is Chris's aesthetic pick, which he'll make at his PC -- and the standing hold forbids touching the live map until then. Deliberately did not over-generate or start applying any option.",
+  "next_task": "Chris reviews docs/world-options/option-{a,b,c}.png and picks one; then a build slice applies that .txt to island_map.gd and adds 'L' library handling to level.gd + main.gd.",
+  "blockers": null,
+  "resume_minutes": 10,
+  "dont_retry": [
+    "Don't design diagonal or 1-wide path/water -- the tileset can't tile it and the validator rejects it; use 2-wide orthogonal bends.",
+    "Don't hardcode entity coordinates onto a generated map -- snap to nearest valid terrain and assert.",
+    "Don't touch scripts/island_map.gd until Chris picks a layout (standing hold)."
+  ],
+  "session_id": "session_01PyCWLhnuhoW79J25QhMwPD"
+}

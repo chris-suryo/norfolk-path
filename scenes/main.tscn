@@ -1,17 +1,51 @@
-[gd_scene load_steps=4 format=3]
+[gd_scene load_steps=10 format=3]
 
-[ext_resource type="PackedScene" path="res://scenes/level.tscn" id="1_level"]
-[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_player"]
-[ext_resource type="Script" path="res://scripts/follow_camera.gd" id="3_cam"]
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/follow_camera.gd" id="8_cam"]
+[ext_resource type="PackedScene" path="res://scenes/level.tscn" id="2_level"]
+[ext_resource type="PackedScene" path="res://scenes/shop.tscn" id="3_shop"]
+[ext_resource type="Texture2D" path="res://assets/game/Duck.png" id="4_duck"]
+[ext_resource type="Script" path="res://scripts/critter.gd" id="5_critter"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="6_player"]
+[ext_resource type="Script" path="res://scripts/midpoint.gd" id="7_midpoint"]
+[ext_resource type="Script" path="res://scripts/encounter_manager.gd" id="9_encounter"]
 
 [node name="Main" type="Node2D"]
+script = ExtResource("1_main")
 
-[node name="Level" parent="." instance=ExtResource("1_level")]
+[node name="Level" parent="." instance=ExtResource("2_level")]
 
-[node name="Player" parent="." instance=ExtResource("2_player")]
-position = Vector2(480, 336)
+[node name="GroundProps" type="Node2D" parent="."]
+
+[node name="World" type="Node2D" parent="."]
+y_sort_enabled = true
+
+[node name="Shop" parent="World" instance=ExtResource("3_shop")]
+
+[node name="Ariana" type="Sprite2D" parent="World"]
+texture = ExtResource("4_duck")
+offset = Vector2(0, -16)
+hframes = 4
+vframes = 10
+script = ExtResource("5_critter")
+fps = 3.0
+frame_count = 4
+first_frame = 0
+
+[node name="Player" parent="World" instance=ExtResource("6_player")]
+
+[node name="Player2" parent="World" instance=ExtResource("6_player")]
+player_index = 2
+
+[node name="CameraTarget" type="Node2D" parent="World"]
+script = ExtResource("7_midpoint")
+target_a_path = NodePath("../Player")
+target_b_path = NodePath("../Player2")
+
+[node name="EncounterManager" type="Node" parent="World"]
+script = ExtResource("9_encounter")
 
 [node name="Camera2D" type="Camera2D" parent="."]
-script = ExtResource("3_cam")
-target = NodePath("../Player")
-bounds_source = NodePath("../Level")
+script = ExtResource("8_cam")
+target_path = NodePath("../World/CameraTarget")
+bounds_source_path = NodePath("../Level")

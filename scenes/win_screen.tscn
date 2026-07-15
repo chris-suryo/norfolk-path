@@ -1,0 +1,46 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/win_screen.gd" id="1_win"]
+
+[node name="WinScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+script = ExtResource("1_win")
+
+[node name="BG" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.09, 0.11, 0.1, 1)
+
+[node name="Center" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Box" type="VBoxContainer" parent="Center"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Title" type="Label" parent="Center/Box"]
+layout_mode = 2
+text = "QUEST COMPLETE"
+horizontal_alignment = 1
+
+[node name="Spacer" type="Control" parent="Center/Box"]
+custom_minimum_size = Vector2(0, 14)
+layout_mode = 2
+
+[node name="Ariana" type="Label" parent="Center/Box"]
+layout_mode = 2
+text = "Ariana:  \"Message received. I'm still renting it again.\""
+horizontal_alignment = 1
+
+[node name="Hint" type="Label" parent="Center/Box"]
+layout_mode = 2
+text = "enter or space: play again"
+horizontal_alignment = 1

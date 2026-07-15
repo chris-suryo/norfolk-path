@@ -1,0 +1,55 @@
+{
+  "goal": "Keep enriching cove-3: fewer trees/rocks, use the pack's other textures, and answer how to get varied buildings + a horse.",
+  "completed": [
+    "Inventoried the entire free Cute Fantasy pack and told Chris the hard truth: exactly ONE building sprite, and no horse -- 'varied buildings + horses' can't come from the free tier.",
+    "Ran a background research subagent (WebSearch) on asset sourcing; wrote docs/asset-sourcing.md. Headline: the $2.99 FULL Cute Fantasy pack (same artist/style) already has a horse, stables, a barn, and ~52 buildings; the free tier is just a locked subset. NPC characters are a separate Kenmi pack. Listed style-matching supplements (Sprout Lands, Mystic Woods) + a free horse (Onfe) with licenses; rejected Tiny Swords (64x64, no horse).",
+    "Generalized tools/preview_map.py's autotiler by terrain KIND and added FARMLAND (D) as a real autotiled ground (3x3 dirt sheet, 3-row clamp), plus decor symbols n=sign q=wheat m=mushroom (regions decoded from the sheet). All backward-compatible; default run unchanged.",
+    "Regenerated cove3-rich-{1,2,3}: plowed farmland fields + grass pasture with animals, roadside/garden signs, wheat, mushrooms, lamp-lit path; dialed tree/rock density way down so the island reads varied, not wooded. All validate 0.",
+    "Updated docs: level-design.md legend + palette (farmland + new decor + the 'farmland must be solid' rule), world-options/README (round 3b), PROJECT.md status + Locations rows. Committed/pushed; delivered the 3 updated PNGs.",
+    "Confirmed scripts/island_map.gd byte-untouched vs origin; tool py-compiles; gdlint green."
+  ],
+  "discovered": [
+    "The paid ($2.99) Cute Fantasy pack is the clean fix for Chris's wishlist: horse + stables + barn + ~52 buildings, same palette, zero blending, commercial license -- researched via search snippets (itch.io pages are proxy-blocked from the cloud session, so prices/licenses need live-page re-verification).",
+    "FarmLand_Tile.png is a clean 3x3 nine-slice (autotiles against grass like a blob); Beach_Tile is built for sand-meets-WATER (not grass) so it'd seam on grass -- deferred; Cliff implies elevation -- deferred.",
+    "Placing a prop ON a farmland cell converts that cell to grass-terrain and punches a hole that pinches the 3x3 dirt field (validator catches it). Fix: farmland fields stay solid rectangles; animals/crops go on grass beside them.",
+    "The pack's 'bush' art is unusable (tiny sprigs), but signs, wheat, mushrooms, and the farmland tiles ARE great and were sitting unused -- another case of the palette being richer than assumed."
+  ],
+  "decisions": [
+    "Recommend Chris buy the $2.99 full Cute Fantasy pack for varied buildings + a horse (documented in asset-sourcing.md); downloads on Windows, commits, build session wires it in.",
+    "Farmland (D) is a first-class autotiled terrain now; fields must be solid rectangles >=2 wide (no interior props).",
+    "cove3-rich variants keep cove-3 geometry but now lead with texture variety (farmland, signs, wheat, mushrooms, lamps, animals) and low tree/rock density.",
+    "Live map still untouched per Chris's standing hold until he picks a final island."
+  ],
+  "lessons": [
+    "When a user asks for assets that don't exist in the current pack, inventory first and say so plainly, then research concrete sourcing -- don't fake variety from what isn't there.",
+    "A background research subagent pairs well with foreground build work: the asset guide was compiled while the texture pass was coded.",
+    "Generalize before you special-case: refactoring the autotiler to key on terrain 'kind' made adding farmland (and future sand/cliff) a few lines instead of a copy-paste of the water/path logic.",
+    "Re-audit 'unused' assets each round -- farmland/signs/wheat/mushrooms were available all along; the palette doc's earlier 'no flowers/rocks/farmland' claims were wrong twice now."
+  ],
+  "files_changed": [
+    "tools/preview_map.py (terrain-kind autotiler; farmland D; sign/wheat/mushroom decor)",
+    "docs/asset-sourcing.md (new -- buildings/horse sourcing guide)",
+    "docs/world-options/cove3-rich-{1,2,3}.txt + .png (regenerated: textures, fewer trees)",
+    "docs/world-options/README.md (round 3b note + sourcing pointer)",
+    "docs/level-design.md (legend + palette: D and new decor, farmland rule)",
+    "PROJECT.md (status + Locations rows)"
+  ],
+  "open_questions": [
+    "Does Chris buy the $2.99 full pack? If yes, we can give Evan's shop and the library DIFFERENT buildings and place a real horse.",
+    "Which cove3-rich variant is the pick (1 balanced / 2 pastoral / 3 wild meadow)? Or more notes?",
+    "Applying the winner is a real build slice: island_map.gd + teach level.gd/main.gd every symbol (L D o p e r u w f v i x n q m) with sprite/terrain + collision. Growing each round -- worth landing a pick soon so it becomes playable, not just previews.",
+    "Still open: 2P camera rule (awaiting playtest), duck swap for Ariana (assets/ducky/ uncommitted + __MACOSX junk)."
+  ],
+  "intent": "Stopped after the texture pass + sourcing guide because the next moves are Chris's: pick a variant and/or buy the $2.99 pack. Did not touch the live map (standing hold) and flagged that we've done several preview rounds now -- landing a pick into the playable game is the higher-value next step.",
+  "next_task": "Chris: review cove3-rich-{1,2,3}.png and pick one; decide on the $2.99 full pack (asset-sourcing.md). Then a build slice applies the pick to island_map.gd and wires all symbols into level.gd + main.gd so it's walkable in-browser.",
+  "blockers": null,
+  "resume_minutes": 15,
+  "dont_retry": [
+    "Don't try to source buildings/a horse from the FREE Cute Fantasy tier -- it has one building, no horse; buy the $2.99 full pack.",
+    "Don't put props on farmland cells -- it pinches the 3x3 dirt field; keep fields solid, props on grass.",
+    "Don't use Beach_Tile against grass -- it's a sand/water-edge sheet and will seam; needs a water-edge treatment.",
+    "Don't fetch itch.io pages from the cloud session -- proxy 403s; Chris downloads on Windows.",
+    "Don't touch scripts/island_map.gd until Chris picks (standing hold)."
+  ],
+  "session_id": "session_01PyCWLhnuhoW79J25QhMwPD"
+}

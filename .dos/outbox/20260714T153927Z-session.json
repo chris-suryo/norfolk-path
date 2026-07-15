@@ -1,0 +1,46 @@
+{
+  "goal": "Finish the comprehensive visual catalog of the full Cute Fantasy arsenal, then write a self-contained handoff prompt for the story/planning chat.",
+  "completed": [
+    "Ran scratchpad/catalog_gen.py -> 22 category contact sheets across all 11 packs (frame0-crop for creatures/characters, whole-montage for tiles/objects); joined the earlier cast/buildings/ui for 25 total in docs/asset-previews/.",
+    "Viewed every sheet and rewrote docs/asset-catalog.md into a searchable 'arsenal' reference: a quick where-is index, exact folder paths per category, frame-layout notes, and a casting board mapping sprites to Evan/Irene/Ariana + pond life.",
+    "Wrote docs/story-handoff.md: a paste-ready prompt embedding the FULL inventory as text (so the story chat needs no repo access) + which contact-sheet PNGs to attach + 10 concrete v1 decisions to answer, under the roadmap scope rules.",
+    "Committed + pushed both (1ec37ae catalog, 7111caf handoff) on claude/slice-1-godot-toolchain-ij6e9w; verified scripts/island_map.gd byte-untouched vs origin (standing hold intact); confirmed docs/.gdignore covers all preview PNGs so Godot skips them.",
+    "Sent Chris animals/tiles/buildings sheets so he can see the roster."
+  ],
+  "discovered": [
+    "Full inventory confirmed: 8 premade cozy NPCs; a modular player (Hair_1-6 x ~8 colors, 5 shirt sets, tools, rideable Horse) to build a custom Irene; 14 fantasy fighters (Angels/Goblins/Knights/Orcs); 13 animal species incl. Duck(=Ariana), Horse(~6 colors), Capybara/Goose/Swan/Frog; enemies (Skeleton sword/bow/mage, Slime 5 colors x 3 sizes, Bombschroom).",
+    "Buildings give distinct silhouettes for the story: Market_Stalls = Evan's shop, Inn/Church = the library, plus barn/coop/silo/windmill/greenhouse/fisherman's house.",
+    "Terrain set is far richer than the 3 we ship: beach, cobble, cliff, cave, waterfall, farmland, wood+stone bridges, all with autotile edges. Full UI kit (HP bars, speech/book panels, buttons, font) covers every remaining v1 system.",
+    "7 themed biome packs (Desert/Dungeons/ShroomLands/MilitaryCamp/Halloween/Volcano/Christmas) cataloged as future-game arsenal; Old_Sprites(242)=legacy, ignore."
+  ],
+  "decisions": [
+    "docs/asset-catalog.md is the durable searchable reference; docs/asset-index.md lists all 1,220 files with dimensions; contact sheets live in docs/asset-previews/ (gdignored via docs/.gdignore).",
+    "Story handoff is text-first: the inventory travels as text in the prompt; PNGs are attached separately because the story chat can't read the repo. Filenames in the prompt match sheet names so the mapping holds even without vision.",
+    "Casting recommendations recorded (not locked): Ariana=Duck; Evan=Chef_Chloe/Bartender_Bruno + Market_Stalls; library=Inn(or Church); Irene=custom modular build; UI=this pack's kit."
+  ],
+  "lessons": [
+    "For montaging multi-frame character/animal sheets, crop the top-left 64x64 idle frame first (frame0) then montage -- montaging whole sheets scales everything unreadably small.",
+    "Redirecting a long-running generator through 'tail -N' truncates its own manifest; keep the full stdout if you need the per-image montage index, or re-enumerate filenames with ls/find.",
+    "A cross-session handoff to a text-only planning chat must be self-contained: embed the inventory as text and name the images to attach -- don't assume it can see repo files or rendered PNGs."
+  ],
+  "files_changed": [
+    "docs/asset-catalog.md (rewritten -- comprehensive searchable arsenal reference)",
+    "docs/asset-previews/*.png (22 new category contact sheets)",
+    "docs/story-handoff.md (new -- paste-ready story-session prompt + full inventory)"
+  ],
+  "open_questions": [
+    "Which cove variant does Chris lock for the live map (still on hold)?",
+    "The 10 story decisions in docs/story-handoff.md: Evan/Irene/Ariana casting, shop vs library buildings, Irene's modular look, the ~5 hardcoded lines, boss mechanic, pond-life density, critical path, tone.",
+    "2P camera rule (leash/zoom-out/clamp) -- deferred to the player-select step."
+  ],
+  "intent": "Completed the arsenal-cataloging task Chris asked for and produced the story handoff; ending here because the next real move (applying a world live) is gated on Chris's cove pick + the story chat's casting answers, neither available in this session.",
+  "next_task": "Chris sends docs/story-handoff.md (+ the named contact sheets) to the story chat; its answers + a cove pick unblock roadmap step 1 -- assemble Irene, swap in duck/horse/buildings, wire the ~5 lines, apply the world live per docs/pack-arrival.md.",
+  "blockers": null,
+  "resume_minutes": 10,
+  "dont_retry": [
+    "Don't montage whole multi-frame sheets for a catalog -- crop frame0 first.",
+    "Don't touch scripts/island_map.gd until Chris picks a cove variant (standing hold).",
+    "Don't build a dialogue system or content pipeline for v1 -- hardcode ~5 lines as exported strings (roadmap)."
+  ],
+  "session_id": "session_01PyCWLhnuhoW79J25QhMwPD"
+}

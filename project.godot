@@ -2,25 +2,24 @@
 ; It's best edited using the editor UI and not directly,
 ; since the parameters that go here are not all obvious.
 ;
-; Format documentation:
-; https://docs.godotengine.org/en/stable/tutorials/editor/project_settings.html
-
-; Pinned to Godot 4.7 (see docs/slice-1-plan.md). The renderer is the
-; Compatibility (OpenGL / WebGL 2) backend because the delivery target is an
-; HTML5 build, and Compatibility is the well-supported web path in Godot 4.
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
 
 config_version=5
 
 [application]
 
 config/name="norfolk-path"
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/player_select.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
+
+[autoload]
+
+Game="*res://scripts/game.gd"
 
 [display]
 
-; Base pixel-art resolution. stretch mode canvas_items + aspect expand keeps
-; pixels crisp while filling ultrawide screens without letterboxing.
 window/size/viewport_width=640
 window/size/viewport_height=360
 window/stretch/mode="canvas_items"
@@ -68,12 +67,37 @@ p2_right={
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":4194321,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
 ]
 }
+p1_attack={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":32,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+]
+}
+p1_action2={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":67,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+]
+}
+p2_attack={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":47,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+]
+}
+p2_action2={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":46,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+]
+}
+
+[layer_names]
+
+2d_physics/layer_1="world"
+2d_physics/layer_2="players"
+2d_physics/layer_3="enemies"
 
 [rendering]
 
+textures/canvas_textures/default_texture_filter=0
 renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
-; Crisp pixel art: no texture filtering, snap transforms and vertices to pixels.
-textures/canvas_textures/default_texture_filter=0
 2d/snap/snap_2d_transforms_to_pixel=true
 2d/snap/snap_2d_vertices_to_pixel=true

@@ -8,14 +8,32 @@ is learning the engine end-to-end, not shipping commercially.
 
 ## Status
 
-- next: **Verify Slice 1 on Windows.** The walking skeleton is authored (branch
-  `claude/slice-1-godot-toolchain-ij6e9w`, per [`docs/slice-1-plan.md`](docs/slice-1-plan.md)),
-  but engine-side verification is deliberately Chris's step: the cloud build
-  session's egress policy blocks github.com/godotengine.org, so Godot 4.7 could
-  not be installed there — the plan's Step 0 toolchain spike failed and the
-  headless import + Web export checks moved to the local machine. Chris: install
-  Godot 4.7, pull the branch, run the headless import + Web export commands
-  below, then tune movement feel in-editor.
+- next: **Chris verifies the combat slice on Windows** (see
+  `docs/combat-slice.md`). The whole real-time game loop is built headlessly
+  (Stages 0–5, lint-clean, pushed): player-select (1P/2P) → walk the path →
+  three encounters (2 slimes, a skeleton) with a **sword + dodge-roll** → **boss
+  Irene** (throws books, HP bar, staged dialogue) → **win screen** → local save
+  (localStorage on web) that survives a refresh. Co-op has a clear-to-revive
+  rule; the 1P camera drops Player2. Controls: P1 = WASD + Space + C, P2 =
+  arrows + `/` + `.`. **Not yet run in-engine** — Chris does the import/run/web
+  loop and tunes positions/feel. **Gated next:** boss Phase 2 (minions; report
+  first) and the cove world swap + pack buildings (still needs the cove pick).
+  `scripts/island_map.gd` stays frozen until that swap.
+- earlier next (still open): **Chris picks a final enriched cove from
+  `docs/world-options/`.** He
+  chose the cove-3 (lakeside) direction; it's now enriched into three
+  detailed variants — `cove3-rich-1` (balanced, recommended), `-2` (pastoral
+  village with farm pens), `-3` (wild garden) — with animals (cow/pig/sheep +
+  Ariana's chicken), lamp posts, rocks, stumps, wildflowers, garden flowers, a
+  veg patch, and a chest, all aligned to the brief (see
+  `docs/world-options/README.md`). Latest pass (3b) added **farmland fields**,
+  signs, wheat, mushrooms and dialed back trees/rocks for texture variety.
+  **The live map (`scripts/island_map.gd`) is still untouched** per Chris's
+  hold. Applying the winner is now a bigger build step: drop its `.txt` into
+  `island_map.gd` AND teach `level.gd`/`main.gd` the new symbols (`L` +
+  `D o p e r u w f v i x n q m` — sprite/terrain + collision each). For varied
+  buildings + a horse (absent from the free pack), Chris to buy the $2.99 full
+  Cute Fantasy pack (`docs/asset-sourcing.md`). Still deferred: the 2P camera rule.
 
 ### v1 scope (the whole build — nothing beyond this without asking)
 
@@ -42,8 +60,13 @@ screen, and their progress survives a refresh.
 |---|---|
 | Repo | `E:\code\norfolk-path` |
 | Engine | Godot **4.7 stable** (June 2026) — from godotengine.org; pin matches the repo |
-| Art pack | *Cute Fantasy RPG – 16×16*, itch.io (free tier) — not yet imported |
+| Art pack | *Cute Fantasy RPG – 16×16* (free tier), committed at `assets/cute_fantasy/Cute_Fantasy_Free/` |
 | Build plan | `docs/slice-1-plan.md` |
+| Level-design contract | `docs/level-design.md` (legend, palette, rules, brief template) |
+| World brief (story session fills) | `docs/world-brief.md` |
+| Map preview image | `docs/island-preview.png` (regenerate: `python tools/preview_map.py`) |
+| Candidate layouts (awaiting pick) | `docs/world-options/` — option/cove/cove3-rich-*.{txt,png} + README |
+| Asset sourcing (buildings/horse) | `docs/asset-sourcing.md` — buy the $2.99 full Cute Fantasy pack |
 | Web build | (HTML5 export → `export/web/` once Slice 1 lands; browser link TBD) |
 
 **On-disk standard:** code repos live under the code root `E:\code\<name>`.
@@ -58,10 +81,13 @@ assumed on PATH as `godot`):
 |---|---|
 | Open in editor (Windows) | `godot --path . --editor` |
 | Run the game | `godot --path .` (runs the main scene, `scenes/main.tscn`) |
-| Headless import / sanity-check | `godot --headless --path . --quit` |
+| **First-time import** (run once per fresh clone, before anything else) | `godot --headless --editor --path . --quit` |
+| Headless sanity-check (after the import cache exists) | `godot --headless --path . --quit` |
 | Web export (headless) | `godot --headless --path . --export-release "Web" export/web/index.html` |
 | Serve the web build locally (PowerShell) | `py -m http.server 8000 --directory export/web` → open `http://localhost:8000` |
 | Lint GDScript (what CI runs) | `pip install gdtoolkit==4.5.0`, then `gdformat --check scripts/` and `gdlint scripts/` |
+| **Edit the level** | change the ASCII grid in `scripts/island_map.gd` (legend at top of file) — terrain, props, and spawns all follow it; no editor painting needed |
+| **Preview / validate the map** | `python tools/preview_map.py` → writes `docs/island-preview.png`, reports rule violations (must be 0). Dev-only tool, not in the game build (`.gdignore`). |
 
 **Playtesting the movement feel is a human-in-editor task on Windows**, not something
 the cloud build session can verify — movement lives in exported constants
@@ -75,11 +101,31 @@ the cloud build session can verify — movement lives in exported constants
   above). Flip threads on later only behind a header-setting host.
 - **Renderer = GL Compatibility** (WebGL 2), not Forward+ — the well-supported
   web path in Godot 4 and the safe choice for an HTML5-first project.
-- **Placeholder level is painted in code** (`scripts/level.gd`, runtime
-  `set_cell()`), not hand-painted in the editor: the project was authored
-  headlessly and TileMapLayer's packed tile data isn't safe to hand-write. Real
-  art still drops in by swapping `assets/placeholder/tileset.tres`; the layout
-  can be repainted by hand in-editor whenever that's nicer.
+- **The level is an ASCII map** (`scripts/island_map.gd`), painted at runtime
+  by `level.gd` and decorated by `main.gd` — the map string is the single
+  source of truth for terrain, props (trees/fences/bridge), and spawn points.
+  Shorelines and path borders autotile in code from the pack's 3×6 edge
+  sheets via a neighbor bitmask (no editor terrain sets), with collision on
+  water only (`B` bridge cells use a collision-free water source). Design
+  rule the art imposes: keep water/path regions ≥ 2 tiles wide (the sheets
+  have no strip tiles). The cloud session verifies layouts with a real-art
+  preview renderer (scratchpad tool) before pushing.
+- **Level design is a two-session handoff:** the story session owns the vision
+  (writes `docs/world-brief.md`), the build session owns the geometry
+  (translates it into `scripts/island_map.gd`) — see `docs/level-design.md` for
+  the full loop. **Image models (diffusion) are explicitly NOT in the level
+  pipeline** — they produce flat rasters with no grid/collision/tileset link;
+  cohesion comes from story-driven layout iterated against the preview render,
+  not one-shot generation. `tools/preview_map.py` is the shared eyes: it
+  composites the real tiles the way the engine does and validates the design
+  rules, so a brief-turned-map is checked before it hits the engine.
+- **Camera zoom is an exported var** (`zoom_level` on Camera2D, default 2.5)
+  — 3× felt too tight in the first browser test; tune it live in the
+  Inspector.
+- **Both players spawn as of Slice 2** (2P shared-screen test): camera tracks
+  a midpoint node, deliberately WITHOUT leash/clamp logic — the "players walk
+  apart" problem is meant to be felt in playtest before the camera rule is
+  designed. Player-select (1P vs 2P) remains a later slice.
 - **CI = gdtoolkit lint only** (see comment in `.github/workflows/ci.yml`): a
   headless-Godot import/export job couldn't be validated from the cloud session
   (egress blocked the engine download), so CI gates on `gdformat --check` +
@@ -89,12 +135,34 @@ the cloud build session can verify — movement lives in exported constants
   godotengine.org are blocked by the session's egress policy, and no allowed
   mirror carries the engine. All engine-side checks (headless import, Web
   export, movement feel) are therefore local, human steps for now.
-- **`.gitattributes` marks image/audio/font extensions `binary`.** First
-  Windows headless-import attempt failed with "No loader found for resource"
-  on the placeholder PNGs — they were byte-correct on origin, but with no
-  `.gitattributes`, Windows `core.autocrlf` corrupted them on checkout by
-  rewriting a lone LF byte inside the binary data as CRLF. Fixed once, at the
-  repo level, so it can't recur when the real Cute Fantasy art lands.
+- **`.gitattributes` marks image/audio/font extensions `binary`** (good
+  hygiene, kept) — but this was **not** the cause of the first Windows import
+  failure. That was a real misdiagnosis: `git hash-object` on the Windows
+  working copy matched `git rev-parse HEAD:...` exactly for both PNGs, proving
+  the files were byte-identical to what's committed the whole time.
+- **The chicken at the pond is a TEMPORARY stand-in for Ariana, who should be
+  a DUCK.** A duck sprite download was attempted but didn't extract correctly;
+  the pack's `Animals/Chicken/Chicken.png` fills the spot visually until a duck
+  is sourced. Swap = replace the `Chicken` Sprite2D texture in
+  `scenes/main.tscn` (frames are 2×2 of 32×32; adjust `hframes`/`vframes` to
+  the duck sheet).
+- **Art pack license caution:** the Cute Fantasy free tier allows
+  non-commercial use and modification but **forbids redistribution, even
+  modified**. The pack is committed to this repo — fine while the repo is
+  private, but making the repo public would arguably be redistribution.
+  Chris's call to revisit before any public hosting of the repo itself (the
+  exported game build is a different question from redistributing the raw
+  pack).
+- **Real cause of "No loader found for resource" on first Windows import:**
+  the project had *never* been imported (`.godot/` didn't exist yet), and the
+  documented sanity command, `godot --headless --path . --quit` (no
+  `--editor`), runs in runtime/game mode — which only loads *already-imported*
+  resources and has no import pipeline. A brand-new headless checkout needs
+  one `godot --headless --editor --path . --quit` pass first to build the
+  `.godot/imported/` cache; only after that does the plain `--quit` sanity
+  command work. Documented as a separate "first-time import" row above so
+  this doesn't trip the next fresh clone (including CI, if a headless Godot
+  job is ever promoted there).
 
 ---
 kit: 364605cbbd6bbff3e9ed81ee4fe49035120c7ff0 · stamped by dos new
