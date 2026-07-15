@@ -1,0 +1,70 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/hud.gd" id="1_hud"]
+[ext_resource type="Texture2D" path="res://assets/game/UI_Bars.png" id="2_bars"]
+[ext_resource type="FontFile" path="res://assets/game/CuteFantasy-5x9.ttf" id="3_font"]
+
+[sub_resource type="AtlasTexture" id="pill_green"]
+atlas = ExtResource("2_bars")
+region = Rect2(2, 65, 12, 6)
+
+[node name="HUD" type="CanvasLayer"]
+script = ExtResource("1_hud")
+
+[node name="P1Name" type="Label" parent="."]
+offset_left = 8.0
+offset_top = 5.0
+offset_right = 80.0
+offset_bottom = 19.0
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 9
+text = "P1"
+
+[node name="P1Bar" type="TextureProgressBar" parent="."]
+offset_left = 8.0
+offset_top = 18.0
+offset_right = 80.0
+offset_bottom = 32.0
+max_value = 6.0
+value = 6.0
+nine_patch_stretch = true
+stretch_margin_left = 4
+stretch_margin_top = 2
+stretch_margin_right = 4
+stretch_margin_bottom = 2
+texture_under = SubResource("pill_green")
+texture_progress = SubResource("pill_green")
+tint_under = Color(0.22, 0.24, 0.2, 1)
+
+[node name="P2Name" type="Label" parent="."]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -80.0
+offset_top = 5.0
+offset_right = -8.0
+offset_bottom = 19.0
+grow_horizontal = 0
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 9
+text = "P2"
+horizontal_alignment = 2
+
+[node name="P2Bar" type="TextureProgressBar" parent="."]
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -80.0
+offset_top = 18.0
+offset_right = -8.0
+offset_bottom = 32.0
+grow_horizontal = 0
+max_value = 6.0
+value = 6.0
+fill_mode = 1
+nine_patch_stretch = true
+stretch_margin_left = 4
+stretch_margin_top = 2
+stretch_margin_right = 4
+stretch_margin_bottom = 2
+texture_under = SubResource("pill_green")
+texture_progress = SubResource("pill_green")
+tint_under = Color(0.22, 0.24, 0.2, 1)

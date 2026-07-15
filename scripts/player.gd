@@ -22,6 +22,10 @@ extends CharacterBody2D
 ## revive) — the player does not respawn itself.
 signal downed
 
+## Fired whenever HP changes (spawn, hit, revive) so the HUD can track it without
+## polling. Carries current + max so a listener needs no other reference.
+signal health_changed(current: int, maximum: int)
+
 enum State { NORMAL, ATTACK, ROLL, HURT, DOWN }
 
 const IDLE_ROW_DOWN := 0
@@ -92,6 +96,12 @@ func _ready() -> void:
 	add_to_group("players")
 	_sword.monitoring = true
 	_sword_shape.disabled = true
+	health_changed.emit(_hp, max_hp)
+
+
+## Current HP (the HUD reads this on connect; _hp itself stays private).
+func hp() -> int:
+	return _hp
 
 
 func is_targetable() -> bool:
@@ -102,6 +112,7 @@ func take_damage(amount: int, from: Vector2) -> void:
 	if _invuln_time > 0.0 or _state == State.DOWN:
 		return
 	_hp -= amount
+	health_changed.emit(maxi(_hp, 0), max_hp)
 	if _hp <= 0:
 		_enter_down()
 	else:
@@ -247,6 +258,7 @@ func respawn_at(pos: Vector2) -> void:
 	_downed_emitted = false
 	_sprite.modulate = Color.WHITE
 	_sword_shape.disabled = true
+	health_changed.emit(_hp, max_hp)
 	_enter_normal()
 
 

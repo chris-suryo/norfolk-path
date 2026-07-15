@@ -8,7 +8,21 @@ is learning the engine end-to-end, not shipping commercially.
 
 ## Status
 
-- next: **Chris verifies the combat slice on Windows** (see
+- next: **Chris verifies the combat/UI slice on Windows.** Built headlessly on
+  top of the live valley-1 world (lint-clean): a **forest-camp ambush** — 4
+  aggro-gated skeletons ring the campfire (they wake only when a player enters
+  ~7 tiles, not at load) with a checkpoint on the road just before the clearing;
+  a **two-player health HUD** (`scenes/hud.tscn`, real UI_Bars pills, P1 top-left
+  / P2 top-right, P2 gated to 2-player); the **boss HP bar** re-skinned and
+  center-anchored so it no longer drifts on the expand-aspect viewport; and an
+  **Esc pause menu** (`scenes/pause_menu.tscn`) — Resume / Zoom (Far 2.0 / Normal
+  2.5 / Close 3.0) / Save Now ("Saved HH:MM") / Return to Title (keeps the
+  checkpoint). First textured UI (TextureProgressBar + NinePatch + the pack
+  font), so Chris's import is the visual gate. **Tuning knobs if it plays off:**
+  camp is 4 skeletons (drop to 3 easily), `aggro_radius` (110 px) on
+  `enemy_skeleton.tscn`. **Still deferred:** distinct P1/P2 sprites (next focused
+  slice), boss Phase 2.
+- earlier next: **Chris verifies the combat slice on Windows** (see
   `docs/combat-slice.md`). The whole real-time game loop is built headlessly
   (Stages 0–5, lint-clean, pushed): player-select (1P/2P) → walk the path →
   three encounters (2 slimes, a skeleton) with a **sword + dodge-roll** → **boss

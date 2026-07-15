@@ -14,7 +14,6 @@ extends Enemy
 signal defeated
 
 const BOOK_SCENE := preload("res://scenes/book_projectile.tscn")
-const BAR_WIDTH := 204.0
 const LINE_DURATION := 3.5
 const FADE_TIME := 1.2
 
@@ -30,12 +29,14 @@ var _said_mid := false
 var _line_time := 0.0
 
 @onready var _hud: CanvasLayer = $HUD
-@onready var _fill: ColorRect = $HUD/BarFill
+@onready var _bar: TextureProgressBar = $HUD/Bar
 @onready var _line: Label = $Dialogue/Line
 
 
 func _ready() -> void:
 	super()
+	_bar.max_value = max_hp
+	_bar.value = _hp
 	_hud.visible = false
 	_line.visible = false
 
@@ -87,8 +88,7 @@ func _throw_book() -> void:
 
 
 func _update_bar() -> void:
-	var frac := clampf(float(_hp) / float(max_hp), 0.0, 1.0)
-	_fill.size = Vector2(BAR_WIDTH * frac, _fill.size.y)
+	_bar.value = maxi(_hp, 0)
 
 
 func _animate_idle(delta: float) -> void:

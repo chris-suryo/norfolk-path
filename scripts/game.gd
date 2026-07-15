@@ -16,6 +16,12 @@ var player_count := 1
 var checkpoint := 0
 var boss_defeated := false
 
+## Runtime-only "HH:MM" of the last save this session (autosave or manual). NOT
+## persisted — it is display-state for the pause menu's "Save Now" confirmation,
+## and keeping it out of the saved dict preserves the ints/bools-only JSON note
+## above. Empty until the first save.
+var last_saved := ""
+
 
 func set_player_count(count: int) -> void:
 	player_count = clampi(count, 1, 2)
@@ -34,6 +40,7 @@ func save() -> void:
 		"boss_defeated": boss_defeated,
 	}
 	var text := JSON.stringify(data)
+	last_saved = Time.get_time_string_from_system().substr(0, 5)
 	if OS.has_feature("web"):
 		JavaScriptBridge.eval("localStorage.setItem('%s', '%s');" % [SAVE_KEY, text], true)
 	else:

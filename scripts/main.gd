@@ -44,6 +44,15 @@ func _ready() -> void:
 	# Encounters/checkpoints/respawn — AFTER players are positioned so a
 	# saved-checkpoint resume can override the default spawn.
 	$World/EncounterManager.setup()
+	_bind_hud()
+
+
+## Connect each live player's HP to its HUD bar. Player2 is freed in 1-player, so
+## only bind it when it is really in play.
+func _bind_hud() -> void:
+	$HUD.bind_player($World/Player)
+	if Game.player_count >= 2:
+		$HUD.bind_player($World/Player2)
 
 
 ## Draw the baked ground composite behind the Y-sorted world.
