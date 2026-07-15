@@ -70,9 +70,6 @@ const DEATH_DURATION := 0.7
 @export var max_hp: int = 6
 @export var attack_damage: int = 3
 
-## Where this player returns on death. Set by main.gd (later: the checkpoint).
-var respawn_point := Vector2.ZERO
-
 var _action_prefix: String
 var _facing := Vector2.DOWN
 var _anim_time := 0.0
@@ -92,7 +89,6 @@ var _downed_emitted := false
 func _ready() -> void:
 	_action_prefix = "p%d_" % player_index
 	_hp = max_hp
-	respawn_point = position
 	add_to_group("players")
 	_sword.monitoring = true
 	_sword_shape.disabled = true

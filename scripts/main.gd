@@ -30,11 +30,9 @@ func _ready() -> void:
 	$Level.modulate = Color(1.0, 1.0, 1.0, 0.0)
 	var spawn := IslandMap.cell_center(IslandMap.find_one("S"))
 	$World/Player.position = spawn
-	$World/Player.respawn_point = spawn
 	# 1P: drop the second player; the midpoint camera falls back to Player1.
 	if Game.player_count >= 2:
 		$World/Player2.position = spawn + Vector2(18, 0)
-		$World/Player2.respawn_point = spawn + Vector2(18, 0)
 	else:
 		$World/Player2.queue_free()
 	$World/Shop.position = IslandMap.cell_center(IslandMap.find_one("H"))

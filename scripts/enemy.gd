@@ -44,6 +44,7 @@ const DIR_FRAMES := 4
 var _hp: int = 3
 var _dead := false
 var _aggro := false
+var _home := Vector2.ZERO
 var _anim_time := 0.0
 var _death_time := 0.0
 var _contact_cd := 0.0
@@ -56,7 +57,22 @@ var _facing := Vector2.DOWN
 
 func _ready() -> void:
 	_hp = max_hp
+	# Position is set before add_child in EncounterManager._spawn_area, so this is
+	# the spawn post — where return_home() sends a survivor on a checkpoint retry.
+	_home = position
 	add_to_group("enemies")
+
+
+## Send a surviving enemy back to its spawn post and re-idle it (clears the ambush
+## latch) — used when the player wipes and retries a checkpoint, so survivors
+## don't stay parked where the death happened. A dying enemy is left alone.
+func return_home() -> void:
+	if _dead:
+		return
+	position = _home
+	velocity = Vector2.ZERO
+	_knockback = Vector2.ZERO
+	_aggro = false
 
 
 func take_damage(amount: int, from: Vector2) -> void:
