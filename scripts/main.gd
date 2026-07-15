@@ -19,6 +19,42 @@ const GROUND_IMAGE := "res://assets/generated/valley-1-ground.png"
 const TERRAIN_SYMS := [".", "#", "S", "~", "B", "D", "Q", "c", "g", "O", "k", "a", "l", "@", "$"]
 const FENCE_SYMS := ["F", "|"]
 
+## Ambient-animal animation, keyed by map symbol (from the audited sheet layout —
+## all 32px frames). "idle"/"idle_n" = the idle row + frame count; the optional
+## "walk"/"walk_n" + "wander" enable a slow random stroll for land animals with a
+## walk cycle. Water animals (a/l swimming, k/@ capybara) bob in place only.
+## hframes/vframes are derived from each sheet at spawn (_spawn_animal).
+const ANIMAL_ANIM := {
+	"d":
+	{"idle": 0, "idle_n": 2, "walk": 1, "walk_n": 6, "wander": true, "radius": 18.0, "speed": 12.0},
+	"U":
+	{"idle": 0, "idle_n": 2, "walk": 1, "walk_n": 6, "wander": true, "radius": 18.0, "speed": 12.0},
+	"^":
+	{"idle": 0, "idle_n": 2, "walk": 1, "walk_n": 6, "wander": true, "radius": 16.0, "speed": 12.0},
+	"h":
+	{"idle": 0, "idle_n": 2, "walk": 3, "walk_n": 6, "wander": true, "radius": 24.0, "speed": 16.0},
+	"R":
+	{"idle": 0, "idle_n": 2, "walk": 1, "walk_n": 8, "wander": true, "radius": 16.0, "speed": 10.0},
+	"j":
+	{
+		"idle": 0,
+		"idle_n": 2,
+		"walk": 2,
+		"walk_n": 10,
+		"wander": true,
+		"radius": 16.0,
+		"speed": 14.0
+	},
+	"o": {"idle": 0, "idle_n": 4},
+	"p": {"idle": 0, "idle_n": 4},
+	"e": {"idle": 0, "idle_n": 4},
+	"C": {"idle": 0, "idle_n": 4},
+	"a": {"idle": 8, "idle_n": 4},
+	"l": {"idle": 8, "idle_n": 3},
+	"k": {"idle": 0, "idle_n": 9},
+	"@": {"idle": 0, "idle_n": 9},
+}
+
 var _rows := IslandMap.rows()
 var _tex_cache := {}
 
@@ -89,10 +125,13 @@ func _spawn_props() -> void:
 			if not PropTable.PROPS.has(sym):
 				continue
 			var spec: Array = PropTable.PROPS[sym]
+			var base := IslandMap.cell_center(Vector2i(x, y))
+			if ANIMAL_ANIM.has(sym):
+				_spawn_animal(sym, spec, base)
+				continue
 			var region: Rect2 = spec[1]
 			var offset: Vector2 = spec[2]
 			var collider: Vector2 = spec[3]
-			var base := IslandMap.cell_center(Vector2i(x, y))
 			var sprite := Sprite2D.new()
 			sprite.texture = _texture(spec[0])
 			sprite.region_enabled = true
@@ -111,6 +150,28 @@ func _spawn_props() -> void:
 				shape.shape = rect
 				body.add_child(shape)
 				_world.add_child(body)
+
+
+## Animals become a live AmbientAnimal (idle-bob + optional wander) instead of a
+## static sprite. Uses the same sheet + foot offset as the prop table; hframes/
+## vframes come from the sheet (all 32px frames). No collider — they're decor.
+func _spawn_animal(sym: String, spec: Array, base: Vector2) -> void:
+	var cfg: Dictionary = ANIMAL_ANIM[sym]
+	var tex := _texture(spec[0])
+	var animal := AmbientAnimal.new()
+	animal.texture = tex
+	animal.hframes = int(tex.get_width() / 32.0)
+	animal.vframes = int(tex.get_height() / 32.0)
+	animal.offset = spec[2]
+	animal.position = base
+	animal.idle_row = cfg["idle"]
+	animal.idle_count = cfg["idle_n"]
+	animal.walk_row = cfg.get("walk", -1)
+	animal.walk_count = cfg.get("walk_n", 6)
+	animal.can_wander = cfg.get("wander", false)
+	animal.wander_radius = cfg.get("radius", 16.0)
+	animal.move_speed = cfg.get("speed", 10.0)
+	_world.add_child(animal)
 
 
 ## Fences need neighbour-aware pieces (a straight run vs a post), so they stay

@@ -26,12 +26,12 @@ y_sort_enabled = true
 
 [node name="Ariana" type="Sprite2D" parent="World"]
 texture = ExtResource("4_duck")
-offset = Vector2(0, -16)
-hframes = 4
-vframes = 10
+offset = Vector2(0, -6)
+hframes = 8
+vframes = 20
 script = ExtResource("5_critter")
 fps = 3.0
-frame_count = 4
+frame_count = 2
 first_frame = 0
 
 [node name="Player" parent="World" instance=ExtResource("6_player")]
