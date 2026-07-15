@@ -8,20 +8,28 @@ is learning the engine end-to-end, not shipping commercially.
 
 ## Status
 
-- next: **Chris verifies the combat/UI slice on Windows.** Built headlessly on
-  top of the live valley-1 world (lint-clean): a **forest-camp ambush** — 4
-  aggro-gated skeletons ring the campfire (they wake only when a player enters
-  ~7 tiles, not at load) with a checkpoint on the road just before the clearing;
-  a **two-player health HUD** (`scenes/hud.tscn`, real UI_Bars pills, P1 top-left
-  / P2 top-right, P2 gated to 2-player); the **boss HP bar** re-skinned and
-  center-anchored so it no longer drifts on the expand-aspect viewport; and an
-  **Esc pause menu** (`scenes/pause_menu.tscn`) — Resume / Zoom (Far 2.0 / Normal
-  2.5 / Close 3.0) / Save Now ("Saved HH:MM") / Return to Title (keeps the
-  checkpoint). First textured UI (TextureProgressBar + NinePatch + the pack
-  font), so Chris's import is the visual gate. **Tuning knobs if it plays off:**
-  camp is 4 skeletons (drop to 3 easily), `aggro_radius` (110 px) on
-  `enemy_skeleton.tscn`. **Still deferred:** distinct P1/P2 sprites (next focused
-  slice), boss Phase 2.
+- next: **Chris verifies the enemy-variety + menu-polish batch on Windows.** On
+  top of the confirmed respawn fix (Slice A): (1) the forest camp is now **3
+  skeletons + 1 bombschroom** — a stationary `BombEnemy` (`scenes/
+  enemy_bombschroom.tscn`) that idles until you're within ~22px, then flashes
+  through a 0.6s wind-up and explodes (AoE + gas puff); defuse it with one sword
+  hit during wind-up, or roll clear. (2) **Mouse support** on the title and pause
+  menus alongside keyboard (hover-highlight + click-activate). (3) A **dressed
+  title screen** — dimmed baked-world backdrop + UI_Frames NinePatch panel + 5x9
+  pixel font + a looping campfire. Tuning knobs: bombschroom `detonate_radius`/
+  `blast_radius`/`windup`/`max_hp` (all exported). Visual bits (title,
+  bombschroom feel) are Chris's import gate.
+- Slice A (spawn/checkpoint/respawn) — **playtest-confirmed**: New Game starts in
+  the west village; checkpoints are progress-based (furthest area walked past);
+  respawn rearms survivors (killed enemies stay dead), boss retries to full. The
+  "no camp skeletons on Continue" was expected (a save past the camp clears it as
+  already-done); a New Game keeps them.
+- **Queued (Slice C):** the remaining playtest items — remove the baked
+  procedural ore scatter (fixes walk-through + duplicated near-house rocks) +
+  re-bake; flower foot-offset + de-dupe the `$`/Ariana double duck; disable the
+  pixel-font sub-pixel positioning that smears the boss "Icene" (and would smear
+  the big title); shorten the dash; animal idle+wander; 1-2 more Irene lines.
+  **Still deferred:** distinct P1/P2 sprites, boss Phase 2.
 - earlier next: **Chris verifies the combat slice on Windows** (see
   `docs/combat-slice.md`). The whole real-time game loop is built headlessly
   (Stages 0–5, lint-clean, pushed): player-select (1P/2P) → walk the path →
