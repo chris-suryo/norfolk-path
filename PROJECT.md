@@ -8,6 +8,14 @@ is learning the engine end-to-end, not shipping commercially.
 
 ## Status
 
+- next: **Chris runs `docs/playtest-checklist.md` top-to-bottom** — one ordered
+  pass over everything built while away (title/mouse/backdrop, collision fixes,
+  animal wander, bombschroom, Irene's taunts, font fix, pause menu), each with
+  its tuning knob. Also this session (unattended, no gameplay touched): **web
+  build trimmed** (gdignored unused base-pack `Player/`+`Tiles/`+`Icons/`; asset
+  payload 4.7→2.0 MB, seasonal packs already excluded); **P1/P2 assets staged**
+  in `assets/game/` (not wired); new **`tools/check_assets.py`** guards asset
+  refs / gdignore trims.
 - next: **Chris verifies the enemy-variety + menu-polish batch on Windows.** On
   top of the confirmed respawn fix (Slice A): (1) the forest camp is now **3
   skeletons + 1 bombschroom** — a stationary `BombEnemy` (`scenes/
