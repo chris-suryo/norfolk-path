@@ -12,9 +12,11 @@ extends Node2D
 const GROUND_IMAGE := "res://assets/generated/valley-1-ground.png"
 
 ## Symbols handled outside PropTable: terrain (painted + baked), fences (F needs
-## neighbour-aware pieces), spawn. Used by the build-time coverage assert so a
-## future map edit can never silently reintroduce the old blank-grass gap.
-const TERRAIN_SYMS := [".", "#", "S", "~", "B", "D", "Q", "c", "g", "O", "k", "a", "l", "@"]
+## neighbour-aware pieces), spawn, and node anchors ("$" = Ariana, spawned as a
+## live critter node below — NOT a table prop, else a static duck stacks on her).
+## Used by the build-time coverage assert so a future map edit can never silently
+## reintroduce the old blank-grass gap.
+const TERRAIN_SYMS := [".", "#", "S", "~", "B", "D", "Q", "c", "g", "O", "k", "a", "l", "@", "$"]
 const FENCE_SYMS := ["F", "|"]
 
 var _rows := IslandMap.rows()

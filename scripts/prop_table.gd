@@ -87,7 +87,6 @@ const SHEETS := {
 ## symbol -> [sheet_key, region(x,y,w,h), sprite_offset(x,y), collider(w,h)]
 ## collider (0,0) = decor, no collision. Offset is from the cell centre.
 const PROPS := {
-	"$": ["duck", Rect2(0, 0, 32, 32), Vector2(0, -6), Vector2(0, 0)],
 	"%": ["beehive", Rect2(0, 0, 16, 16), Vector2(0, -2), Vector2(10, 8)],
 	"&": ["berries2", Rect2(0, 0, 16, 16), Vector2(0, 0), Vector2(10, 8)],
 	"+": ["lamp2", Rect2(0, 0, 16, 48), Vector2(0, -16), Vector2(6, 8)],

@@ -94,7 +94,9 @@ SPEC = {
     "b": ("bench", 0, 0, 32, 32, -16, -18, 26, 8),
     "C": ("chicken", 0, 0, 32, 32, -16, -26, 0, 0),
     "d": ("duck", 0, 0, 32, 32, -16, -22, 0, 0),
-    "$": ("duck", 0, 0, 32, 32, -16, -22, 0, 0),
+    # NOTE: '$' (Ariana) is NOT a table prop — main.gd spawns the animated Ariana
+    # critter node there. Drawing a duck prop too stacked a second, static duck on
+    # her. '$' is kept covered via main.gd TERRAIN_SYMS instead.
     "k": ("capy", 0, 0, 32, 32, -16, -18, 0, 0),
     "@": ("capy2", 0, 0, 32, 32, -16, -18, 0, 0),
     "h": ("horse", 0, 0, 32, 32, -16, -26, 0, 0),
