@@ -47,20 +47,25 @@ jobs:
           presets_to_export: Web
           cache: true
 
-      # export_presets.cfg pins the Web preset's output to export/web/index.html
-      # (use_preset_export_path above honors that), so this is grounded in the
-      # repo's own config rather than assumed from the action's docs.
+      # First real run showed use_preset_export_path nests output one level
+      # deeper than export_presets.cfg's own export_path implies — the action
+      # organizes by preset name, landing at export/web/Web/index.html, not
+      # export/web/index.html. Use the action's own build_directory output as
+      # the source of truth instead of a second guessed path.
       - name: Confirm export output
+        env:
+          BUILD_DIR: ${{ steps.export.outputs.build_directory }}
         run: |
-          echo "export/web contents:"
-          ls -la export/web
-          test -f export/web/index.html || (echo "::error::index.html missing from export/web — the export step did not produce the expected output" && exit 1)
+          echo "build_directory: $BUILD_DIR"
+          echo "contents:"
+          ls -la "$BUILD_DIR"
+          test -f "$BUILD_DIR/index.html" || (echo "::error::index.html missing from $BUILD_DIR — the export step did not produce the expected output" && exit 1)
 
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
       - name: Deploy to Vercel (production)
-        working-directory: export/web
+        working-directory: ${{ steps.export.outputs.build_directory }}
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
