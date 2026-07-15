@@ -117,9 +117,9 @@ SPEC = {
     "z": ("windmill", 0, 0, 128, 112, -64, -104, 28, 14),
     "s": ("tent", 0, 0, 48, 96, -24, -88, 26, 12),
     "0": ("campfire", 0, 0, 16, 32, -8, -24, 12, 10),
-    "1": ("campdecor", 0, 0, 16, 16, -8, -8, 0, 0),
+    "1": ("campdecor", 0, 0, 16, 16, -8, -8, 10, 8),
     "%": ("beehive", 0, 0, 16, 16, -8, -10, 10, 8),
-    "&": ("berries2", 0, 0, 16, 16, -8, -8, 0, 0),
+    "&": ("berries2", 0, 0, 16, 16, -8, -8, 10, 8),
     "=": ("trough", 16, 0, 32, 16, -16, -8, 28, 8),
     "+": ("lamp2", 0, 0, 16, 48, -8, -40, 6, 8),
     "^": ("rooster", 0, 0, 32, 32, -16, -26, 0, 0),
@@ -143,12 +143,15 @@ SPEC = {
 # Buildings drawn via blit_building (whole sheet, foot offset) — derive region +
 # offset from the sheet dims so we don't hand-copy 240x192 etc.
 BUILDINGS = {  # sym: (sheet_key, foot, collider_w, collider_h)
-    "L": ("inn", 8, 90, 18),
-    "A": ("house_a", 8, 52, 14),
-    "G": ("house_g", 8, 52, 14),
-    "J": ("house_j", 8, 52, 14),
-    "E": ("house_e", 8, 52, 14),
-    "Y": ("barn", 8, 60, 16),
+    # Collider widths cover the visible ground-floor mass (buildings aren't
+    # enterable, so a full-base wall is correct). Earlier values only spanned the
+    # central door, leaving the wings walk-through (playtest collision audit).
+    "L": ("inn", 8, 210, 18),  # base ~230 wide, was 90
+    "A": ("house_a", 8, 52, 14),  # compact house, base ~67 — already fine
+    "G": ("house_g", 8, 112, 14),  # 144-wide L-shape, was 52
+    "J": ("house_j", 8, 76, 14),  # base ~84, was 52
+    "E": ("house_e", 8, 112, 14),  # 144-wide L-shape, was 52
+    "Y": ("barn", 8, 92, 16),  # base ~100, was 60
     "W": ("well", 6, 20, 12),
 }
 
