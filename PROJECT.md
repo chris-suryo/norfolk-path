@@ -8,11 +8,17 @@ is learning the engine end-to-end, not shipping commercially.
 
 ## Status
 
-- next: **Chris deploys a build for cross-machine playtest** — see
-  `docs/web-deploy.md` (pull → export the Web preset in Godot → drag
-  `export/web` onto vercel.com/new → share the URL). The build session can't do
-  this step itself (no Godot binary + sandbox network blocks the export-template
-  download), so it's a self-serve runbook.
+- next: **Chris adds 3 GitHub repo secrets to turn on continuous deploy** —
+  `VERCEL_TOKEN` / `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID` (exact steps in
+  `docs/web-deploy.md`). Once set, `.github/workflows/deploy-web.yml`
+  auto-exports the Godot Web preset and deploys to the existing Vercel
+  project's production URL on every push — no manual export needed. Pinned to
+  Godot 4.7-stable (his exact local build) via `firebelley/godot-export@v8.0.0`
+  (a third-party CI action — explicitly approved). The manual drag-and-drop
+  path in `docs/web-deploy.md` still works as a fallback. The build session
+  itself still can't run Godot (network-blocked), but GitHub's own Actions
+  runners aren't, so the build session can verify this pipeline end-to-end via
+  the GitHub Actions API once the secrets exist.
 - next: **Chris runs `docs/playtest-checklist.md` top-to-bottom** — one ordered
   pass over everything built while away (title/mouse/backdrop, collision fixes,
   animal wander, bombschroom, Irene's taunts, font fix, pause menu), each with
