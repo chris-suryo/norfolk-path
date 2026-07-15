@@ -16,6 +16,12 @@ var player_count := 1
 var checkpoint := 0
 var boss_defeated := false
 
+## Set by player-select: true when the player chose "Continue" (resume the saved
+## checkpoint), false for "New Game" (fresh village start). The EncounterManager
+## only resumes a saved position when this is true, so a stale save never drops a
+## new game next to a late-game checkpoint.
+var resume_requested := false
+
 ## Runtime-only "HH:MM" of the last save this session (autosave or manual). NOT
 ## persisted — it is display-state for the pause menu's "Save Now" confirmation,
 ## and keeping it out of the saved dict preserves the ints/bools-only JSON note
@@ -51,6 +57,18 @@ func save() -> void:
 
 
 func load_state() -> bool:
+	return _apply(_read_raw())
+
+
+## True when a valid save exists, so player-select can offer "Continue". Reads
+## without applying (no side effects on the current run state).
+func has_save() -> bool:
+	var text := _read_raw()
+	var parsed: Variant = JSON.parse_string(text) if text != "" else null
+	return parsed is Dictionary and parsed.get("v") == SAVE_VERSION
+
+
+func _read_raw() -> String:
 	var text := ""
 	if OS.has_feature("web"):
 		var raw: Variant = JavaScriptBridge.eval("localStorage.getItem('%s');" % SAVE_KEY, true)
@@ -61,7 +79,7 @@ func load_state() -> bool:
 		if file != null:
 			text = file.get_as_text()
 			file.close()
-	return _apply(text)
+	return text
 
 
 func _apply(text: String) -> bool:

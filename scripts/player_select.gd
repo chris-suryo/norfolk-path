@@ -1,26 +1,37 @@
 extends Control
 
-## Mario-style 1P/2P pick. Sets Game.player_count, then loads the level (which
-## resumes at the saved checkpoint). Deliberately plain — Labels + a highlight;
-## dressing it with the pack UI kit is a later polish pass.
+## Title screen. Two stages, driven by whether a save exists:
+##   MODE  (only shown when Game.has_save()): Continue / New Game.
+##   COUNT (always): 1 Player / 2 Players.
+## Continue resumes the saved checkpoint (Game.resume_requested = true, player
+## count comes from the save). New Game wipes the run (reset_run) and asks for a
+## player count, starting fresh in the village. With no save we skip straight to
+## COUNT (an implicit New Game).
 ##
-## Confirm is intentionally broad: ui_accept AND the game's own attack keys AND a
-## raw Enter/Space check, so a quirk in one binding can't make "start" dead. If
-## the scene ever fails to load, that is reported loudly rather than looking like
-## a dead key.
+## Deliberately plain — Labels + a highlight; dressing it with the pack UI kit is
+## a later polish pass. Confirm is intentionally broad: ui_accept AND the game's
+## own attack keys AND a raw Enter/Space check, so a quirk in one binding can't
+## make "start" dead. A failed scene load is reported loudly, not silent.
+
+enum Stage { MODE, COUNT }
 
 const MAIN_SCENE := "res://scenes/main.tscn"
 const SELECTED := Color(1, 0.9, 0.3)
 const DIMMED := Color(0.6, 0.6, 0.6)
 
+var _stage: int = Stage.COUNT
 var _selected := 1
 
+@onready var _title: Label = $Center/Box/Title
 @onready var _option1: Label = $Center/Box/Option1
 @onready var _option2: Label = $Center/Box/Option2
+@onready var _hint: Label = $Center/Box/Hint
 
 
 func _ready() -> void:
-	_refresh()
+	if Game.has_save():
+		_stage = Stage.MODE
+	_show_stage()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -28,7 +39,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_selected = 3 - _selected
 		_refresh()
 	elif _is_confirm(event):
-		_start()
+		_confirm()
 
 
 func _is_confirm(event: InputEvent) -> bool:
@@ -42,8 +53,39 @@ func _is_confirm(event: InputEvent) -> bool:
 	return false
 
 
-func _start() -> void:
-	Game.set_player_count(_selected)
+func _show_stage() -> void:
+	_selected = 1
+	if _stage == Stage.MODE:
+		_option1.text = "CONTINUE"
+		_option2.text = "NEW GAME"
+		_hint.text = "up / down: choose      enter or space: select"
+	else:
+		_option1.text = "1 PLAYER"
+		_option2.text = "2 PLAYERS"
+		_hint.text = "up / down: choose      enter or space: start"
+	_refresh()
+
+
+func _confirm() -> void:
+	if _stage == Stage.MODE:
+		if _selected == 1:
+			# Continue: load the saved state now (so main._ready sees the right
+			# player_count) and let the EncounterManager resume the checkpoint.
+			Game.resume_requested = true
+			Game.load_state()
+			_go()
+		else:
+			# New Game: wipe the run, then ask for a player count.
+			Game.resume_requested = false
+			Game.reset_run()
+			_stage = Stage.COUNT
+			_show_stage()
+	else:
+		Game.set_player_count(_selected)
+		_go()
+
+
+func _go() -> void:
 	var err: int = get_tree().change_scene_to_file(MAIN_SCENE)
 	if err != OK:
 		push_error("player_select: could not load %s (error %d)" % [MAIN_SCENE, err])
