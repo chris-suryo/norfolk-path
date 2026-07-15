@@ -10,7 +10,10 @@ extends Node
 
 const SAVE_KEY := "norfolk_path"
 const SAVE_PATH := "user://save.json"
-const SAVE_VERSION := 1
+# Bumped to 2 to invalidate pre-respawn-fix saves (their checkpoint ids point at
+# renumbered areas): has_save() now returns false for a v1 save, so the title
+# starts a clean New Game in the village instead of resuming a stale checkpoint.
+const SAVE_VERSION := 2
 
 var player_count := 1
 var checkpoint := 0

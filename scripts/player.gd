@@ -48,7 +48,10 @@ const ATTACK_ACTIVE_END := 0.28
 const SWORD_REACH := 12.0
 
 const ROLL_DURATION := 0.3
-const ROLL_SPEED := 150.0
+# Dash distance = ROLL_SPEED * ROLL_DURATION. Dropped 150 -> 105 (~45px -> ~31px)
+# per playtest ("dash feels too long"); ROLL_DURATION unchanged so the i-frame
+# window stays the same.
+const ROLL_SPEED := 105.0
 const ROLL_COOLDOWN := 0.5
 
 const HURT_DURATION := 0.25

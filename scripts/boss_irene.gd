@@ -20,12 +20,16 @@ const FADE_TIME := 1.2
 @export var throw_interval: float = 1.7
 @export var keep_distance: float = 44.0
 @export var start_line := "Oh — you're here about the DVD. I really am sorry it came to this."
+@export var early_line := "You could have just returned it on time, you know."
 @export var mid_line := "This is for your own good, I promise."
+@export var late_line := "Fine, keep the disc — but the late fees are NON-NEGOTIABLE."
 @export var defeat_line := "I suppose I'll waive the late fee."
 
 var _active := false
 var _throw_cd := 0.0
+var _said_early := false
 var _said_mid := false
+var _said_late := false
 var _line_time := 0.0
 
 @onready var _hud: CanvasLayer = $HUD
@@ -61,9 +65,17 @@ func _physics_process(delta: float) -> void:
 	if _throw_cd <= 0.0:
 		_throw_book()
 		_throw_cd = throw_interval
-	if not _said_mid and _hp <= int(max_hp / 2.0):
+	# Staged taunts at 3/4, 1/2, 1/4 HP — one-shot each, highest unspoken threshold
+	# first (elif so a big single hit can't flash two lines the same frame).
+	if not _said_early and _hp <= int(max_hp * 3.0 / 4.0):
+		_said_early = true
+		_show_line(early_line)
+	elif not _said_mid and _hp <= int(max_hp / 2.0):
 		_said_mid = true
 		_show_line(mid_line)
+	elif not _said_late and _hp <= int(max_hp / 4.0):
+		_said_late = true
+		_show_line(late_line)
 
 	var target := _nearest_player()
 	if target != null:
