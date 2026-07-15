@@ -22,7 +22,9 @@ resolved:
 
 ## The sheet
 
-- Base body: `assets/cute_fantasy/packs/Cute_Fantasy/Cute_Fantasy/Player/Player_Base/Player_Base_animations.png`
+- Base body: **`assets/game/Player_Modular_Base.png`** (staged copy of the pack's
+  `Player/Player_Base/Player_Base_animations.png`; the pack's `Player/` dir is
+  now `.gdignore`d as unused bulk, so wire against the staged copy).
 - **576×3584 = 9 columns × 56 rows of 64×64 frames.**
 - Direction order within each animation block is **down / side / up**; the side
   row faces RIGHT and flips for left — same convention as the current 32×32
@@ -55,11 +57,13 @@ rows 44–49 fishing, 20–25 misc/jump/pickup.
 Same base body, composited with a different pre-authored hair sheet (each
 576×3584, frame-aligned with the body):
 
-- **P1 (black hair):** `…/Player/Head/Hair_1/Hair_1_Black.png`
-- **P2 (brown hair):** `…/Player/Head/Hair_1/Hair_1_Brown.png`
-- (Hair_1…Hair_6 styles exist, each in Black/Blonde/Brown/Ginger/Grey. Shirts/
-  pants/shoes are also aligned layers in many colors if we want extra P1/P2
-  contrast beyond hair.)
+- **P1 (black hair):** **`assets/game/Player_Hair_Black.png`** (staged)
+- **P2 (brown hair):** **`assets/game/Player_Hair_Brown.png`** (staged)
+- (These are the pack's `Hair_1_Black`/`Hair_1_Brown`, already copied into
+  `assets/game/` as prep. Hair_1…Hair_6 styles exist in the pack in Black/Blonde/
+  Brown/Ginger/Grey, and shirts/pants/shoes are also aligned layers — un-ignore
+  or copy more if we want extra P1/P2 contrast beyond hair. The rest of the pack's
+  `Player/` generator is `.gdignore`d to keep it out of the web build.)
 
 ## Proposed wiring (for approval — a future slice)
 
