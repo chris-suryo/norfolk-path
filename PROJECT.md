@@ -8,6 +8,11 @@ is learning the engine end-to-end, not shipping commercially.
 
 ## Status
 
+- next: **Chris deploys a build for cross-machine playtest** — see
+  `docs/web-deploy.md` (pull → export the Web preset in Godot → drag
+  `export/web` onto vercel.com/new → share the URL). The build session can't do
+  this step itself (no Godot binary + sandbox network blocks the export-template
+  download), so it's a self-serve runbook.
 - next: **Chris runs `docs/playtest-checklist.md` top-to-bottom** — one ordered
   pass over everything built while away (title/mouse/backdrop, collision fixes,
   animal wander, bombschroom, Irene's taunts, font fix, pause menu), each with
