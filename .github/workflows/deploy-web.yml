@@ -70,10 +70,29 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
 
-      - name: Deploy to Vercel (production)
-        working-directory: ${{ steps.locate.outputs.dir }}
+      # Why prebuilt and not a plain `vercel deploy <dir>`: the earlier run
+      # uploaded fine, printed a Production URL, then hung on "Building…" for
+      # 12+ minutes. This Vercel project was created by importing the Git repo,
+      # so it carries a framework/build config; a normal deploy runs that build
+      # pipeline against our already-exported static files and stalls. The Build
+      # Output API (`.vercel/output/static` + a v3 `config.json`) plus
+      # `--prebuilt` tells Vercel "these ARE the final files — serve them, run
+      # no build step," which removes the phase that hung entirely.
+      - name: Stage prebuilt output for Vercel
+        run: |
+          rm -rf .vercel/output
+          mkdir -p .vercel/output/static
+          cp -a "${{ steps.locate.outputs.dir }}/." .vercel/output/static/
+          printf '{"version":3}\n' > .vercel/output/config.json
+          echo "Staged Build Output API tree:"
+          find .vercel/output -maxdepth 2
+
+      # `timeout` makes a future stall fail loud in 5 min instead of burning the
+      # job's full wall-clock — fail-loud over silent hang. With --prebuilt the
+      # real work is a sub-minute upload, so 300s is comfortably slack.
+      - name: Deploy to Vercel (production, prebuilt)
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
           VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-        run: vercel deploy . --prod --token="$VERCEL_TOKEN" --yes
+        run: timeout 300 vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN" --yes
