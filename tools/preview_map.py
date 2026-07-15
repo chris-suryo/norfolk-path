@@ -279,7 +279,10 @@ def blit_building(canvas, cw, ch, src, px_, py_, foot=8):
     blit(canvas, cw, ch, src, 0, 0, w, h, px_ - w // 2, py_ + foot - h)
 
 
-def render(rows, out_path, scale=1, crop_box=None):
+def render(rows, out_path, scale=1, crop_box=None, ground_only=False):
+    # ground_only bakes the below-player composite (terrain + bridge floor +
+    # procedural detail) and SKIPS pass 3 (tall/colliding props), which the
+    # engine draws as live y-sorted nodes on top of this baked image.
     w, h = len(rows[0]), len(rows)
     cw, ch = w * TILE, h * TILE
     canvas = bytearray(cw * ch * 4)
@@ -515,7 +518,7 @@ def render(rows, out_path, scale=1, crop_box=None):
         blit_scaled(canvas, cw, ch, stone_bridge, 0, 48, 128, 16, bx0, by0 + dh - 16, dw, 16)
 
     # ---- pass 3: props/buildings, painter-sorted by base Y ----
-    items = [(y, rows[y][x], x) for y in range(h) for x in range(w)]
+    items = [] if ground_only else [(y, rows[y][x], x) for y in range(h) for x in range(w)]
     for y, sym, x in sorted(items, key=lambda i: i[0]):
         px_, py_ = x * TILE + 8, y * TILE + 8
         if sym == "T":
@@ -690,12 +693,14 @@ def main():
     ap.add_argument("--out", default=OUT)
     ap.add_argument("--scale", type=int, default=1)
     ap.add_argument("--crop", default=None, help="x0,y0,x1,y1 in tiles (render a close-up)")
+    ap.add_argument("--ground-only", action="store_true",
+                    help="bake the below-player composite (terrain + detail), skip tall props")
     args = ap.parse_args()
 
     rows = load_map(args.map)
     problems = validate(rows)
     box = tuple(int(v) for v in args.crop.split(",")) if args.crop else None
-    cw, ch = render(rows, args.out, args.scale, box)
+    cw, ch = render(rows, args.out, args.scale, box, ground_only=args.ground_only)
     print(f"rendered {cw}x{ch}px -> {os.path.relpath(args.out, REPO)}")
     if problems:
         print(f"\n{len(problems)} validation problem(s):")

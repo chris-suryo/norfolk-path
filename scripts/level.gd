@@ -49,13 +49,18 @@ func _ready() -> void:
 
 static func terrain_of(symbol: String) -> Terrain:
 	match symbol:
-		"~":
+		# open water + everything that floats ON the lake (boat, capybaras,
+		# swimming duck/swan) — all solid so the player can't walk into the lake.
+		"~", "O", "k", "a", "l", "@":
 			return Terrain.WATER
 		"B":
 			return Terrain.WATER_WALKABLE
-		"#", "S":
+		# path, spawn, and the grape-bower arch (walk underneath it).
+		"#", "S", "g":
 			return Terrain.PATH
 		_:
+			# grass catch-all — also farm (D/Q) and cobble (c): all walkable,
+			# their look comes from the baked ground image, not the tilemap.
 			return Terrain.GRASS
 
 

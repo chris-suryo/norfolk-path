@@ -54,13 +54,16 @@ func _process(_delta: float) -> void:
 
 
 func _build_areas() -> void:
-	# center cell (checkpoint) + [scene, cell] enemy specs — all on walkable tiles.
+	# center cell (checkpoint) + [scene, cell] enemy specs — all on walkable path
+	# tiles of the valley-1 (192x48) map: spawn/west village -> road+bridge near
+	# Evan -> library approach. Slimes sit at the village exit, the skeleton
+	# further out in the forest. (Camp/forest enemy spawns are the NEXT slice.)
 	_areas = [
 		_make_area(
-			0, Vector2i(9, 20), [[SLIME_SCENE, Vector2i(14, 20)], [SLIME_SCENE, Vector2i(17, 21)]]
+			0, Vector2i(45, 28), [[SLIME_SCENE, Vector2i(50, 28)], [SLIME_SCENE, Vector2i(55, 28)]]
 		),
-		_make_area(1, Vector2i(24, 20), [[SKELETON_SCENE, Vector2i(31, 20)]]),
-		_make_area(2, Vector2i(44, 22), [[BOSS_SCENE, Vector2i(45, 22)]]),
+		_make_area(1, Vector2i(70, 26), [[SKELETON_SCENE, Vector2i(95, 21)]]),
+		_make_area(2, Vector2i(156, 26), [[BOSS_SCENE, Vector2i(162, 26)]]),
 	]
 
 
