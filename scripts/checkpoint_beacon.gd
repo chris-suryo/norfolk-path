@@ -1,12 +1,11 @@
 class_name CheckpointBeacon
 extends Node2D
 
-## A persistent road marker for each autosave point. It uses the supplied lantern
-## art and a small code-drawn glow, so activation remains clear without another
-## generated sprite asset.
+## A persistent grass-side marker for each autosave point. The checkpoint trigger
+## stays on the road; the distinct tall post keeps the player out of its sprite.
 
-const LANTERN := preload(
-	"res://assets/cute_fantasy/packs/Cute_Fantasy/Cute_Fantasy/Outdoor decoration/Lantern.png"
+const LAMP_POST := preload(
+	"res://assets/cute_fantasy/packs/Cute_Fantasy/Cute_Fantasy/Outdoor decoration/Lanter_Posts.png"
 )
 
 var _active := false
@@ -17,8 +16,10 @@ var _sprite: Sprite2D
 
 func _ready() -> void:
 	_sprite = Sprite2D.new()
-	_sprite.texture = LANTERN
-	_sprite.position = Vector2(0, -12)
+	_sprite.texture = LAMP_POST
+	_sprite.region_enabled = true
+	_sprite.region_rect = Rect2(0, 0, 16, 48)
+	_sprite.offset = Vector2(0, -16)
 	add_child(_sprite)
 	_refresh()
 
@@ -50,5 +51,5 @@ func _refresh() -> void:
 func _draw() -> void:
 	if not _active:
 		return
-	var radius := 11.0 + sin(_phase) * 1.5 + _pulse * 12.0
-	draw_circle(Vector2(0, -12), radius, Color(1.0, 0.67, 0.18, 0.14 + _pulse * 0.16))
+	var radius := 24.0 + sin(_phase) * 2.0 + _pulse * 12.0
+	draw_circle(Vector2(0, -26), radius, Color(1.0, 0.67, 0.18, 0.12 + _pulse * 0.14))

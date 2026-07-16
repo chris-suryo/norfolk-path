@@ -45,10 +45,10 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -128.0
-offset_top = -112.0
-offset_right = 128.0
-offset_bottom = 112.0
+offset_left = -144.0
+offset_top = -118.0
+offset_right = 144.0
+offset_bottom = 118.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("2_frames")
@@ -59,8 +59,8 @@ patch_margin_right = 6
 patch_margin_bottom = 6
 
 [node name="Campfire" type="Sprite2D" parent="Frame"]
-position = Vector2(128, 38)
-scale = Vector2(1.5, 1.5)
+position = Vector2(144, 36)
+scale = Vector2(1.25, 1.25)
 texture = ExtResource("5_fire")
 hframes = 4
 script = ExtResource("6_critter")
@@ -74,22 +74,29 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 16.0
-offset_top = 66.0
+offset_top = 62.0
 offset_right = -16.0
-offset_bottom = -16.0
+offset_bottom = -28.0
 grow_horizontal = 2
 grow_vertical = 2
 alignment = 1
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
 
 [node name="Title" type="Label" parent="Frame/Box"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 18
 text = "NORFOLK PATH"
 horizontal_alignment = 1
 
+[node name="Subtitle" type="Label" parent="Frame/Box"]
+layout_mode = 2
+modulate = Color(0.85, 0.71, 0.4, 1)
+theme_override_font_sizes/font_size = 8
+text = "A CO-OP PATH TO IRENE"
+horizontal_alignment = 1
+
 [node name="Spacer" type="Control" parent="Frame/Box"]
-custom_minimum_size = Vector2(0, 6)
+custom_minimum_size = Vector2(0, 4)
 layout_mode = 2
 
 [node name="Option1" type="Label" parent="Frame/Box"]
@@ -106,7 +113,14 @@ horizontal_alignment = 1
 modulate = Color(0.75, 0.75, 0.75, 1)
 layout_mode = 2
 theme_override_font_sizes/font_size = 8
-text = "arrows or mouse"
+text = "CLICK OR ARROWS + ENTER"
+horizontal_alignment = 1
+
+[node name="Legend" type="Label" parent="Frame/Box"]
+layout_mode = 2
+modulate = Color(0.66, 0.61, 0.52, 1)
+theme_override_font_sizes/font_size = 7
+text = "P1: WASD + SPACE    P2: ARROWS + /"
 horizontal_alignment = 1
 
 [node name="BuildVersion" type="Label" parent="Frame"]

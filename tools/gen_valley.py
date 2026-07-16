@@ -416,9 +416,8 @@ def build(variant):
                 putg(g, x, y, fill_kinds[int(hh(x + 7, y + 9) * 8) % 8])
 
     # ===== REGION 4: LIBRARY & LAKE (cols 152-190) =====
-    for lx in (150, 157):                      # lamp-lit final approach
-        put(g, lx, path_y(lx) - 1, "+")
-        put(g, lx, path_y(lx) + 4, "+")
+    # Tall lamp posts are reserved for checkpoint markers, keeping their visual
+    # language distinct from ordinary village and library dressing.
     building(g, 162, 17, "L", fence=False)     # Inn_Black = the darker library
     put(g, 166, 20, "N")                        # Irene
     put(g, 165, 19, "x")                        # chest anchored beside the door

@@ -54,7 +54,7 @@ func setup(hud: Node) -> void:
 func _spawn_beacons() -> void:
 	for area in _areas:
 		var beacon := CheckpointBeacon.new()
-		beacon.position = area.center
+		beacon.position = area.beacon_center
 		_world.add_child(beacon)
 		_beacons[area.id] = beacon
 		beacon.set_active(area.id <= Game.checkpoint)
@@ -88,12 +88,16 @@ func _build_areas() -> void:
 	# respawns you on the road, not inside the clearing.
 	_areas = [
 		_make_area(
-			0, Vector2i(45, 28), [[SLIME_SCENE, Vector2i(50, 28)], [SLIME_SCENE, Vector2i(55, 28)]]
+			0,
+			Vector2i(45, 28),
+			Vector2i(45, 30),
+			[[SLIME_SCENE, Vector2i(50, 28)], [SLIME_SCENE, Vector2i(55, 28)]]
 		),
-		_make_area(1, Vector2i(70, 26), [[SKELETON_SCENE, Vector2i(95, 21)]]),
+		_make_area(1, Vector2i(70, 26), Vector2i(70, 28), [[SKELETON_SCENE, Vector2i(95, 21)]]),
 		_make_area(
 			2,
 			Vector2i(108, 24),
+			Vector2i(108, 26),
 			[
 				[BOMB_SCENE, Vector2i(117, 33)],
 				[SKELETON_SCENE, Vector2i(124, 32)],
@@ -101,17 +105,20 @@ func _build_areas() -> void:
 				[SKELETON_SCENE, Vector2i(124, 35)],
 			]
 		),
-		_make_area(BOSS_ID, Vector2i(156, 26), [[BOSS_SCENE, Vector2i(162, 26)]]),
+		_make_area(
+			BOSS_ID, Vector2i(156, 26), Vector2i(156, 28), [[BOSS_SCENE, Vector2i(162, 26)]]
+		),
 	]
 
 
-func _make_area(id: int, center_cell: Vector2i, specs: Array) -> Dictionary:
+func _make_area(id: int, center_cell: Vector2i, beacon_cell: Vector2i, specs: Array) -> Dictionary:
 	var built: Array = []
 	for spec in specs:
 		built.append({"scene": spec[0], "pos": IslandMap.cell_center(spec[1])})
 	return {
 		"id": id,
 		"center": IslandMap.cell_center(center_cell),
+		"beacon_center": IslandMap.cell_center(beacon_cell),
 		"specs": built,
 		"instances": [],
 		"cleared": false,

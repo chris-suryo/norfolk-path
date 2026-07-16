@@ -164,6 +164,7 @@ func _process_attack(_delta: float) -> void:
 		_apply_sword_hits()
 	var column := mini(ATTACK_FRAMES - 1, int(_state_time / ATTACK_DURATION * ATTACK_FRAMES))
 	_set_frame(_attack_row(), column)
+	queue_redraw()
 	if _state_time >= ATTACK_DURATION:
 		_sword_shape.disabled = true
 		_enter_normal()
@@ -211,6 +212,7 @@ func _move_input() -> Vector2:
 func _enter_normal() -> void:
 	_state = State.NORMAL
 	_state_time = 0.0
+	queue_redraw()
 
 
 func _enter_attack(input_vector: Vector2) -> void:
@@ -302,3 +304,24 @@ func _animate_move(moving: bool, delta: float) -> void:
 func _set_frame(row: int, column: int) -> void:
 	_sprite.flip_h = absf(_facing.x) >= absf(_facing.y) and _facing.x < 0.0
 	_sprite.frame = row * SHEET_COLUMNS + column
+
+
+## The sheet's sword frames are compact; this brief code-drawn trail reaches the
+## same 30px tip as the 18px-offset, 24px-wide hitbox so combat reads honestly.
+func _draw() -> void:
+	if (
+		_state != State.ATTACK
+		or _state_time < ATTACK_ACTIVE_START
+		or _state_time > ATTACK_ACTIVE_END
+	):
+		return
+	var progress := inverse_lerp(ATTACK_ACTIVE_START, ATTACK_ACTIVE_END, _state_time)
+	var direction := _facing.normalized()
+	var side := Vector2(-direction.y, direction.x)
+	var start := direction * 9.0
+	var tip := direction * lerpf(22.0, 30.0, progress)
+	var outer := Color(0.96, 0.63, 0.2, 0.78)
+	var inner := Color(1.0, 0.92, 0.58, 0.96)
+	draw_line(start + side * 4.0, tip + side, outer, 2.0, false)
+	draw_line(start - side * 4.0, tip - side, outer, 2.0, false)
+	draw_line(start, tip, inner, 2.0, false)
