@@ -225,7 +225,7 @@ func _update_coop_revive() -> void:
 func _on_boss_defeated() -> void:
 	# Let her defeat line + fade play, then the quest-complete screen.
 	await get_tree().create_timer(WIN_DELAY).timeout
-	get_tree().change_scene_to_file(WIN_SCENE)
+	Game.change_scene(WIN_SCENE)
 
 
 func _all_players_down() -> bool:

@@ -147,7 +147,7 @@ func _save_now() -> void:
 
 func _return_to_title() -> void:
 	get_tree().paused = false
-	get_tree().change_scene_to_file(SELECT_SCENE)
+	Game.change_scene(SELECT_SCENE)
 
 
 func _sync_zoom_label() -> void:

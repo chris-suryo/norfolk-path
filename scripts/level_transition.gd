@@ -54,4 +54,4 @@ func _travel() -> void:
 	# A door/edge crossing is not a save resume — spawn at the entry, not at a
 	# valley checkpoint.
 	Game.resume_requested = false
-	get_tree().change_scene_to_file("res://scenes/main.tscn")
+	Game.change_scene("res://scenes/main.tscn")
