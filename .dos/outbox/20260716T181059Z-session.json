@@ -1,0 +1,66 @@
+{
+  "goal": "Triage playtest round 1, ship the fix slices, stand up the automated testing loop, and execute the full map-polish slice",
+  "completed": [
+    "Merged PR #5 (75-screenshot playtest findings) and triaged all 13 findings with verdicts appended to docs/playtest-findings.md",
+    "PR #6 (merged + auto-deployed): font space glyph added via fontTools (web tofu fixed, proven by before/after render), circle player collision body, post-win reset keeps characters, HP-bar/hint/dialogue legibility, bombschroom breathe tell",
+    "PR #4: deploy-web trigger moved to main after the slice-1 branch merge left it dangling; proven live end-to-end",
+    "Built the browser playtest bot (playtest.yml + tools/playtest/ci_driver.py): exports the web build, drives it with trusted Playwright input, fail-loud input-proof assertion, 13 asserted screenshots; green on its first run and now runs on every merge to main",
+    "Merged PR #7 (local session's map audit + Windows driver scripts); fixed its tool nits (spawn twin-sprite render, cross-drive relpath crash, hardcoded path)",
+    "PR #8 (merged): bot armed on main + docs/testing-loop.md standardizing the 3-layer loop",
+    "PR #9 (merged): map slice M1-M13 - road-to-library approach, aligned/visible doorsteps, treed beehives, closed pens, dressed plaza, camp cleanup, picnic vignette out of the boss arena, NE border dressing, river jog softened; windmill animated sails, villager variety (Chef Chloe on odd columns), deterministic oak flips, chicken walk-anim fix",
+    "check_map_rules.py added + animal frame-bounds check in check_assets; ci.yml now actually runs all four project checkers (it never did before)",
+    "PROJECT.md status updated; deploy-web + playtest bot verified green on the final merge - the loop completed its first full cycle"
+  ],
+  "discovered": [
+    "CuteFantasy-5x9.ttf had no U+0020 (or dash) glyphs; desktop system-font fallback masked it, web showed tofu on every menu line including production",
+    "The bridge/tent pins were the classic Godot rect-vs-tile-seam catch; a circle body fixes the whole class without map edits",
+    "The windmill prop region (0,0,128,112) drew the tower and its detached sail cross side by side - the pack ships the rotating sails as a separate 4-frame sheet the game never spawned",
+    "The chicken declared a 6-frame walk on a 4-frame sheet - per-step engine errors caught only by the playtest bot's console log",
+    "ci.yml ran gdlint only; the python checkers were local-ritual until this session",
+    "The 'missing library' exists - the road just never reached it; the boss-beacon/NPC confusion was a villager standing directly under the beacon",
+    "GitHub workflow dispatch-by-API resolves only default-branch workflows (404 otherwise); bring-up needs a temporary branch push trigger",
+    "Actions artifact/log blob storage (Azure) is egress-blocked from this cloud session; job-log text via the MCP tool works"
+  ],
+  "decisions": [
+    "The valley map is the keeper: island_map.gd UNFROZEN, cove becomes a future NE-quadrant extension, the long-standing cove pick is closed",
+    "Post-win reset keeps character appearances (identity, not run state); boss full-HP reset on party wipe is intended difficulty, documented",
+    ".import policy: commit editor-generated files (execution still pending, needs a Godot editor)",
+    "Playtest bot standing triggers: push-to-main + manual dispatch",
+    "Map fix scope was all of M1-M13; M13 (procedural flower jitter) deferred with reason"
+  ],
+  "lessons": [
+    "Script ASCII-map surgery with per-cell old-value assertions - they caught three wrong assumptions before any file was touched",
+    "Promote every audit bug CLASS into a CI rule immediately: check_map_rules found 4 stray fence posts the human audit missed, on its first run",
+    "Read the bot's console log even when the run is green - that is where the chicken bug lived",
+    "gdformat the regenerated prop_table.gd after gen_prop_table.py or the diff balloons from 1 line to 167",
+    "Playwright keyboard input drives Godot web builds fine (CDP = trusted); synthetic JS events are ignored by the engine"
+  ],
+  "files_changed": [
+    "scripts/island_map.gd", "assets/generated/valley-1-ground.png", "scripts/main.gd",
+    "scripts/prop_table.gd", "scripts/game.gd", "scenes/player.tscn", "scenes/hud.tscn",
+    "scenes/player_select.tscn", "scenes/character_creator.tscn", "scenes/boss_irene.tscn",
+    "scripts/bomb_enemy.gd", "assets/game/CuteFantasy-5x9.ttf", "tools/gen_prop_table.py",
+    "tools/preview_map.py", "tools/check_assets.py", "tools/check_map_rules.py",
+    "tools/playtest/ci_driver.py", "tools/playtest/map_audit.py", ".github/workflows/ci.yml",
+    ".github/workflows/playtest.yml", ".github/workflows/deploy-web.yml",
+    "docs/testing-loop.md", "docs/playtest-automation.md", "docs/playtest-findings.md",
+    "docs/combat-slice.md", "PROJECT.md"
+  ],
+  "open_questions": [
+    "Do the collision, windmill, doorstep, and variety fixes hold up live in-engine? (round-2 checklist at the end of docs/playtest-findings.md)",
+    "Roll i-frames and bombschroom windup visuals remain human-untested",
+    "When to build the NE cove extension now that the site is reserved"
+  ],
+  "intent": "Chris was away and pre-authorized the roadmap including merges, so the session executed through the PR #9 merge and verified the full deploy+bot cycle; it stops at the natural handoff to his manual playthrough",
+  "next_task": "Manual playthrough of the live build against the round-2 checklist, then the one-time editor .import commit",
+  "blockers": null,
+  "resume_minutes": 10,
+  "dont_retry": [
+    "Fetching Actions artifact/log blobs from the cloud session (Azure host egress-blocked) - use MCP get_job_logs return_content or Chris's eyes",
+    "Dispatching a workflow that only exists on a topic branch (404) - use a temporary branch push trigger, strip before merge",
+    "Reaching norfolk-path.vercel.app from the cloud sandbox (egress policy 403) - browser-test via CI runner or locally",
+    "Idle-only chicken config with wander:true - walk_row -1 silently disables wandering entirely",
+    "Shifting the E-cottage doorstep right - a lamp occupies (35,21)"
+  ],
+  "session_id": "session_01FhtmMU3vN2QW9P1PAUFdCV"
+}
