@@ -19,11 +19,10 @@ name: playtest
 
 on:
   workflow_dispatch: {}
-  # TEMPORARY bring-up trigger: dispatch-by-API only resolves workflows that
-  # exist on the default branch, so pushes to the dev branch drive the
-  # verification runs. REMOVE before merging to main.
+  # Every merge to main gets a bot run (~3.5 min): a screenshot record of the
+  # actual playable build, alongside deploy-web shipping it.
   push:
-    branches: [claude/norfolk-path-godot-continue-l07jly]
+    branches: [main]
 
 permissions:
   contents: read
