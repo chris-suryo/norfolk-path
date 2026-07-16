@@ -600,7 +600,9 @@ def render(rows, out_path, scale=1, crop_box=None, ground_only=False):
         elif sym == "|":                                 # white picket fence (garden run)
             blit(canvas, cw, ch, wfence, 16, 0, 16, 16, px_ - 8, py_ - 8)
         elif sym == "y":                                 # butterfly (flits above grass)
-            blit(canvas, cw, ch, butterfly, 0, 0, 16, 16, px_ - 8, py_ - 20)
+            # sheet is 8px frames (2 flaps x 8 colors) — draw ONE butterfly,
+            # color row picked per cell (in-game it's randomized per instance)
+            blit(canvas, cw, ch, butterfly, 0, ((x * 31 + y * 17) % 8) * 8, 8, 8, px_ - 4, py_ - 16)
         elif sym == "O":                                 # boat moored at the shore
             blit(canvas, cw, ch, boat, 0, 0, 48, 48, px_ - 24, py_ - 34)
         elif sym == "M":                                 # market awning / storefront canopy
