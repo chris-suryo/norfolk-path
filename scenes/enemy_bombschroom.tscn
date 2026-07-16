@@ -1,0 +1,33 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/bomb_enemy.gd" id="1_bomb"]
+[ext_resource type="Texture2D" path="res://assets/cute_fantasy/packs/Cute_Fantasy/Cute_Fantasy/Enemies/Bombschroom/Bombschroom.png" id="2_tex"]
+
+[sub_resource type="RectangleShape2D" id="body"]
+size = Vector2(10, 8)
+
+[sub_resource type="CircleShape2D" id="contact"]
+radius = 10.0
+
+[node name="Bombschroom" type="CharacterBody2D"]
+motion_mode = 1
+collision_layer = 4
+collision_mask = 1
+script = ExtResource("1_bomb")
+max_hp = 3
+contact_damage = 3
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_tex")
+hframes = 11
+vframes = 21
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("body")
+
+[node name="ContactHitbox" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ContactHitbox"]
+shape = SubResource("contact")

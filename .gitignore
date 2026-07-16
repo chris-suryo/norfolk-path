@@ -10,9 +10,18 @@ export/
 .env
 .DS_Store
 
+# Vercel CLI's local link (org/project IDs + cache) from `vercel link`/`vercel
+# dev` — not secret on its own, but it's machine-local state, not project
+# source; keeping it out avoids an untracked-file pull conflict later.
+.vercel/
+
 # Python bytecode from tools/
 __pycache__/
 *.pyc
+
+# Local visual-review snapshots. They are generated per revision and uploaded by
+# the Visual Review workflow, so they do not belong in the source history.
+artifacts/visual-review/
 
 # Raw downloaded asset zips — keep the EXTRACTED art in git, not the archives.
 # (Your backup copies stay on disk; git just ignores them.)
@@ -28,3 +37,6 @@ __MACOSX/
 
 # Orphaned old placeholder art (replaced by the real Cute Fantasy pack).
 assets/placeholder/
+
+.vercel
+.env*

@@ -184,19 +184,22 @@ def flock(g, cx, cy, kinds, n, spread=3, salt=0):
             placed += 1
 
 
-DOORS = []  # (bx, by, step) of every placed building — for the connectivity check
+DOORS = []  # (bx, by, step) of every placed building — for the doorstep check
 
 
 def building(g, bx, by, sym, fence=True, lamps=True):
-    """Place a building in context: a cobble ribbon that REACHES the door and runs
-    to the path, flanking lamps, a fenced yard behind, and a flowerbed cluster."""
+    """Place a building with a short doorstep, lamps, a fenced yard and flowers.
+
+    A full cobble ribbon from every door to the road looked procedural and cut
+    through the village lawn. Players can walk on grass, so the doorstep is a
+    visual cue rather than a forced route.
+    """
     put(g, bx, by, sym)
     ty = path_y(bx)
     step = 1 if ty > by else -1                 # direction from building to path
     DOORS.append((bx, by, step))
-    y = by
-    while y != ty:                              # continuous cobble door -> path
-        y += step
+    for distance in range(1, 2):                # a single-row, subtle doorstep
+        y = by + step * distance
         for dx in (0, 1):
             if g[y][bx + dx] in ".fF":
                 g[y][bx + dx] = "c"
@@ -214,26 +217,13 @@ def building(g, bx, by, sym, fence=True, lamps=True):
 
 
 def check_connected(g):
-    """Fail loud if any building's cobble ribbon doesn't reach the road: flood
-    from every path cell through path/cobble/bridge, then require a flooded
-    cobble cell right at each door."""
-    flooded = set()
-    stack = [(x, y) for y in range(H) for x in range(W) if g[y][x] in "#SB"]
-    flooded.update(stack)
-    while stack:
-        x, y = stack.pop()
-        for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
-            nx, ny = x + dx, y + dy
-            if 0 <= nx < W and 0 <= ny < H and (nx, ny) not in flooded \
-                    and g[ny][nx] in "#SBc":
-                flooded.add((nx, ny))
-                stack.append((nx, ny))
+    """Fail loud if a generated building loses its immediate cobble doorstep."""
     bad = []
     for bx, by, step in DOORS:
-        if not any((bx + dx, by + step) in flooded for dx in (0, 1)):
+        if not any(g[by + step][bx + dx] == "c" for dx in (0, 1)):
             bad.append((bx, by))
     if bad:
-        raise SystemExit(f"DISCONNECTED buildings (door cobble never reaches the road): {bad}")
+        raise SystemExit(f"Buildings missing a cobble doorstep: {bad}")
 
 
 def pen(g, x0, y0, x1, y1):
@@ -335,11 +325,16 @@ def build(variant):
     # two DISTINCT farms: mixed veggies (west) + wheat (east, windmill + scarecrow)
     rect(g, 6, 38, 12, 42, "D")
     rect(g, 44, 37, 51, 42, "Q")
-    put(g, 47, 35, "z")                        # windmill overlooking the wheat
+    # A deliberate landmark clearing east of the wheat: the windmill has room
+    # for its full silhouette instead of reading as an accidental field prop.
+    for y in range(36, 43):
+        for x in range(53, 60):
+            g[y][x] = "."
+    put(g, 56, 39, "z")
     put(g, 43, 38, "K")                        # scarecrow
     scatter(g, [(43, 40), (52, 38), (52, 41)], "2")    # hay bales
-    scatter(g, [(53, 40), (42, 42)], "%")               # beehives
-    scatter(g, [(53, 39), (42, 41), (13, 39)], "y")     # bees/butterflies at the hives
+    scatter(g, [(52, 33)], "%")                         # one purposeful hive by the orchard edge
+    scatter(g, [(53, 33), (42, 41), (13, 39)], "y")     # butterflies around flowers and the hive
     # livestock pen + NEW horse paddock, each with a trough, flocks not rows
     pen(g, 16, 37, 25, 43)
     put(g, 17, 39, "=")
@@ -421,9 +416,8 @@ def build(variant):
                 putg(g, x, y, fill_kinds[int(hh(x + 7, y + 9) * 8) % 8])
 
     # ===== REGION 4: LIBRARY & LAKE (cols 152-190) =====
-    for lx in (150, 157):                      # lamp-lit final approach
-        put(g, lx, path_y(lx) - 1, "+")
-        put(g, lx, path_y(lx) + 4, "+")
+    # Tall lamp posts are reserved for checkpoint markers, keeping their visual
+    # language distinct from ordinary village and library dressing.
     building(g, 162, 17, "L", fence=False)     # Inn_Black = the darker library
     put(g, 166, 20, "N")                        # Irene
     put(g, 165, 19, "x")                        # chest anchored beside the door

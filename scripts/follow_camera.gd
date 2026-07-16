@@ -58,6 +58,13 @@ func _physics_process(_delta: float) -> void:
 		global_position = _target.global_position
 
 
+## Live zoom change from the pause menu's Zoom presets. The painted-bounds limits
+## are in world space, so they don't depend on zoom — no need to recompute them.
+func set_zoom_preset(value: float) -> void:
+	zoom_level = value
+	zoom = Vector2(value, value)
+
+
 func _apply_bounds() -> void:
 	var used := _bounds_source.get_used_rect()
 	var tile := _bounds_source.tile_set.tile_size

@@ -12,10 +12,59 @@ extends Node2D
 const GROUND_IMAGE := "res://assets/generated/valley-1-ground.png"
 
 ## Symbols handled outside PropTable: terrain (painted + baked), fences (F needs
-## neighbour-aware pieces), spawn. Used by the build-time coverage assert so a
-## future map edit can never silently reintroduce the old blank-grass gap.
-const TERRAIN_SYMS := [".", "#", "S", "~", "B", "D", "Q", "c", "g", "O", "k", "a", "l", "@"]
+## neighbour-aware pieces), spawn, and node anchors ("$" = Ariana, spawned as a
+## live critter node below — NOT a table prop, else a static duck stacks on her).
+## Used by the build-time coverage assert so a future map edit can never silently
+## reintroduce the old blank-grass gap.
+const TERRAIN_SYMS := [".", "#", "S", "~", "B", "D", "Q", "c", "g", "O", "k", "a", "l", "@", "$"]
 const FENCE_SYMS := ["F", "|"]
+
+## Ambient-animal animation, keyed by map symbol (from the audited sheet layout —
+## all 32px frames). "idle"/"idle_n" = the idle row + frame count; the optional
+## "walk"/"walk_n" + "wander" enable a slow random stroll for land animals with a
+## walk cycle. Water animals (a/l swimming, k/@ capybara) bob in place only.
+## hframes/vframes are derived from each sheet at spawn (_spawn_animal).
+const ANIMAL_ANIM := {
+	"d":
+	{"idle": 0, "idle_n": 2, "walk": 1, "walk_n": 6, "wander": true, "radius": 18.0, "speed": 12.0},
+	"U":
+	{"idle": 0, "idle_n": 2, "walk": 1, "walk_n": 6, "wander": true, "radius": 18.0, "speed": 12.0},
+	"^":
+	{"idle": 0, "idle_n": 2, "walk": 1, "walk_n": 6, "wander": true, "radius": 16.0, "speed": 12.0},
+	"h":
+	{"idle": 0, "idle_n": 2, "walk": 3, "walk_n": 6, "wander": true, "radius": 24.0, "speed": 16.0},
+	"R":
+	{"idle": 0, "idle_n": 2, "walk": 1, "walk_n": 8, "wander": true, "radius": 16.0, "speed": 10.0},
+	"j":
+	{
+		"idle": 0,
+		"idle_n": 2,
+		"walk": 2,
+		"walk_n": 10,
+		"wander": true,
+		"radius": 16.0,
+		"speed": 14.0
+	},
+	"o": {"idle": 0, "idle_n": 4},
+	"p": {"idle": 0, "idle_n": 4},
+	"e": {"idle": 0, "idle_n": 4},
+	"C":
+	{"idle": 0, "idle_n": 4, "walk": 1, "walk_n": 6, "wander": true, "radius": 12.0, "speed": 8.0},
+	"y":
+	{
+		"frame_size": 16,
+		"idle": 0,
+		"idle_n": 4,
+		"fly": true,
+		"radius": 9.0,
+		"period": 2.8,
+		"idle_fps": 5.0
+	},
+	"a": {"idle": 8, "idle_n": 4},
+	"l": {"idle": 8, "idle_n": 3},
+	"k": {"idle": 0, "idle_n": 9},
+	"@": {"idle": 0, "idle_n": 9},
+}
 
 var _rows := IslandMap.rows()
 var _tex_cache := {}
@@ -30,11 +79,9 @@ func _ready() -> void:
 	$Level.modulate = Color(1.0, 1.0, 1.0, 0.0)
 	var spawn := IslandMap.cell_center(IslandMap.find_one("S"))
 	$World/Player.position = spawn
-	$World/Player.respawn_point = spawn
 	# 1P: drop the second player; the midpoint camera falls back to Player1.
 	if Game.player_count >= 2:
 		$World/Player2.position = spawn + Vector2(18, 0)
-		$World/Player2.respawn_point = spawn + Vector2(18, 0)
 	else:
 		$World/Player2.queue_free()
 	$World/Shop.position = IslandMap.cell_center(IslandMap.find_one("H"))
@@ -43,7 +90,16 @@ func _ready() -> void:
 	_spawn_fences()
 	# Encounters/checkpoints/respawn — AFTER players are positioned so a
 	# saved-checkpoint resume can override the default spawn.
-	$World/EncounterManager.setup()
+	$World/EncounterManager.setup($HUD)
+	_bind_hud()
+
+
+## Connect each live player's HP to its HUD bar. Player2 is freed in 1-player, so
+## only bind it when it is really in play.
+func _bind_hud() -> void:
+	$HUD.bind_player($World/Player)
+	if Game.player_count >= 2:
+		$HUD.bind_player($World/Player2)
 
 
 ## Draw the baked ground composite behind the Y-sorted world.
@@ -80,28 +136,69 @@ func _spawn_props() -> void:
 			if not PropTable.PROPS.has(sym):
 				continue
 			var spec: Array = PropTable.PROPS[sym]
+			var base := IslandMap.cell_center(Vector2i(x, y))
+			if ANIMAL_ANIM.has(sym):
+				_spawn_animal(sym, spec, base)
+				continue
 			var region: Rect2 = spec[1]
 			var offset: Vector2 = spec[2]
 			var collider: Vector2 = spec[3]
-			var base := IslandMap.cell_center(Vector2i(x, y))
+			var collider_offset: Vector2 = spec[4] if spec.size() > 4 else Vector2.ZERO
+			var collision_segments: Array = spec[5] if spec.size() > 5 else []
 			var sprite := Sprite2D.new()
 			sprite.texture = _texture(spec[0])
 			sprite.region_enabled = true
 			sprite.region_rect = region
 			sprite.offset = offset
-			if collider == Vector2.ZERO:
+			if collider == Vector2.ZERO and collision_segments.is_empty():
 				sprite.position = base
 				_world.add_child(sprite)
 			else:
 				var body := StaticBody2D.new()
 				body.position = base
 				body.add_child(sprite)
-				var shape := CollisionShape2D.new()
-				var rect := RectangleShape2D.new()
-				rect.size = collider
-				shape.shape = rect
-				body.add_child(shape)
+				if collider != Vector2.ZERO:
+					_add_collision_shape(body, collider, collider_offset)
+				for segment in collision_segments:
+					_add_collision_shape(body, segment[0], segment[1])
 				_world.add_child(body)
+
+
+func _add_collision_shape(body: StaticBody2D, size: Vector2, offset: Vector2) -> void:
+	var shape := CollisionShape2D.new()
+	var rect := RectangleShape2D.new()
+	rect.size = size
+	shape.shape = rect
+	shape.position = offset
+	body.add_child(shape)
+
+
+## Animals become a live AmbientAnimal (idle-bob + optional wander) instead of a
+## static sprite. Uses the same sheet + foot offset as the prop table; hframes/
+## vframes come from the sheet (all 32px frames). No collider — they're decor.
+func _spawn_animal(sym: String, spec: Array, base: Vector2) -> void:
+	var cfg: Dictionary = ANIMAL_ANIM[sym]
+	var tex := _texture(spec[0])
+	var animal := AmbientAnimal.new()
+	animal.texture = tex
+	var frame_size: float = cfg.get("frame_size", 32.0)
+	animal.hframes = int(tex.get_width() / frame_size)
+	animal.vframes = int(tex.get_height() / frame_size)
+	animal.offset = spec[2]
+	animal.position = base
+	animal.idle_row = cfg["idle"]
+	animal.idle_count = cfg["idle_n"]
+	animal.walk_row = cfg.get("walk", -1)
+	animal.walk_count = cfg.get("walk_n", 6)
+	animal.idle_fps = cfg.get("idle_fps", 2.0)
+	animal.walk_fps = cfg.get("walk_fps", 6.0)
+	animal.can_wander = cfg.get("wander", false)
+	animal.wander_radius = cfg.get("radius", 16.0)
+	animal.move_speed = cfg.get("speed", 10.0)
+	animal.can_fly = cfg.get("fly", false)
+	animal.flight_radius = cfg.get("radius", 8.0)
+	animal.flight_period = cfg.get("period", 3.0)
+	_world.add_child(animal)
 
 
 ## Fences need neighbour-aware pieces (a straight run vs a post), so they stay

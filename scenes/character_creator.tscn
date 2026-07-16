@@ -1,0 +1,133 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/character_creator.gd" id="1_creator"]
+[ext_resource type="Texture2D" path="res://assets/game/UI_Frames.png" id="2_frames"]
+[ext_resource type="FontFile" path="res://assets/game/CuteFantasy-5x9.ttf" id="3_font"]
+[ext_resource type="PackedScene" path="res://scenes/appearance_preview.tscn" id="4_preview"]
+
+[sub_resource type="Theme" id="theme"]
+default_font = ExtResource("3_font")
+default_font_size = 9
+
+[node name="CharacterCreator" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = SubResource("theme")
+mouse_filter = 2
+script = ExtResource("1_creator")
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.04, 0.06, 0.09, 0.8)
+
+[node name="Frame" type="NinePatchRect" parent="."]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -208.0
+offset_top = -152.0
+offset_right = 208.0
+offset_bottom = 152.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_frames")
+region_rect = Rect2(10, 10, 28, 28)
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
+
+[node name="Slot" type="Label" parent="Frame"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 18.0
+offset_bottom = 36.0
+grow_horizontal = 2
+theme_override_font_sizes/font_size = 14
+horizontal_alignment = 1
+text = "CREATE PLAYER 1"
+
+[node name="PreviewLabel" type="Label" parent="Frame"]
+layout_mode = 1
+offset_left = 42.0
+offset_top = 66.0
+offset_right = 170.0
+offset_bottom = 82.0
+theme_override_font_sizes/font_size = 7
+horizontal_alignment = 1
+text = "LIVE PREVIEW"
+
+[node name="Preview" parent="Frame" instance=ExtResource("4_preview")]
+position = Vector2(106, 145)
+scale = Vector2(2, 2)
+
+[node name="Options" type="VBoxContainer" parent="Frame"]
+layout_mode = 1
+offset_left = 194.0
+offset_top = 52.0
+offset_right = 398.0
+offset_bottom = 260.0
+theme_override_constants/separation = 4
+
+[node name="Hair" type="Label" parent="Frame/Options"]
+layout_mode = 2
+text = "> HAIR: 1"
+
+[node name="HairColor" type="Label" parent="Frame/Options"]
+layout_mode = 2
+text = "  HAIR COLOR: BLACK"
+
+[node name="Top" type="Label" parent="Frame/Options"]
+layout_mode = 2
+text = "  TOP: FARMER SHIRT"
+
+[node name="TopColor" type="Label" parent="Frame/Options"]
+layout_mode = 2
+text = "  TOP COLOR: GREEN"
+
+[node name="Pants" type="Label" parent="Frame/Options"]
+layout_mode = 2
+text = "  PANTS: BROWN"
+
+[node name="Shoes" type="Label" parent="Frame/Options"]
+layout_mode = 2
+text = "  SHOES: BROWN"
+
+[node name="Hat" type="Label" parent="Frame/Options"]
+layout_mode = 2
+text = "  HAT: OFF"
+
+[node name="Randomize" type="Label" parent="Frame/Options"]
+layout_mode = 2
+text = "  RANDOMIZE"
+
+[node name="Confirm" type="Label" parent="Frame/Options"]
+layout_mode = 2
+text = "  CONFIRM"
+
+[node name="Back" type="Label" parent="Frame/Options"]
+layout_mode = 2
+text = "  BACK"
+
+[node name="Hint" type="Label" parent="Frame"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -27.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 0
+modulate = Color(0.75, 0.69, 0.58, 1)
+theme_override_font_sizes/font_size = 7
+horizontal_alignment = 1
+text = "ARROWS: CHANGE    ENTER / SPACE: SELECT    ESC: BACK"

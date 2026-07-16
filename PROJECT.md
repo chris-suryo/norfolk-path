@@ -8,7 +8,69 @@ is learning the engine end-to-end, not shipping commercially.
 
 ## Status
 
-- next: **Chris verifies the combat slice on Windows** (see
+- **Continuous deploy is LIVE and verified end-to-end.** The 3 repo secrets
+  (`VERCEL_TOKEN` / `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID`) are set, and a real
+  run of `.github/workflows/deploy-web.yml` went fully green: every push to the
+  working branch exports the Godot Web preset and deploys to
+  **https://norfolk-path.vercel.app** in ~90s, no manual export needed. Pinned
+  to Godot 4.7-stable (Chris's exact local build) via
+  `firebelley/godot-export@v8.0.0` (a third-party CI action — explicitly
+  approved). Deploy uses Vercel's **Build Output API + `vercel deploy
+  --prebuilt`**: the first attempt uploaded fine but hung 12+ min on Vercel's
+  "Building…" step (the Git-imported project runs its own build pipeline over
+  our already-exported files); staging the export into `.vercel/output/static`
+  and deploying prebuilt makes Vercel serve the files directly with no build
+  step. The manual drag-and-drop path in `docs/web-deploy.md` still works as a
+  fallback.
+- next: **Chris opens https://norfolk-path.vercel.app from another laptop** to
+  confirm the game actually loads and is publicly reachable. The build session
+  couldn't check this itself — its egress proxy blocks `vercel.app` (CONNECT
+  403), unrelated to Vercel. If a Vercel login/SSO wall appears instead of the
+  game, that's **Deployment Protection** on the project (Vercel dashboard →
+  Project → Settings → Deployment Protection → disable Vercel Authentication);
+  a dashboard-only toggle Chris controls.
+- next: **Chris runs `docs/playtest-checklist.md` top-to-bottom** — one ordered
+  pass over everything built while away (title/mouse/backdrop, collision fixes,
+  animal wander, bombschroom, Irene's taunts, font fix, pause menu), each with
+  its tuning knob. Also this session (unattended, no gameplay touched): **web
+  build trimmed** (gdignored unused base-pack `Player/`+`Tiles/`+`Icons/`; asset
+  payload 4.7→2.0 MB, seasonal packs already excluded); **P1/P2 assets staged**
+  in `assets/game/` (not wired); new **`tools/check_assets.py`** guards asset
+  refs / gdignore trims.
+- next: **Chris verifies the enemy-variety + menu-polish batch on Windows.** On
+  top of the confirmed respawn fix (Slice A): (1) the forest camp is now **3
+  skeletons + 1 bombschroom** — a stationary `BombEnemy` (`scenes/
+  enemy_bombschroom.tscn`) that idles until you're within ~22px, then flashes
+  through a 0.6s wind-up and explodes (AoE + gas puff); defuse it with one sword
+  hit during wind-up, or roll clear. (2) **Mouse support** on the title and pause
+  menus alongside keyboard (hover-highlight + click-activate). (3) A **dressed
+  title screen** — dimmed baked-world backdrop + UI_Frames NinePatch panel + 5x9
+  pixel font + a looping campfire. Tuning knobs: bombschroom `detonate_radius`/
+  `blast_radius`/`windup`/`max_hp` (all exported). Visual bits (title,
+  bombschroom feel) are Chris's import gate.
+- Slice A (spawn/checkpoint/respawn) — **playtest-confirmed**: New Game starts in
+  the west village; checkpoints are progress-based (furthest area walked past);
+  respawn rearms survivors (killed enemies stay dead), boss retries to full. The
+  "no camp skeletons on Continue" was expected (a save past the camp clears it as
+  already-done); a New Game keeps them.
+- **Slice C — built & pushed (verify on Windows):** SAVE_VERSION bumped (old
+  saves auto-invalidate to a clean New Game); font sub-pixel positioning disabled
+  via a committed `.ttf.import` (fixes the boss "Icene" smear + all centered
+  text — the one item that may need an editor re-import if the hand-authored
+  `.import` is rejected); dash 150→105; two more Irene taunts (¾/¼ HP). Collision
+  audit (beyond rocks): dropped the procedural ore scatter + re-baked (fixes
+  walk-through AND duplicated near-house rocks); added colliders to berry bush &
+  camp keg; widened under-sized building colliders (inn/cottages/barn were
+  walk-through). Fixed the doubled duck (`$` removed, Ariana is the node) and the
+  one flower-on-goose adjacency (relocated). **Animals now idle-bob + wander**
+  (`scripts/ambient_animal.gd`; land animals stroll, water animals bob in place);
+  also fixed Ariana rendering as 4 ducks (mis-framed 64px). Animation feel / font
+  render are Chris's import gate.
+- **Prep (not wired):** distinct P1/P2 sprites — the modular 64×64 sheet is now
+  confidently mapped (`docs/player-modular-mapping.md`); idle/walk/attack/roll +
+  a black/brown hair overlay for P1/P2, awaiting Chris's approval + live
+  per-animation verification. **Still deferred:** boss Phase 2.
+- earlier next: **Chris verifies the combat slice on Windows** (see
   `docs/combat-slice.md`). The whole real-time game loop is built headlessly
   (Stages 0–5, lint-clean, pushed): player-select (1P/2P) → walk the path →
   three encounters (2 slimes, a skeleton) with a **sword + dodge-roll** → **boss

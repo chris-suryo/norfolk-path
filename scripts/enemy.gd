@@ -24,6 +24,13 @@ const DIR_FRAMES := 4
 @export var contact_cooldown: float = 0.8
 @export var knockback_speed: float = 90.0
 
+## Ambush gate. 0 = always-on: the enemy chases from spawn (slimes, as before).
+## When > 0, it idles until a live player comes within this radius, then latches
+## awake and chases forever — so a camp/cluster wakes when you enter the clearing
+## instead of marching at you from level load. Set per-scene (~110 px on the
+## skeleton). Being hit doesn't wake it; only proximity does.
+@export var aggro_radius: float = 0.0
+
 ## Animation layout.
 @export var directional: bool = false
 @export var idle_row: int = 0
@@ -36,6 +43,8 @@ const DIR_FRAMES := 4
 
 var _hp: int = 3
 var _dead := false
+var _aggro := false
+var _home := Vector2.ZERO
 var _anim_time := 0.0
 var _death_time := 0.0
 var _contact_cd := 0.0
@@ -48,7 +57,22 @@ var _facing := Vector2.DOWN
 
 func _ready() -> void:
 	_hp = max_hp
+	# Position is set before add_child in EncounterManager._spawn_area, so this is
+	# the spawn post — where return_home() sends a survivor on a checkpoint retry.
+	_home = position
 	add_to_group("enemies")
+
+
+## Send a surviving enemy back to its spawn post and re-idle it (clears the ambush
+## latch) — used when the player wipes and retries a checkpoint, so survivors
+## don't stay parked where the death happened. A dying enemy is left alone.
+func return_home() -> void:
+	if _dead:
+		return
+	position = _home
+	velocity = Vector2.ZERO
+	_knockback = Vector2.ZERO
+	_aggro = false
 
 
 func take_damage(amount: int, from: Vector2) -> void:
@@ -74,7 +98,7 @@ func _physics_process(delta: float) -> void:
 
 	var target := _nearest_player()
 	var moving := false
-	if target != null:
+	if target != null and _awake(target):
 		var to_target := target.global_position - global_position
 		if to_target.length() > 6.0:
 			_facing = to_target.normalized()
@@ -88,6 +112,16 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	_try_contact_damage()
 	_animate(moving, delta)
+
+
+## Ambush latch: always awake when aggro_radius is 0 (default) or once triggered;
+## otherwise wakes — permanently — the first frame a live player is within range.
+func _awake(target: Node2D) -> bool:
+	if aggro_radius <= 0.0 or _aggro:
+		return true
+	if global_position.distance_to(target.global_position) <= aggro_radius:
+		_aggro = true
+	return _aggro
 
 
 func _nearest_player() -> Node2D:

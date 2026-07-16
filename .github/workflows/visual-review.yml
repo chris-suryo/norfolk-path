@@ -1,0 +1,36 @@
+name: visual-review
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture-map:
+    name: Capture map review images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install review renderer dependency
+        run: pip install "Pillow==10.4.0"
+
+      - name: Render visual review snapshot
+        run: python tools/capture_visual_review.py --output-dir artifacts/visual-review --label "${{ github.sha }}"
+
+      - name: Upload visual review artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-review-${{ github.sha }}
+          path: artifacts/visual-review/${{ github.sha }}
+          if-no-files-found: error
+          retention-days: 90

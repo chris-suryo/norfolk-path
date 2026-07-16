@@ -1,0 +1,98 @@
+name: deploy-web
+
+# Continuous deploy: on every push to the working branch, headlessly export the
+# Godot "Web" preset and ship it straight to the existing Vercel project.
+#
+# Why this lives in GitHub Actions and not the build session's own sandbox: that
+# sandbox's egress policy blocks godotengine.org/github.com release downloads
+# (see ci.yml's history), so it can never fetch Godot or the export templates.
+# GitHub's own runners aren't behind that block — this is the one place the
+# export can genuinely run unattended.
+#
+# Pinned to the exact local Godot build in use (v4.7-stable, official
+# [5b4e0cb0f]) so CI matches what's authored/tested locally. Bump both download
+# URLs together if that ever changes.
+#
+# One-time setup (not automatable — see docs/web-deploy.md): add VERCEL_TOKEN,
+# VERCEL_ORG_ID, VERCEL_PROJECT_ID as repo secrets (Settings > Secrets and
+# variables > Actions) before this can deploy successfully.
+
+on:
+  push:
+    branches: [claude/slice-1-godot-toolchain-ij6e9w]
+  # Lets a run be started on demand (GitHub UI "Run workflow" button, or the
+  # API) without needing a throwaway commit — useful for testing right after
+  # the three secrets below are first added.
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: true
+
+jobs:
+  export-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Export Web build
+        id: export
+        uses: firebelley/godot-export@v8.0.0
+        with:
+          godot_executable_download_url: https://github.com/godotengine/godot/releases/download/4.7-stable/Godot_v4.7-stable_linux.x86_64.zip
+          godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.7-stable/Godot_v4.7-stable_export_templates.tpz
+          relative_project_path: ./
+          use_preset_export_path: true
+          presets_to_export: Web
+          cache: true
+
+      # Two prior runs each guessed a different fixed path (export/web, then the
+      # action's build_directory output, which turned out to be its pre-move
+      # staging dir, not the final in-repo location) and both were wrong. Stop
+      # guessing: search for the actual index.html under export/web and deploy
+      # from wherever it really landed — self-correcting if the action's
+      # internal layout ever changes again.
+      - name: Locate export output
+        id: locate
+        run: |
+          echo "export/web tree:"
+          find export/web
+          found="$(find export/web -maxdepth 4 -name index.html | head -n1)"
+          if [ -z "$found" ]; then
+            echo "::error::no index.html found anywhere under export/web"
+            exit 1
+          fi
+          dir="$(dirname "$found")"
+          echo "found: $found (deploying from $dir)"
+          echo "dir=$dir" >> "$GITHUB_OUTPUT"
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      # Why prebuilt and not a plain `vercel deploy <dir>`: the earlier run
+      # uploaded fine, printed a Production URL, then hung on "Building…" for
+      # 12+ minutes. This Vercel project was created by importing the Git repo,
+      # so it carries a framework/build config; a normal deploy runs that build
+      # pipeline against our already-exported static files and stalls. The Build
+      # Output API (`.vercel/output/static` + a v3 `config.json`) plus
+      # `--prebuilt` tells Vercel "these ARE the final files — serve them, run
+      # no build step," which removes the phase that hung entirely.
+      - name: Stage prebuilt output for Vercel
+        run: |
+          rm -rf .vercel/output
+          mkdir -p .vercel/output/static
+          cp -a "${{ steps.locate.outputs.dir }}/." .vercel/output/static/
+          printf '{"version":3}\n' > .vercel/output/config.json
+          echo "Staged Build Output API tree:"
+          find .vercel/output -maxdepth 2
+
+      # `timeout` makes a future stall fail loud in 5 min instead of burning the
+      # job's full wall-clock — fail-loud over silent hang. With --prebuilt the
+      # real work is a sub-minute upload, so 300s is comfortably slack.
+      - name: Deploy to Vercel (production, prebuilt)
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: timeout 300 vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN" --yes

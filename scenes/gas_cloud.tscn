@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/gas_cloud.gd" id="1_gas"]
+[ext_resource type="Texture2D" path="res://assets/cute_fantasy/packs/Cute_Fantasy/Cute_Fantasy/Enemies/Bombschroom/Toxic_Gas_Cloud_VFX.png" id="2_tex"]
+
+[node name="GasCloud" type="Sprite2D"]
+texture = ExtResource("2_tex")
+hframes = 6
+z_index = 1
+script = ExtResource("1_gas")

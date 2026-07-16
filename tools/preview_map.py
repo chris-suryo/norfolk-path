@@ -299,7 +299,6 @@ def render(rows, out_path, scale=1, crop_box=None, ground_only=False):
     tufts = [tex2(ga + "Grass_%d_Anim.png" % i) for i in (1, 2, 3)]
     fgrass = [tex2(ga + "Flower_Grass_%d_Anim.png" % i) for i in (1, 3, 5, 7, 9, 11, 13, 15)]
     flowers = tex2("Outdoor decoration/Flowers.png")     # 10x10 @16; cols 0-4 = no pot
-    ores = tex2("Outdoor decoration/Ores.png")           # col 0 = grey rocks
     wp = "Outdoor decoration/Outdoor_Decor_Animations/Water_Decor_Animations/Water_Plants/"
     reeds = [tex2(wp + "Water_Grass_%d_Anim.png" % i) for i in (1, 2)]
     waterdec = tex2("Tiles/Water/Water_Decoration.png")  # 3x1 lily pads
@@ -495,10 +494,6 @@ def render(rows, out_path, scale=1, crop_box=None, ground_only=False):
                         fc = flower_cells[int(rng(x, y, 37) * len(flower_cells)) % len(flower_cells)]
                         blit(canvas, cw, ch, flowers, fc[0] * 16, fc[1] * 16, 16, 16,
                              cx_ - 8 + jx, cy_ - 8 + jy)
-                elif (not near_water(x, y) and rng(x // 3, y // 3, 60) < 0.05
-                      and rng(x, y, 61) < 0.6):
-                    blit(canvas, cw, ch, ores, 0, (int(rng(x, y, 62) * 4) % 4) * 16, 16, 16,
-                         cx_ - 8 + jx, cy_ - 6)
 
     # bridge under props — one clean span covering the WHOLE crossing (bbox of all
     # B cells + a tile of overhang), scaled from the east-west bridge piece

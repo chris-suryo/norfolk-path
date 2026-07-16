@@ -1,0 +1,92 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/pause_menu.gd" id="1_pause"]
+[ext_resource type="Texture2D" path="res://assets/game/UI_Frames.png" id="2_frames"]
+[ext_resource type="FontFile" path="res://assets/game/CuteFantasy-5x9.ttf" id="3_font"]
+
+[sub_resource type="Theme" id="theme"]
+default_font = ExtResource("3_font")
+default_font_size = 9
+
+[node name="PauseMenu" type="CanvasLayer"]
+process_mode = 3
+script = ExtResource("1_pause")
+
+[node name="Panel" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = SubResource("theme")
+
+[node name="Dim" type="ColorRect" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.55)
+
+[node name="Frame" type="NinePatchRect" parent="Panel"]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -100.0
+offset_top = -88.0
+offset_right = 100.0
+offset_bottom = 88.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_frames")
+region_rect = Rect2(10, 10, 28, 28)
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
+
+[node name="Box" type="VBoxContainer" parent="Panel/Frame"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="Panel/Frame/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "PAUSED"
+horizontal_alignment = 1
+
+[node name="Resume" type="Label" parent="Panel/Frame/Box"]
+layout_mode = 2
+text = "Resume"
+horizontal_alignment = 1
+
+[node name="Zoom" type="Label" parent="Panel/Frame/Box"]
+layout_mode = 2
+text = "Zoom: Normal"
+horizontal_alignment = 1
+
+[node name="Save" type="Label" parent="Panel/Frame/Box"]
+layout_mode = 2
+text = "Save Now"
+horizontal_alignment = 1
+
+[node name="ToTitle" type="Label" parent="Panel/Frame/Box"]
+layout_mode = 2
+text = "Return to Title"
+horizontal_alignment = 1
+
+[node name="Status" type="Label" parent="Panel/Frame/Box"]
+modulate = Color(0.7, 0.8, 0.7, 1)
+layout_mode = 2
+text = ""
+horizontal_alignment = 1

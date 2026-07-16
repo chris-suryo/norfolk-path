@@ -18,6 +18,7 @@ max_hp = 5
 move_speed = 34.0
 contact_damage = 2
 contact_cooldown = 1.0
+aggro_radius = 110.0
 directional = true
 
 [node name="Sprite2D" type="Sprite2D" parent="."]

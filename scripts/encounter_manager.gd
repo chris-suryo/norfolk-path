@@ -1,22 +1,32 @@
 class_name EncounterManager
 extends Node
 
-## Drives the three path areas: spawn, shop, library-approach. Each area has a
-## checkpoint (an Area2D trigger that sets Game.checkpoint + autosaves), a set of
-## enemies, and a cleared flag. On a player's death the current checkpoint's area
-## resets (its enemies respawn) unless it was already cleared; a cleared area
-## never respawns. Positions come from the map anchors (S/H/C) + hand-picked
-## on-path cells, so nothing here edits the frozen island_map.gd.
+## Drives the path areas west->east: village slimes, a lone forest skeleton, the
+## forest camp cluster, then the library boss. Each area has a checkpoint (an
+## x-position on the road), a set of enemies, and a cleared flag.
 ##
-## setup() is called by main.gd AFTER it positions the players, so a resume (load
-## a saved checkpoint) overrides the default spawn placement rather than being
-## clobbered by main._ready running last.
+## Checkpoints are recorded by PROGRESS, not by a trigger volume: _process tracks
+## the furthest area a player has walked past (by world-x) and advances
+## Game.checkpoint monotonically + autosaves. This is reliable regardless of road
+## width or which edge the player hugs — the old 40px Area2D triggers could be
+## missed while a camp skeleton (110px aggro) still reached and killed you,
+## stranding the checkpoint behind you.
+##
+## On a wipe, players revive at the current checkpoint's road spot and the area is
+## REARMED, not re-spawned: enemies the player already killed stay dead, survivors
+## just reset to their post and idle again. The boss area is the exception — a
+## boss retry re-spawns her to full HP. A cleared area never comes back.
+##
+## setup() is called by main.gd AFTER it positions the players, so a Continue
+## resume overrides the default village spawn rather than being clobbered by
+## main._ready running last.
 
 const SLIME_SCENE := preload("res://scenes/enemy_slime.tscn")
 const SKELETON_SCENE := preload("res://scenes/enemy_skeleton.tscn")
+const BOMB_SCENE := preload("res://scenes/enemy_bombschroom.tscn")
 const BOSS_SCENE := preload("res://scenes/boss_irene.tscn")
 const WIN_SCENE := "res://scenes/win_screen.tscn"
-const TRIGGER_RADIUS := 40.0
+const BOSS_ID := 3
 const WIN_DELAY := 3.0
 
 ## Co-op: a downed teammate revives once no live enemy is within this radius of
@@ -25,17 +35,29 @@ const REVIVE_RADIUS := 130.0
 
 var _areas: Array = []
 var _world: Node2D
+var _hud: Node
+var _beacons := {}
 
 
-func setup() -> void:
+func setup(hud: Node) -> void:
 	_world = get_parent()
+	_hud = hud
 	_build_areas()
+	_spawn_beacons()
 	for area in _areas:
 		_spawn_area(area)
-	_make_triggers()
 	for player in get_tree().get_nodes_in_group("players"):
 		player.downed.connect(_on_downed)
 	_apply_resume()
+
+
+func _spawn_beacons() -> void:
+	for area in _areas:
+		var beacon := CheckpointBeacon.new()
+		beacon.position = area.beacon_center
+		_world.add_child(beacon)
+		_beacons[area.id] = beacon
+		beacon.set_active(area.id <= Game.checkpoint)
 
 
 func _process(_delta: float) -> void:
@@ -49,31 +71,54 @@ func _process(_delta: float) -> void:
 		area.instances = alive
 		if alive.is_empty():
 			area.cleared = true
+	_update_checkpoint()
 	if Game.player_count >= 2:
 		_update_coop_revive()
 
 
 func _build_areas() -> void:
-	# center cell (checkpoint) + [scene, cell] enemy specs — all on walkable path
-	# tiles of the valley-1 (192x48) map: spawn/west village -> road+bridge near
-	# Evan -> library approach. Slimes sit at the village exit, the skeleton
-	# further out in the forest. (Camp/forest enemy spawns are the NEXT slice.)
+	# center cell (checkpoint road spot) + [scene, cell] enemy specs — all on
+	# walkable tiles of the valley-1 (192x48) map, west -> east along the road:
+	# spawn/west village (slimes) -> lone forest skeleton (a taste) -> the forest
+	# CAMP (3 skeletons + 1 stationary bombschroom guarding the western entry at
+	# (117,33)) -> library approach (boss). The camp skeletons are aggro-gated
+	# (enemy_skeleton.tscn) so they wake on approach, not at load.
+	# The camp checkpoint (108,24) sits on the road WEST of the camp's ~110px
+	# aggro edge (~x1818), so it records before the skeletons wake and a wipe
+	# respawns you on the road, not inside the clearing.
 	_areas = [
 		_make_area(
-			0, Vector2i(45, 28), [[SLIME_SCENE, Vector2i(50, 28)], [SLIME_SCENE, Vector2i(55, 28)]]
+			0,
+			Vector2i(45, 28),
+			Vector2i(45, 30),
+			[[SLIME_SCENE, Vector2i(50, 28)], [SLIME_SCENE, Vector2i(55, 28)]]
 		),
-		_make_area(1, Vector2i(70, 26), [[SKELETON_SCENE, Vector2i(95, 21)]]),
-		_make_area(2, Vector2i(156, 26), [[BOSS_SCENE, Vector2i(162, 26)]]),
+		_make_area(1, Vector2i(70, 26), Vector2i(70, 28), [[SKELETON_SCENE, Vector2i(95, 21)]]),
+		_make_area(
+			2,
+			Vector2i(108, 24),
+			Vector2i(108, 26),
+			[
+				[BOMB_SCENE, Vector2i(117, 33)],
+				[SKELETON_SCENE, Vector2i(124, 32)],
+				[SKELETON_SCENE, Vector2i(120, 35)],
+				[SKELETON_SCENE, Vector2i(124, 35)],
+			]
+		),
+		_make_area(
+			BOSS_ID, Vector2i(156, 26), Vector2i(156, 28), [[BOSS_SCENE, Vector2i(162, 26)]]
+		),
 	]
 
 
-func _make_area(id: int, center_cell: Vector2i, specs: Array) -> Dictionary:
+func _make_area(id: int, center_cell: Vector2i, beacon_cell: Vector2i, specs: Array) -> Dictionary:
 	var built: Array = []
 	for spec in specs:
 		built.append({"scene": spec[0], "pos": IslandMap.cell_center(spec[1])})
 	return {
 		"id": id,
 		"center": IslandMap.cell_center(center_cell),
+		"beacon_center": IslandMap.cell_center(beacon_cell),
 		"specs": built,
 		"instances": [],
 		"cleared": false,
@@ -92,29 +137,13 @@ func _spawn_area(area: Dictionary) -> void:
 	area.spawned = true
 
 
-func _make_triggers() -> void:
-	for area in _areas:
-		var trigger := Area2D.new()
-		trigger.position = area.center
-		trigger.collision_layer = 0
-		trigger.collision_mask = 2
-		var collider := CollisionShape2D.new()
-		var shape := CircleShape2D.new()
-		shape.radius = TRIGGER_RADIUS
-		collider.shape = shape
-		trigger.add_child(collider)
-		add_child(trigger)
-		trigger.body_entered.connect(_on_area_entered.bind(area))
-
-
+## Continue only: apply the checkpoint the player-select already loaded. A New
+## Game (resume_requested false) leaves checkpoint 0 and the village spawn intact.
 func _apply_resume() -> void:
-	# The player-select choice wins over the saved player_count; the rest of the
-	# save (checkpoint / boss_defeated) is what we resume from.
-	var chosen := Game.player_count
-	Game.load_state()
-	Game.player_count = chosen
+	if not Game.resume_requested:
+		return
 	if Game.boss_defeated:
-		_clear_area(_area_by_id(2))
+		_clear_area(_area_by_id(BOSS_ID))
 	if Game.checkpoint <= 0:
 		return
 	var area := _area_by_id(Game.checkpoint)
@@ -123,29 +152,48 @@ func _apply_resume() -> void:
 			_clear_area(prior)
 	for player in get_tree().get_nodes_in_group("players"):
 		player.global_position = area.center
-		player.respawn_point = area.center
+	if Game.checkpoint >= BOSS_ID:
+		_activate_area(_area_by_id(BOSS_ID))
 
 
-func _on_area_entered(body: Node, area: Dictionary) -> void:
-	if not body.is_in_group("players"):
-		return
-	if area.id > Game.checkpoint:
-		Game.checkpoint = area.id
-		Game.save()
+## Progress-based checkpoint: advance to the furthest area whose road spot a live
+## player has walked past (by world-x). Monotonic — never moves backward — so a
+## respawn (which teleports players west to the checkpoint) can't lower it.
+func _update_checkpoint() -> void:
+	var max_x := -INF
 	for player in get_tree().get_nodes_in_group("players"):
-		player.respawn_point = area.center
-	_activate_area(area)
+		if player.is_targetable():
+			max_x = maxf(max_x, player.global_position.x)
+	if max_x == -INF:
+		return
+	var reached := Game.checkpoint
+	for area in _areas:
+		if area.center.x <= max_x and area.id > reached:
+			reached = area.id
+	if reached > Game.checkpoint:
+		Game.checkpoint = reached
+		Game.save()
+		_activate_beacon(reached)
+		_hud.show_checkpoint_saved()
+		if reached >= BOSS_ID:
+			_activate_area(_area_by_id(BOSS_ID))
+
+
+func _activate_beacon(id: int) -> void:
+	var beacon: CheckpointBeacon = _beacons.get(id)
+	if beacon != null:
+		beacon.set_active(true, true)
 
 
 func _on_downed() -> void:
-	# Solo, or co-op with everyone down: respawn all at the checkpoint + reset
-	# the area. Co-op with a survivor: the downed player waits for a clear-revive.
+	# Solo, or co-op with everyone down: respawn all at the checkpoint + rearm the
+	# area. Co-op with a survivor: the downed player waits for a clear-revive.
 	if not _all_players_down():
 		return
 	var area := _area_by_id(Game.checkpoint)
 	for player in get_tree().get_nodes_in_group("players"):
 		player.respawn_at(area.center)
-	_reset_area(area)
+	_rearm_area(area)
 
 
 func _update_coop_revive() -> void:
@@ -186,19 +234,29 @@ func _enemies_near_players(radius: float) -> bool:
 	return false
 
 
-func _reset_area(area: Dictionary) -> void:
+## Retry handling. Normal areas: killed enemies stay dead — only survivors reset
+## to their post and idle again (return_home), so a partial clear isn't undone.
+## The boss area is the exception: a boss retry re-spawns her to full HP and
+## re-activates (she's a single fight, not a clearable cluster).
+func _rearm_area(area: Dictionary) -> void:
 	if area.cleared:
 		return
+	if area.id == BOSS_ID:
+		for enemy in area.instances:
+			if is_instance_valid(enemy):
+				enemy.queue_free()
+		area.instances = []
+		area.spawned = false
+		_spawn_area(area)
+		_activate_area(area)
+		return
+	var alive: Array = []
 	for enemy in area.instances:
 		if is_instance_valid(enemy):
-			enemy.queue_free()
-	area.instances = []
-	area.spawned = false
-	_spawn_area(area)
-	# On a retry the player is already standing in the area, so re-activate any
-	# boss immediately (a fresh boss would otherwise wait for a re-entry that
-	# never fires while the body already overlaps the trigger).
-	_activate_area(area)
+			if enemy.has_method("return_home"):
+				enemy.return_home()
+			alive.append(enemy)
+	area.instances = alive
 
 
 func _activate_area(area: Dictionary) -> void:

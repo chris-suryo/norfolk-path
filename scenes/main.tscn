@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/follow_camera.gd" id="8_cam"]
@@ -9,6 +9,8 @@
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="6_player"]
 [ext_resource type="Script" path="res://scripts/midpoint.gd" id="7_midpoint"]
 [ext_resource type="Script" path="res://scripts/encounter_manager.gd" id="9_encounter"]
+[ext_resource type="PackedScene" path="res://scenes/hud.tscn" id="10_hud"]
+[ext_resource type="PackedScene" path="res://scenes/pause_menu.tscn" id="11_pause"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
@@ -24,12 +26,12 @@ y_sort_enabled = true
 
 [node name="Ariana" type="Sprite2D" parent="World"]
 texture = ExtResource("4_duck")
-offset = Vector2(0, -16)
-hframes = 4
-vframes = 10
+offset = Vector2(0, -6)
+hframes = 8
+vframes = 20
 script = ExtResource("5_critter")
 fps = 3.0
-frame_count = 4
+frame_count = 2
 first_frame = 0
 
 [node name="Player" parent="World" instance=ExtResource("6_player")]
@@ -49,3 +51,8 @@ script = ExtResource("9_encounter")
 script = ExtResource("8_cam")
 target_path = NodePath("../World/CameraTarget")
 bounds_source_path = NodePath("../Level")
+
+[node name="HUD" parent="." instance=ExtResource("10_hud")]
+
+[node name="PauseMenu" parent="." instance=ExtResource("11_pause")]
+camera_path = NodePath("../Camera2D")

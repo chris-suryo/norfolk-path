@@ -94,7 +94,9 @@ SPEC = {
     "b": ("bench", 0, 0, 32, 32, -16, -18, 26, 8),
     "C": ("chicken", 0, 0, 32, 32, -16, -26, 0, 0),
     "d": ("duck", 0, 0, 32, 32, -16, -22, 0, 0),
-    "$": ("duck", 0, 0, 32, 32, -16, -22, 0, 0),
+    # NOTE: '$' (Ariana) is NOT a table prop — main.gd spawns the animated Ariana
+    # critter node there. Drawing a duck prop too stacked a second, static duck on
+    # her. '$' is kept covered via main.gd TERRAIN_SYMS instead.
     "k": ("capy", 0, 0, 32, 32, -16, -18, 0, 0),
     "@": ("capy2", 0, 0, 32, 32, -16, -18, 0, 0),
     "h": ("horse", 0, 0, 32, 32, -16, -26, 0, 0),
@@ -117,9 +119,9 @@ SPEC = {
     "z": ("windmill", 0, 0, 128, 112, -64, -104, 28, 14),
     "s": ("tent", 0, 0, 48, 96, -24, -88, 26, 12),
     "0": ("campfire", 0, 0, 16, 32, -8, -24, 12, 10),
-    "1": ("campdecor", 0, 0, 16, 16, -8, -8, 0, 0),
+    "1": ("campdecor", 0, 0, 16, 16, -8, -8, 10, 8),
     "%": ("beehive", 0, 0, 16, 16, -8, -10, 10, 8),
-    "&": ("berries2", 0, 0, 16, 16, -8, -8, 0, 0),
+    "&": ("berries2", 0, 0, 16, 16, -8, -8, 10, 8),
     "=": ("trough", 16, 0, 32, 16, -16, -8, 28, 8),
     "+": ("lamp2", 0, 0, 16, 48, -8, -40, 6, 8),
     "^": ("rooster", 0, 0, 32, 32, -16, -26, 0, 0),
@@ -142,15 +144,19 @@ SPEC = {
 
 # Buildings drawn via blit_building (whole sheet, foot offset) — derive region +
 # offset from the sheet dims so we don't hand-copy 240x192 etc.
-BUILDINGS = {  # sym: (sheet_key, foot, collider_w, collider_h)
-    "L": ("inn", 8, 90, 18),
-    "A": ("house_a", 8, 52, 14),
-    "G": ("house_g", 8, 52, 14),
-    "J": ("house_j", 8, 52, 14),
-    "E": ("house_e", 8, 52, 14),
-    "Y": ("barn", 8, 60, 16),
-    "W": ("well", 6, 20, 12),
+BUILDINGS = {  # sym: (sheet_key, foot, foundation_width, foundation_y)
+    # Each doorway has a 20px recess. Low left/right foundations stop a player
+    # at the visible facade; the shallow rear backstop keeps the recess exterior
+    # until buildings gain real enter/exit scenes.
+    "L": ("inn", 8, 186, -4),
+    "A": ("house_a", 8, 46, -4),
+    "G": ("house_g", 8, 96, -4),
+    "J": ("house_j", 8, 64, -4),
+    "E": ("house_e", 8, 96, -4),
+    "Y": ("barn", 8, 76, -4),
 }
+
+WELL = ("well", 6, 16, 8, -5)
 
 
 def build_table():
@@ -163,13 +169,23 @@ def build_table():
         if rx + rw > sw or ry + rh > sh:
             errors.append(f"{sym}: region ({rx},{ry},{rw},{rh}) exceeds {key} {sw}x{sh}")
         used_sheets.add(key)
-        table[sym] = (key, rx, ry, rw, rh, ax + rw / 2.0, ay + rh / 2.0, cw, ch)
-    for sym, (key, foot, cw, ch) in BUILDINGS.items():
+        table[sym] = (key, rx, ry, rw, rh, ax + rw / 2.0, ay + rh / 2.0, cw, ch, 0.0, 0.0)
+    for sym, (key, foot, width, foundation_y) in BUILDINGS.items():
         rel = SHEETS[key]
         sw, sh = dims(rel)
         used_sheets.add(key)
         # whole sheet, centered offset = (0, foot - sh/2)
-        table[sym] = (key, 0, 0, sw, sh, 0.0, foot - sh / 2.0, cw, ch)
+        side_width = (width - 20.0) / 2.0
+        segments = [
+            (side_width, 8.0, -(10.0 + side_width / 2.0), foundation_y),
+            (side_width, 8.0, 10.0 + side_width / 2.0, foundation_y),
+            (20.0, 6.0, 0.0, foundation_y - 11.0),
+        ]
+        table[sym] = (key, 0, 0, sw, sh, 0.0, foot - sh / 2.0, 0.0, 0.0, 0.0, 0.0, segments)
+    key, foot, cw, ch, collider_y = WELL
+    sw, sh = dims(SHEETS[key])
+    used_sheets.add(key)
+    table["W"] = (key, 0, 0, sw, sh, 0.0, foot - sh / 2.0, cw, ch, 0.0, collider_y, [])
     return table, used_sheets, errors
 
 
@@ -193,15 +209,19 @@ def emit(table, used_sheets):
         lines.append('\t"%s": "%s",' % (key, res_path(SHEETS[key])))
     lines.append("}")
     lines.append("")
-    lines.append("## symbol -> [sheet_key, region(x,y,w,h), sprite_offset(x,y), collider(w,h)]")
-    lines.append("## collider (0,0) = decor, no collision. Offset is from the cell centre.")
+    lines.append("## symbol -> [sheet, region, sprite_offset, collider, collider_offset, collision_segments].")
+    lines.append("## collision_segments are [size, offset] pairs; buildings use a doorway recess + rear backstop.")
     lines.append("const PROPS := {")
     for sym in sorted(table):
-        key, rx, ry, rw, rh, ox, oy, cw, ch = table[sym]
+        key, rx, ry, rw, rh, ox, oy, cw, ch, cox, coy, *rest = table[sym]
+        segments = rest[0] if rest else []
         esc = '\\"' if sym == '"' else ("\\\\" if sym == "\\" else sym)
+        segment_text = "[" + ", ".join(
+            "[Vector2(%g, %g), Vector2(%g, %g)]" % segment for segment in segments
+        ) + "]"
         lines.append(
-            '\t"%s": ["%s", Rect2(%d, %d, %d, %d), Vector2(%g, %g), Vector2(%g, %g)],'
-            % (esc, key, rx, ry, rw, rh, ox, oy, cw, ch)
+            '\t"%s": ["%s", Rect2(%d, %d, %d, %d), Vector2(%g, %g), Vector2(%g, %g), Vector2(%g, %g), %s],'
+            % (esc, key, rx, ry, rw, rh, ox, oy, cw, ch, cox, coy, segment_text)
         )
     lines.append("}")
     lines.append("")
@@ -216,5 +236,5 @@ if __name__ == "__main__":
             print("  -", e)
         sys.exit(1)
     out = os.path.join(REPO, "scripts", "prop_table.gd")
-    open(out, "w").write(emit(table, used))
+    open(out, "w", encoding="utf-8").write(emit(table, used))
     print(f"wrote scripts/prop_table.gd: {len(table)} symbols, {len(used)} sheets, 0 region errors")

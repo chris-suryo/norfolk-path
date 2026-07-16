@@ -84,63 +84,134 @@ const SHEETS := {
 	"res://assets/cute_fantasy/packs/Cute_Fantasy/Cute_Fantasy/Buildings/Buildings/Unique_Buildings/Windmill/Windmill.png",
 }
 
-## symbol -> [sheet_key, region(x,y,w,h), sprite_offset(x,y), collider(w,h)]
-## collider (0,0) = decor, no collision. Offset is from the cell centre.
+## symbol -> [sheet, region, sprite_offset, collider, collider_offset, collision_segments].
+## collision_segments are [size, offset] pairs; buildings use a doorway recess + rear backstop.
 const PROPS := {
-	"$": ["duck", Rect2(0, 0, 32, 32), Vector2(0, -6), Vector2(0, 0)],
-	"%": ["beehive", Rect2(0, 0, 16, 16), Vector2(0, -2), Vector2(10, 8)],
-	"&": ["berries2", Rect2(0, 0, 16, 16), Vector2(0, 0), Vector2(0, 0)],
-	"+": ["lamp2", Rect2(0, 0, 16, 48), Vector2(0, -16), Vector2(6, 8)],
-	"0": ["campfire", Rect2(0, 0, 16, 32), Vector2(0, -8), Vector2(12, 10)],
-	"1": ["campdecor", Rect2(0, 0, 16, 16), Vector2(0, 0), Vector2(0, 0)],
-	"2": ["haybale", Rect2(0, 0, 16, 16), Vector2(0, 0), Vector2(12, 8)],
-	"3": ["barrels", Rect2(0, 0, 16, 16), Vector2(0, -2), Vector2(10, 8)],
-	"4": ["birch_s", Rect2(32, 0, 32, 64), Vector2(0, -24), Vector2(8, 6)],
-	"5": ["birch_b", Rect2(32, 0, 32, 80), Vector2(0, -30), Vector2(12, 8)],
-	"6": ["spruce_s", Rect2(32, 0, 32, 64), Vector2(0, -24), Vector2(8, 6)],
-	"7": ["spruce_b", Rect2(64, 0, 64, 80), Vector2(0, -30), Vector2(12, 8)],
-	"8": ["apple_t", Rect2(0, 0, 32, 64), Vector2(0, -24), Vector2(8, 6)],
-	"9": ["cherry_t", Rect2(0, 0, 32, 64), Vector2(0, -24), Vector2(8, 6)],
-	"=": ["trough", Rect2(16, 0, 32, 16), Vector2(0, 0), Vector2(28, 8)],
-	"@": ["capy2", Rect2(0, 0, 32, 32), Vector2(0, -2), Vector2(0, 0)],
-	"A": ["house_a", Rect2(0, 0, 96, 128), Vector2(0, -56), Vector2(52, 14)],
-	"C": ["chicken", Rect2(0, 0, 32, 32), Vector2(0, -10), Vector2(0, 0)],
-	"E": ["house_e", Rect2(0, 0, 144, 128), Vector2(0, -56), Vector2(52, 14)],
-	"G": ["house_g", Rect2(0, 0, 144, 128), Vector2(0, -56), Vector2(52, 14)],
-	"H": ["stall", Rect2(96, 0, 48, 48), Vector2(0, -16), Vector2(26, 10)],
-	"J": ["house_j", Rect2(0, 0, 112, 96), Vector2(0, -40), Vector2(52, 14)],
-	"K": ["scarecrow", Rect2(0, 0, 32, 32), Vector2(0, -8), Vector2(6, 10)],
-	"L": ["inn", Rect2(0, 0, 240, 192), Vector2(0, -88), Vector2(90, 18)],
-	"N": ["villager", Rect2(0, 0, 64, 64), Vector2(0, -22), Vector2(0, 0)],
-	"O": ["boat", Rect2(0, 0, 48, 48), Vector2(0, -10), Vector2(0, 0)],
-	"R": ["frog", Rect2(0, 0, 32, 32), Vector2(0, -6), Vector2(0, 0)],
-	"T": ["oak", Rect2(0, 0, 64, 80), Vector2(0, -30), Vector2(12, 8)],
-	"U": ["goose", Rect2(0, 0, 32, 32), Vector2(0, -6), Vector2(0, 0)],
-	"W": ["well", Rect2(0, 0, 32, 48), Vector2(0, -18), Vector2(20, 12)],
-	"Y": ["barn", Rect2(0, 0, 128, 144), Vector2(0, -64), Vector2(60, 16)],
-	"^": ["rooster", Rect2(0, 0, 32, 32), Vector2(0, -10), Vector2(0, 0)],
-	"a": ["duck", Rect2(0, 256, 32, 32), Vector2(0, -4), Vector2(0, 0)],
-	"b": ["bench", Rect2(0, 0, 32, 32), Vector2(0, -2), Vector2(26, 8)],
-	"d": ["duck", Rect2(0, 0, 32, 32), Vector2(0, -6), Vector2(0, 0)],
-	"e": ["sheep", Rect2(0, 0, 32, 32), Vector2(0, -10), Vector2(0, 0)],
-	"f": ["decor", Rect2(32, 176, 16, 16), Vector2(0, 0), Vector2(0, 0)],
-	"g": ["bower", Rect2(96, 80, 96, 80), Vector2(0, -24), Vector2(0, 0)],
-	"h": ["horse", Rect2(0, 0, 32, 32), Vector2(0, -10), Vector2(0, 0)],
-	"i": ["decor", Rect2(64, 64, 16, 64), Vector2(0, -24), Vector2(6, 12)],
-	"j": ["mouse", Rect2(0, 0, 32, 32), Vector2(0, -6), Vector2(0, 0)],
-	"k": ["capy", Rect2(0, 0, 32, 32), Vector2(0, -2), Vector2(0, 0)],
-	"l": ["swan", Rect2(0, 256, 32, 32), Vector2(0, -4), Vector2(0, 0)],
-	"m": ["decor", Rect2(32, 112, 16, 16), Vector2(0, 0), Vector2(0, 0)],
-	"n": ["decor", Rect2(48, 0, 16, 16), Vector2(0, 0), Vector2(8, 10)],
-	"o": ["cow", Rect2(0, 0, 32, 32), Vector2(0, -10), Vector2(0, 0)],
-	"p": ["pig", Rect2(0, 0, 32, 32), Vector2(0, -10), Vector2(0, 0)],
-	"r": ["decor", Rect2(0, 48, 16, 16), Vector2(0, 0), Vector2(12, 8)],
-	"s": ["tent", Rect2(0, 0, 48, 96), Vector2(0, -40), Vector2(26, 12)],
-	"t": ["oak_s", Rect2(32, 0, 32, 48), Vector2(0, -16), Vector2(8, 6)],
-	"u": ["decor", Rect2(0, 32, 16, 16), Vector2(0, 0), Vector2(10, 6)],
-	"w": ["decor", Rect2(0, 16, 16, 16), Vector2(0, 0), Vector2(0, 0)],
-	"x": ["chest", Rect2(0, 0, 16, 16), Vector2(0, -4), Vector2(12, 8)],
-	"y": ["butterfly", Rect2(0, 0, 16, 16), Vector2(0, -12), Vector2(0, 0)],
-	"z": ["windmill", Rect2(0, 0, 128, 112), Vector2(0, -48), Vector2(28, 14)],
-	"|": ["wfence", Rect2(16, 0, 16, 16), Vector2(0, 0), Vector2(14, 6)],
+	"%": ["beehive", Rect2(0, 0, 16, 16), Vector2(0, -2), Vector2(10, 8), Vector2(0, 0), []],
+	"&": ["berries2", Rect2(0, 0, 16, 16), Vector2(0, 0), Vector2(10, 8), Vector2(0, 0), []],
+	"+": ["lamp2", Rect2(0, 0, 16, 48), Vector2(0, -16), Vector2(6, 8), Vector2(0, 0), []],
+	"0": ["campfire", Rect2(0, 0, 16, 32), Vector2(0, -8), Vector2(12, 10), Vector2(0, 0), []],
+	"1": ["campdecor", Rect2(0, 0, 16, 16), Vector2(0, 0), Vector2(10, 8), Vector2(0, 0), []],
+	"2": ["haybale", Rect2(0, 0, 16, 16), Vector2(0, 0), Vector2(12, 8), Vector2(0, 0), []],
+	"3": ["barrels", Rect2(0, 0, 16, 16), Vector2(0, -2), Vector2(10, 8), Vector2(0, 0), []],
+	"4": ["birch_s", Rect2(32, 0, 32, 64), Vector2(0, -24), Vector2(8, 6), Vector2(0, 0), []],
+	"5": ["birch_b", Rect2(32, 0, 32, 80), Vector2(0, -30), Vector2(12, 8), Vector2(0, 0), []],
+	"6": ["spruce_s", Rect2(32, 0, 32, 64), Vector2(0, -24), Vector2(8, 6), Vector2(0, 0), []],
+	"7": ["spruce_b", Rect2(64, 0, 64, 80), Vector2(0, -30), Vector2(12, 8), Vector2(0, 0), []],
+	"8": ["apple_t", Rect2(0, 0, 32, 64), Vector2(0, -24), Vector2(8, 6), Vector2(0, 0), []],
+	"9": ["cherry_t", Rect2(0, 0, 32, 64), Vector2(0, -24), Vector2(8, 6), Vector2(0, 0), []],
+	"=": ["trough", Rect2(16, 0, 32, 16), Vector2(0, 0), Vector2(28, 8), Vector2(0, 0), []],
+	"@": ["capy2", Rect2(0, 0, 32, 32), Vector2(0, -2), Vector2(0, 0), Vector2(0, 0), []],
+	"A":
+	[
+		"house_a",
+		Rect2(0, 0, 96, 128),
+		Vector2(0, -56),
+		Vector2(0, 0),
+		Vector2(0, 0),
+		[
+			[Vector2(13, 8), Vector2(-16.5, -4)],
+			[Vector2(13, 8), Vector2(16.5, -4)],
+			[Vector2(20, 6), Vector2(0, -15)]
+		]
+	],
+	"C": ["chicken", Rect2(0, 0, 32, 32), Vector2(0, -10), Vector2(0, 0), Vector2(0, 0), []],
+	"E":
+	[
+		"house_e",
+		Rect2(0, 0, 144, 128),
+		Vector2(0, -56),
+		Vector2(0, 0),
+		Vector2(0, 0),
+		[
+			[Vector2(38, 8), Vector2(-29, -4)],
+			[Vector2(38, 8), Vector2(29, -4)],
+			[Vector2(20, 6), Vector2(0, -15)]
+		]
+	],
+	"G":
+	[
+		"house_g",
+		Rect2(0, 0, 144, 128),
+		Vector2(0, -56),
+		Vector2(0, 0),
+		Vector2(0, 0),
+		[
+			[Vector2(38, 8), Vector2(-29, -4)],
+			[Vector2(38, 8), Vector2(29, -4)],
+			[Vector2(20, 6), Vector2(0, -15)]
+		]
+	],
+	"H": ["stall", Rect2(96, 0, 48, 48), Vector2(0, -16), Vector2(26, 10), Vector2(0, 0), []],
+	"J":
+	[
+		"house_j",
+		Rect2(0, 0, 112, 96),
+		Vector2(0, -40),
+		Vector2(0, 0),
+		Vector2(0, 0),
+		[
+			[Vector2(22, 8), Vector2(-21, -4)],
+			[Vector2(22, 8), Vector2(21, -4)],
+			[Vector2(20, 6), Vector2(0, -15)]
+		]
+	],
+	"K": ["scarecrow", Rect2(0, 0, 32, 32), Vector2(0, -8), Vector2(6, 10), Vector2(0, 0), []],
+	"L":
+	[
+		"inn",
+		Rect2(0, 0, 240, 192),
+		Vector2(0, -88),
+		Vector2(0, 0),
+		Vector2(0, 0),
+		[
+			[Vector2(83, 8), Vector2(-51.5, -4)],
+			[Vector2(83, 8), Vector2(51.5, -4)],
+			[Vector2(20, 6), Vector2(0, -15)]
+		]
+	],
+	"N": ["villager", Rect2(0, 0, 64, 64), Vector2(0, -22), Vector2(0, 0), Vector2(0, 0), []],
+	"O": ["boat", Rect2(0, 0, 48, 48), Vector2(0, -10), Vector2(0, 0), Vector2(0, 0), []],
+	"R": ["frog", Rect2(0, 0, 32, 32), Vector2(0, -6), Vector2(0, 0), Vector2(0, 0), []],
+	"T": ["oak", Rect2(0, 0, 64, 80), Vector2(0, -30), Vector2(12, 8), Vector2(0, 0), []],
+	"U": ["goose", Rect2(0, 0, 32, 32), Vector2(0, -6), Vector2(0, 0), Vector2(0, 0), []],
+	"W": ["well", Rect2(0, 0, 32, 48), Vector2(0, -18), Vector2(16, 8), Vector2(0, -5), []],
+	"Y":
+	[
+		"barn",
+		Rect2(0, 0, 128, 144),
+		Vector2(0, -64),
+		Vector2(0, 0),
+		Vector2(0, 0),
+		[
+			[Vector2(28, 8), Vector2(-24, -4)],
+			[Vector2(28, 8), Vector2(24, -4)],
+			[Vector2(20, 6), Vector2(0, -15)]
+		]
+	],
+	"^": ["rooster", Rect2(0, 0, 32, 32), Vector2(0, -10), Vector2(0, 0), Vector2(0, 0), []],
+	"a": ["duck", Rect2(0, 256, 32, 32), Vector2(0, -4), Vector2(0, 0), Vector2(0, 0), []],
+	"b": ["bench", Rect2(0, 0, 32, 32), Vector2(0, -2), Vector2(26, 8), Vector2(0, 0), []],
+	"d": ["duck", Rect2(0, 0, 32, 32), Vector2(0, -6), Vector2(0, 0), Vector2(0, 0), []],
+	"e": ["sheep", Rect2(0, 0, 32, 32), Vector2(0, -10), Vector2(0, 0), Vector2(0, 0), []],
+	"f": ["decor", Rect2(32, 176, 16, 16), Vector2(0, 0), Vector2(0, 0), Vector2(0, 0), []],
+	"g": ["bower", Rect2(96, 80, 96, 80), Vector2(0, -24), Vector2(0, 0), Vector2(0, 0), []],
+	"h": ["horse", Rect2(0, 0, 32, 32), Vector2(0, -10), Vector2(0, 0), Vector2(0, 0), []],
+	"i": ["decor", Rect2(64, 64, 16, 64), Vector2(0, -24), Vector2(6, 12), Vector2(0, 0), []],
+	"j": ["mouse", Rect2(0, 0, 32, 32), Vector2(0, -6), Vector2(0, 0), Vector2(0, 0), []],
+	"k": ["capy", Rect2(0, 0, 32, 32), Vector2(0, -2), Vector2(0, 0), Vector2(0, 0), []],
+	"l": ["swan", Rect2(0, 256, 32, 32), Vector2(0, -4), Vector2(0, 0), Vector2(0, 0), []],
+	"m": ["decor", Rect2(32, 112, 16, 16), Vector2(0, 0), Vector2(0, 0), Vector2(0, 0), []],
+	"n": ["decor", Rect2(48, 0, 16, 16), Vector2(0, 0), Vector2(8, 10), Vector2(0, 0), []],
+	"o": ["cow", Rect2(0, 0, 32, 32), Vector2(0, -10), Vector2(0, 0), Vector2(0, 0), []],
+	"p": ["pig", Rect2(0, 0, 32, 32), Vector2(0, -10), Vector2(0, 0), Vector2(0, 0), []],
+	"r": ["decor", Rect2(0, 48, 16, 16), Vector2(0, 0), Vector2(12, 8), Vector2(0, 0), []],
+	"s": ["tent", Rect2(0, 0, 48, 96), Vector2(0, -40), Vector2(26, 12), Vector2(0, 0), []],
+	"t": ["oak_s", Rect2(32, 0, 32, 48), Vector2(0, -16), Vector2(8, 6), Vector2(0, 0), []],
+	"u": ["decor", Rect2(0, 32, 16, 16), Vector2(0, 0), Vector2(10, 6), Vector2(0, 0), []],
+	"w": ["decor", Rect2(0, 16, 16, 16), Vector2(0, 0), Vector2(0, 0), Vector2(0, 0), []],
+	"x": ["chest", Rect2(0, 0, 16, 16), Vector2(0, -4), Vector2(12, 8), Vector2(0, 0), []],
+	"y": ["butterfly", Rect2(0, 0, 16, 16), Vector2(0, -12), Vector2(0, 0), Vector2(0, 0), []],
+	"z": ["windmill", Rect2(0, 0, 128, 112), Vector2(0, -48), Vector2(28, 14), Vector2(0, 0), []],
+	"|": ["wfence", Rect2(16, 0, 16, 16), Vector2(0, 0), Vector2(14, 6), Vector2(0, 0), []],
 }
