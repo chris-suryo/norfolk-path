@@ -1,0 +1,40 @@
+{
+  "name": "cove",
+  "width": 96,
+  "height": 48,
+  "seed": 11,
+  "border": {"depth": 2.6, "gap": 0.10},
+  "water": [
+    {"type": "lake", "rect": [52, 12, 95, 44], "round": 8}
+  ],
+  "pois": {
+    "spawn":   {"sym": "S", "at": [4, 24]},
+    "hut":     {"sym": "J", "at": [24, 17], "lamps": true},
+    "docksign":{"sym": "n", "at": [50, 26], "flowers": false,
+                "props": [[-2, 1, "b"], [-1, -2, "i"], [1, 2, "r"]]},
+    "camp":    {"sym": "0", "at": [30, 34], "flowers": false,
+                "props": [[-2, 0, "u"], [2, 1, "u"], [-1, 2, "1"], [3, -1, "s"]]},
+    "chest":   {"sym": "x", "at": [14, 8], "flowers": false, "props": [[1, 1, "r"]]},
+    "boat":    {"sym": "O", "at": [55, 28], "flowers": false},
+    "glade":   {"sym": "&", "at": [66, 6], "flowers": false,
+                "props": [[-2, 1, "r"], [2, 0, "u"], [-1, -1, "w"], [1, 2, "f"], [3, 1, "&"]]},
+    "swan":    {"sym": "l", "at": [66, 22], "flowers": false},
+    "duck1":   {"sym": "a", "at": [70, 31], "flowers": false},
+    "capy":    {"sym": "k", "at": [80, 27], "flowers": false}
+  },
+  "paths": [
+    {"from": "spawn", "to": [24, 19], "via": [[14, 21]], "width": 3, "wobble": 1.6},
+    {"from": [24, 19], "to": [48, 26], "via": [[36, 22]], "width": 3, "wobble": 1.8},
+    {"from": [24, 19], "to": [28, 32], "via": [[25, 26]], "width": 2, "wobble": 1.4}
+  ],
+  "pens": [
+    {"rect": [10, 30, 17, 36], "contents": "eCC2"}
+  ],
+  "scatter": [
+    {"kinds": "TtT456", "radius": 2.3, "keep": 0.32, "noise_scale": 9.0},
+    {"kinds": "Tt", "radius": 7.0, "keep": 0.62, "noise_scale": 16.0},
+    {"kinds": "wfwf", "radius": 3.2, "keep": 0.38, "noise_scale": 8.0},
+    {"kinds": "&ru", "radius": 9.0, "keep": 0.35, "noise_scale": 18.0},
+    {"kinds": "Cdy", "radius": 12.0, "keep": 0.30, "noise_scale": 20.0}
+  ]
+}

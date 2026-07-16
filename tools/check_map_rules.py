@@ -29,10 +29,18 @@ BUILDINGS = set("AGJEYLH")
 BOMB_SPAWN = (117, 33)
 
 
+def load_rows(path: Path) -> list:
+    """Rows from either the live island_map.gd or a plain candidate .txt —
+    lets worldgen gate generated maps with the exact same rules as CI."""
+    text = path.read_text(encoding="utf-8")
+    if path.suffix == ".gd":
+        text = re.search(r'const MAP := """\n(.*?)"""', text, re.S).group(1)
+    return text.rstrip("\n").split("\n")
+
+
 def main() -> None:
-    src = (REPO / "scripts" / "island_map.gd").read_text(encoding="utf-8")
-    rows = re.search(r'const MAP := """\n(.*?)"""', src, re.S).group(1)
-    rows = rows.rstrip("\n").split("\n")
+    path = Path(sys.argv[1]) if len(sys.argv) > 1 else REPO / "scripts" / "island_map.gd"
+    rows = load_rows(path)
     height, width = len(rows), len(rows[0])
     problems = []
 
@@ -80,12 +88,17 @@ def main() -> None:
         if not near:
             problems.append(f"doorstep group {group} has no building within 2 cells")
 
-    # 3. singletons stay singleton
+    # 3. singletons stay singleton (0 is fine — a level may not feature the
+    #    prop — but 2+ is a clone bug). Spawn is the exception: every level
+    #    needs exactly one.
     for sym, label in [("x", "chest"), ("W", "well"), ("z", "windmill"),
-                       ("s", "tent"), ("L", "library"), ("H", "stall"), ("S", "spawn")]:
+                       ("s", "tent"), ("L", "library"), ("H", "stall")]:
         n = len(cells(sym))
-        if n != 1:
-            problems.append(f"{label} '{sym}' expected exactly once, found {n}")
+        if n > 1:
+            problems.append(f"{label} '{sym}' appears {n} times — singleton prop cloned")
+    n_spawn = len(cells("S"))
+    if n_spawn != 1:
+        problems.append(f"spawn 'S' expected exactly once, found {n_spawn}")
 
     # 4. no floating fence fragments
     for sym in "F|":

@@ -680,12 +680,13 @@ def validate(rows):
     def count(sym):
         return sum(r.count(sym) for r in rows)
 
+    # Portable across levels: every map needs exactly one spawn; unique props
+    # may be absent (a cove has no shop) but must never be cloned.
     if count("S") != 1:
         problems.append(f"expected exactly one spawn 'S', found {count('S')}")
-    if count("H") != 1:
-        problems.append(f"expected exactly one shop 'H', found {count('H')}")
-    if count("L") not in (0, 1):
-        problems.append(f"expected at most one library 'L', found {count('L')}")
+    for sym, label in (("H", "shop"), ("L", "library"), ("W", "well"), ("z", "windmill")):
+        if count(sym) > 1:
+            problems.append(f"expected at most one {label} '{sym}', found {count(sym)}")
     return problems
 
 
