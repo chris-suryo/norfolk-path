@@ -33,7 +33,9 @@ var _pending_appearances: Array[Dictionary] = []
 
 
 func _ready() -> void:
-	_build_version.text = "v%s" % ProjectSettings.get_setting("application/config/version", "dev")
+	_build_version.text = (
+		"v%s - %s" % [ProjectSettings.get_setting("application/config/version", "?"), BuildInfo.SHA]
+	)
 	_creator.close()
 	_creator.accepted.connect(_on_creator_accepted)
 	_creator.backed.connect(_on_creator_backed)

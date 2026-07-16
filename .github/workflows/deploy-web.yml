@@ -39,6 +39,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Stamp the short commit SHA into the build BEFORE export, so the title
+      # screen identifies exactly what's deployed (repo keeps "dev").
+      - name: Stamp build SHA
+        run: sed -i "s/const SHA := \"dev\"/const SHA := \"${GITHUB_SHA::7}\"/" scripts/build_info.gd
+
       - name: Export Web build
         id: export
         uses: firebelley/godot-export@v8.0.0
