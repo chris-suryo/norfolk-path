@@ -21,13 +21,20 @@ layer.
 - Run `/security-review` before merging anything non-trivial (it ships with
   Claude Code).
 
-## Commands — the standard scaffold (don't guess others)
+## Commands — stack is per-shape (don't guess)
+
+**The default kit scaffold** (uv · typer+pydantic · pytest · ruff · ubuntu+windows
+CI) is for **CLI / script / service** projects (`dos new`, or `--shape python`):
 
 - deps: `uv sync` · run: `uv run <name> …`
 - tests: `uv run pytest -q` · one file: `uv run pytest tests/test_x.py -q`
 - lint: `uv run ruff check .` · format: `uv run ruff format .`
 
-If this project's notes name different commands, those win.
+For a **game, web app, or other stack** the project is stamped `--shape minimal`
+— plumbing only, no Python scaffold — and its real structure, toolchain, and CI
+are decided by `/grill` + `/plan`. Do NOT assume uv/pytest/ruff there: read
+PROJECT.md for this project's actual commands. If this project's notes name
+different commands, those win.
 
 ## Before you build
 
@@ -67,17 +74,23 @@ If this project's notes name different commands, those win.
 
 ## Session capture
 
-- End working sessions with `/wrap` so the story lands in Otto (the project
-  hub). Locally that runs `dos wrap`; in a cloud session it emits the
-  artifact for `dos post`. An honest artifact — including wrong paths and
+- **Capture every working session with `/wrap`** so its story lands in Otto
+  (the project hub). Locally that runs `dos wrap`; in a cloud session it emits
+  the artifact for `dos post`. An honest artifact — including wrong paths and
   wasted time — is the point; a flattering one defeats the system.
+- **The auto-wrap norm — don't wait for the literal `/wrap`.** When I signal
+  I'm finishing in ANY phrasing ("done", "stop", "gotta go", calling it,
+  switching to another topic or project), confirm in one line, then run the
+  wrap flow yourself. A session that ends unsaid can't be captured — catch the
+  signal. All fail-closed rules still apply: never fabricate, a trivial session
+  says so, and treat `blockers` with care.
 
 ## The refinement loop
 
 This file is versioned in the builder-kit repo and improves over time. When a
 lesson recurs across sessions (surfaced by `/harvest`), it earns a line here.
 Propose additions as builder-kit commits; never edit this block in a stamped
-project by hand — `dos sync` (future) refreshes it from the kit.
+project by hand — `dos sync` refreshes it from the kit.
 <!-- kit:end -->
 
 # norfolk-path — project specifics

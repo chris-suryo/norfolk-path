@@ -8,6 +8,14 @@ description: Stress-test a plan or design by interrogating the user relentlessly
 *Adapted from Matt Pocock's `grilling` skill (github.com/mattpocock/skills,
 MIT, © 2026 Matt Pocock) — with a handoff into this kit's `/plan`.*
 
+**First move — check the stamped scaffold against the spec's shape.** If the
+repo carries a Python scaffold (`pyproject.toml`, `src/`, python-matrix CI) but
+the spec is a game / web / other non-Python shape, that mismatch is decision #1:
+confirm ripping the scaffold out (it should have been `dos new --shape minimal`)
+before any design question — project structure, CI, and commands all hang off
+it. New projects stamped with the right shape won't hit this; older or
+mis-stamped repos still will.
+
 Interview me relentlessly about every aspect of this plan until we reach a
 shared understanding. Walk down each branch of the design tree, resolving
 dependencies between decisions one-by-one. For each question, provide your
