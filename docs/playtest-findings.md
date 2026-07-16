@@ -1,0 +1,259 @@
+# Playtest findings — round 1
+
+Local playtest on Chris's Windows machine, Godot 4.7-stable (Chris's exact build),
+branch `playtest/round-1` = `origin/main` @ 41188ea. The engine ran natively
+(windowed); input was driven programmatically via Win32 `PostMessage` key events
+(real editor F5 window, not the web build — see Methodology at the bottom). The
+web export was also built locally and checked in a browser for boot, fonts and
+save-gating. Screenshots live in `docs/playtest/round-1/`.
+
+**TL;DR:** the game is playable end-to-end (creator → slimes → skeletons →
+camp → Irene → win screen). Creator, persistence, checkpoints, co-op revive and
+the full HUD all work. The two most user-visible problems are the **missing
+space glyph in the pixel font (tofu boxes on every menu line of the web build —
+including the live site)** and a cluster of **sticky collision spots** (bridge
+parapet corners, tent rock pocket) that can pin a player in place. Several
+smaller polish items below.
+
+## Checklist status
+
+| Item | Status |
+|---|---|
+| A. Creator 1P — all 7 rows cycle + wrap | PASS |
+| A. Creator — Randomize / Confirm / Back | PASS |
+| A. Creator 2P — P1→P2 handoff, Back semantics | PASS |
+| A. Creator — live preview layers stay aligned (idle) | PASS |
+| B. Idle + walk all 8 directions | PASS |
+| B. Left-facing flip | PASS (indirect — sword/arc render on left when facing west; per-pixel sprite inspection not done at 640×360) |
+| B. Sword swing each facing | PASS, with one visual anomaly (see "Swing arc direction") |
+| B. Actual hit + impact FX | PASS (slime killed; debris + spark dashes captured) |
+| B. Max-range hit | PARTIAL (hits landed and killed, but a controlled max-range-only hit wasn't isolated) |
+| B. Dodge roll movement + animation | PASS |
+| B. Roll i-frame flash | NOT VERIFIED (no flash distinguishable in stills) |
+| B. Well-timed roll passes through a hit | NOT RUN (needs human timing; scripted input couldn't time reliably) |
+| B. Damage → hurt flash → downed | PASS (red tint, collapse pose captured) |
+| B. 1P downed → checkpoint respawn + area rearm | PASS |
+| B. 2P co-op revive in place | PASS (P1 downed, P2 cleared skeleton, P1 back up while P2 stayed at low HP) |
+| B. 2P all-down → checkpoint respawn | PASS (verified repeatedly, incl. boss reset) |
+| C. Persistence — desktop save/Continue | PASS (save.json matches created look exactly; Continue restores count + appearances + checkpoint) |
+| C. Persistence — web (localStorage) | PARTIAL (load path PASS via injected save → CONTINUE gates correctly; write path not drivable — see Methodology) |
+| D. Pause / Save Now | PASS ("Saved HH:MM" toast) |
+| D. Skeletons | PASS |
+| D. Bombschroom | PARTIAL (camp + enemy engaged; its blast wiped the party — windup flash and gas cloud not captured in stills) |
+| D. Irene boss | PASS (activation, HP bar, book projectiles, taunt line, damage to ~55%); **kill performed manually by Chris** |
+| D. Win screen | Reached (by Chris, manually); not screenshotted. Post-win reset behavior observed via save file — see finding below |
+| E. Map polish pass west/middle/east | DONE — traversal screenshots `map-east-run-*.png`; issues below |
+| Live URL reachable | PASS (https://norfolk-path.vercel.app boots; same font bug as local web build) |
+| Engine smoke test | PASS (headless `--import` clean; native boot clean, no script errors) |
+
+## Findings
+
+### Pixel font is missing the space glyph — tofu boxes across all web menus
+- Area: hud / flow (web build, including LIVE site)
+- Severity: bug (worst user-visible issue; first thing a visitor sees)
+- Observed: on the web build every UI line renders a boxed glyph (hex `0020`)
+  wherever a space should be: "NORFOLK⬚PATH", "1⬚PLAYER", "NEW⬚GAME", and the
+  hint lines are almost entirely boxes. Confirmed on the locally exported web
+  build AND on https://norfolk-path.vercel.app (CI build). Native Windows build
+  renders spaces fine — `allow_system_fallback=true` silently substitutes a
+  system font on desktop, but web has no system fonts, so the .notdef box shows.
+  Root cause is in the font file itself: `assets/game/CuteFantasy-5x9.ttf`
+  appears to have no glyph for U+0020.
+- Expected: spaces render as spaces on every platform.
+- Screenshot: docs/playtest/round-1/boot-title.png (local web),
+  docs/playtest/round-1/live-vercel-title.png (live site),
+  docs/playtest/round-1/native-count-stage.png (native — correct).
+
+### Committed font .import was hand-authored; editor regenerates it (dirty tree)
+- Area: flow (repo hygiene)
+- Severity: bug
+- Observed: `assets/game/CuteFantasy-5x9.ttf.import` in git contains a
+  hand-written UID (`uid://cnorfolkctf5x9font`) and a fake dest hash
+  (`...-cf5x9norfolkpathfont000000000.fontdata`). The first time the real
+  editor imports the project it regenerates a genuine UID/hash and adds
+  Godot-4.7 param keys (`modulate_color_glyphs`, etc.), so every local machine
+  immediately has a modified tracked file. Dozens of asset `.png.import` files
+  are also untracked locally (never committed), so a fresh editor open makes a
+  noisy working tree.
+- Expected: commit editor-generated `.import` files (open project once, commit
+  the result), or gitignore them consistently — one policy, applied to all.
+- Screenshot: n/a (see `git status` / `git diff` on any machine after opening
+  the editor).
+
+### Sticky collision at stone-bridge parapet corners
+- Area: map-middle
+- Severity: bug
+- Observed: approaching the river bridge from the northwest (the natural line
+  from the road), both players got pinned against the bridge's west parapet
+  corner — holding east for 4+ seconds produced zero movement, twice, in two
+  different spots (NW corner outside the deck, and mid-deck against the north
+  parapet). Stepping south first, then east, always freed them. Repro: walk the
+  road east to the bridge, hug the north edge, hold east.
+- Expected: colliders beveled/positioned so sliding along the wall funnels the
+  player onto the deck instead of wedging them.
+- Screenshot: docs/playtest/round-1/map-bridge-cross-1.png (pinned; identical
+  frame repeated over 2.5s of held input), docs/playtest/round-1/diag-stuck-south.png
+  (after stepping south, both free and crossing).
+
+### Prop pocket at the camp tent wedges players
+- Area: map-middle (bombschroom camp)
+- Severity: bug
+- Observed: the rock cluster + tree trunk immediately west of the tent forms a
+  pocket; P1 got wedged there twice and S/D inputs didn't free them (had to go
+  north). Blind repro: from the camp, walk into the gap between the tree and
+  the rocks next to the tent's left pole.
+- Expected: prop colliders spaced so there's no dead pocket, or the gap closed
+  entirely.
+- Screenshot: docs/playtest/round-1/bombschroom-leg2.png (P1's hat visible
+  wedged between rock and tree; same position across three consecutive
+  captures).
+
+### Swing arc occasionally renders opposite to the direction that lands the hit
+- Area: combat
+- Severity: bug (needs code-side verification)
+- Observed: in several captures the white swing arc + sword sprite render on
+  the player's WEST side while the hit lands on a slime to the EAST (slime
+  deformed with debris in the same frame). A controlled test (long walk to set
+  facing, then swing) matched arc-to-facing for west and south, so the anomaly
+  appears when direction changes rapidly or after respawns — possibly facing
+  updates a frame late, or the attack uses stale facing.
+- Expected: swing visual and hitbox always match current facing.
+- Screenshot: docs/playtest/round-1/combat-1p-hit-seq2.png (arc west, slime
+  east mid-death), docs/playtest/round-1/combat-1p-facing-west.png +
+  combat-1p-facing-south.png (controlled, correct).
+
+### Post-win reset silently discards the created characters
+- Area: persistence / flow
+- Severity: bug (design-level)
+- Observed: after Chris beat Irene and pressed through the win screen, the
+  saved file became `checkpoint 0, boss_defeated false, player_count 2` with
+  DEFAULT appearances (P1's custom blonde/hat look was replaced by the seed
+  default). The title screen then offers CONTINUE, which resumes a fresh run
+  with default-looking characters — surprising after having customized them.
+- Expected: either keep appearances through the reset (players' identities
+  persist across runs), or don't offer CONTINUE for a just-reset run.
+- Screenshot: docs/playtest/round-1/post-irene-state.png (title after win);
+  save.json contents captured in the session log.
+
+### Boss resets to full HP on every party wipe
+- Area: combat (boss)
+- Severity: polish (design feedback)
+- Observed: each all-down respawn (players revive at the adjacent checkpoint-3
+  beacon) resets Irene to full HP. With 6-HP players and 1-2 books being
+  enough to chip them down, uncoordinated play bounces off her indefinitely —
+  scripted play got her to ~55% repeatedly but never further; a human (Chris)
+  beat her fine. Worth a deliberate decision: keep as intended difficulty, or
+  persist partial boss damage / shorten her range.
+- Expected: intentional, documented difficulty rather than accidental wall.
+- Screenshot: docs/playtest/round-1/boss-assault12.png (~55%),
+  docs/playtest/round-1/boss-tight-end.png (bar back to ~full right after a
+  wipe, players respawned at the beacon).
+
+### Bombschroom is nearly identical to decorative mushrooms
+- Area: map-middle (camp)
+- Severity: polish
+- Observed: the bombschroom enemy and the decorative red amanita props are both
+  small red-capped mushrooms; at 640×360 they're effectively indistinguishable
+  until the enemy detonates (its blast wiped the party before any tell was
+  visible in stills). Several decor amanitas sit near the camp specifically.
+- Expected: a visual tell on the enemy (idle pulse/bob, different cap color,
+  eyes) so players can read the threat before stepping on it.
+- Screenshot: docs/playtest/round-1/bombschroom-approach2.png (enemy alive near
+  the campfire, decor mushrooms in the same shot),
+  docs/playtest/round-1/bomb2-southroute.png.
+
+### Road terminates in a blunt dead-end near the boss arena
+- Area: map-east
+- Severity: polish
+- Observed: the dirt road just stops in a rectangular stub in the grass short
+  of the boss/lake area (and the library that per design lives at the far east
+  wasn't seen anywhere around the arena — the fight happens on open road/lake
+  shore). Feels unfinished / AI-generated-tell.
+- Expected: road tapers into a clearing, gate, or the library frontage it's
+  leading to.
+- Screenshot: docs/playtest/round-1/boss-seq3.png (road stub, book projectile
+  in flight).
+
+### Creator hint line is barely legible
+- Area: creator
+- Severity: polish
+- Observed: the input-hints line at the bottom of the creator panel is tiny and
+  very low contrast (pale grey on tan). At the default window size it's
+  unreadable; at 4× it's still faint. The title-screen hint rows have the same
+  problem (compounded by the tofu boxes on web).
+- Expected: readable hint text (darker color or larger font).
+- Screenshot: docs/playtest/round-1/2p-creator-p2.png (bottom of panel).
+
+### Dialogue/taunt font doesn't match the pixel aesthetic
+- Area: hud
+- Severity: polish
+- Observed: Irene's taunt line ("Oh — you're here about the DVD. I really am
+  sorry it came to this.") renders in a smooth antialiased font (Godot default),
+  while every other UI element uses the 5×9 pixel font. Possibly intentional
+  for readability, but it visibly breaks style.
+- Expected: pixel font (or a deliberate, consistent "subtitle" style).
+- Screenshot: docs/playtest/round-1/boss-assault6.png.
+
+### HP bar fill is hard to read against the HUD
+- Area: hud
+- Severity: polish
+- Observed: the missing-HP portion of the P1/P2 bars is near-black on a dark
+  edge, so at a glance "nearly dead" and "full but dim" are easy to confuse
+  (this repeatedly confused the playtest itself). P2's bar fills right-to-left
+  (mirrored), which is fine once noticed but adds to the ambiguity.
+- Expected: lighter empty-fill or an outlined empty state; consistent fill
+  direction is a taste call.
+- Screenshot: docs/playtest/round-1/2p-simul-move.png (both bars read as
+  "empty" mid-fight), docs/playtest/round-1/boss-long24.png.
+
+### Boss arena flag/checkpoint props confusable with NPCs
+- Area: map-east / map-west
+- Severity: polish (minor)
+- Observed: the checkpoint beacons are scarecrow figures (straw hat + blue
+  overalls, arms out) with a lamp. West village also has decorative scarecrows
+  by the wheat fields, and during play the beacon was repeatedly mistaken for
+  an NPC/player at a glance (same silhouette + palette as a hatted player).
+- Expected: beacon silhouette more distinct from player/NPC (e.g. taller pole,
+  distinct color, animated glow).
+- Screenshot: docs/playtest/round-1/2p-p2-attack.png (beacon scarecrow beside
+  the players at the lamp), docs/playtest/round-1/bombschroom-spawn.png.
+
+## Positive observations (no action needed)
+
+- Creator handoff logic is exactly to spec: P1 confirm → P2; Esc from P2 → P1
+  with confirmed look intact (2p-back-to-p1.png); Esc from P1 → count screen.
+- Randomize produces varied, valid combos; live preview matches labels on
+  every row change (creator-1p-*.png series).
+- Checkpoint toast ("CHECKPOINT SAVED", map-east-run-15.png), pause Save Now
+  toast, and autosave-on-creation all fired as designed.
+- Co-op revive works and reads clearly in motion (2p-revive2-fight2.png shows
+  P1 back up beside the dying skeleton while P2 stayed at ~15% — a checkpoint
+  respawn would have refilled both).
+- Ambient life (chickens, ducks, goose, frog, capybara in the lake, floating
+  logs, boat) is charming and dense; boss-long24.png accidentally captured a
+  duck inspecting a downed player, which is honestly a feature.
+- Desktop persistence round-trip is byte-exact for appearances.
+- Web export boots clean (no console errors), and the live Vercel deployment is
+  publicly reachable — the PROJECT.md "verify from another machine" item can be
+  considered half-done (loads fine from this machine's browser; still worth one
+  check from a truly external network).
+
+## Methodology + honest limitations
+
+- The Claude-driven browser couldn't deliver keyboard input to the Godot web
+  canvas (CDP events never reached the page in this session; untrusted JS
+  events reach Godot's handler but the engine ignores them — separately
+  interesting but not a game bug). So all gameplay was driven on the NATIVE
+  Windows build via Win32 `PostMessage` scan-code events, with `PrintWindow`
+  screen captures. This gives real engine input but blind, latency-heavy
+  "hands" — timing-sensitive tests (roll i-frames, max-range spacing) were
+  attempted but couldn't be timed reliably, and are marked NOT VERIFIED rather
+  than guessed.
+- The Irene kill and win screen were completed manually by Chris mid-session
+  (the scripted fighter kept trading wipes with the boss-reset mechanic); every
+  other result above was observed directly from the scripted run.
+- The bombschroom's blast is inferred (mushroom present → party wipe → mushroom
+  gone); its windup flash and gas cloud were never caught in a still frame.
+- One save-file injection was used to jump back to checkpoint 2 after the
+  post-win reset (documented format, `user://save.json`) — used for travel
+  only, not to fake any result.
