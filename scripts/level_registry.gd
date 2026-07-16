@@ -21,6 +21,7 @@ extends RefCounted
 
 const VALLEY_MAP := preload("res://scripts/island_map.gd")
 const COVE_MAP := preload("res://scripts/cove_map.gd")
+const COTTAGE_MAP := preload("res://scripts/cottage_map.gd")
 
 const LEVELS := {
 	"valley":
@@ -31,10 +32,16 @@ const LEVELS := {
 		"has_shop": true,
 		"has_ariana": true,
 		"encounters": "valley",
-		# Arrive back from the cove just inside the east-edge path stub.
-		"entries": {"from_cove": Vector2i(186, 25)},
-		# East-edge crossing to the cove (a path stub runs east past the boss).
-		"transitions": [{"cells": Rect2i(190, 24, 2, 5), "to": "cove", "entry": "from_valley"}],
+		# Arrivals: back from the cove (east stub), or out of the cottage (in
+		# front of cottage G's door, a couple tiles down the village path).
+		"entries": {"from_cove": Vector2i(186, 25), "from_cottage": Vector2i(21, 20)},
+		# East-edge crossing to the cove + the cottage door (cottage G at 21,17;
+		# the door faces down onto the 2-wide path at row 18).
+		"transitions":
+		[
+			{"cells": Rect2i(190, 24, 2, 5), "to": "cove", "entry": "from_valley"},
+			{"cells": Rect2i(20, 18, 2, 1), "to": "cottage", "entry": "from_valley"},
+		],
 	},
 	"cove":
 	{
@@ -48,6 +55,20 @@ const LEVELS := {
 		# Arrive from the valley a few tiles east of the west-edge return volume.
 		"entries": {"from_valley": Vector2i(7, 24)},
 		"transitions": [{"cells": Rect2i(2, 21, 3, 6), "to": "valley", "entry": "from_cove"}],
+	},
+	"cottage":
+	{
+		"map": COTTAGE_MAP,
+		"ground": "res://assets/generated/cottage-interior-ground.png",
+		"biome": "interior",
+		"has_shop": false,
+		"has_ariana": false,
+		"encounters": "",
+		# No named entry — arriving from the door spawns on the map's own "S",
+		# just inside the doorway.
+		"entries": {},
+		# The exit mat at the bottom doorway sends you back out in front of G.
+		"transitions": [{"cells": Rect2i(6, 8, 1, 1), "to": "valley", "entry": "from_cottage"}],
 	},
 }
 

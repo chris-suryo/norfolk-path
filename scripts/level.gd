@@ -55,7 +55,9 @@ static func terrain_of(symbol: String) -> Terrain:
 	match symbol:
 		# open water + everything that floats ON the lake (boat, capybaras,
 		# swimming duck/swan) — all solid so the player can't walk into the lake.
-		"~", "O", "k", "a", "l", "@":
+		# "X" is an interior wall: reuse the colliding water source (its collision
+		# polygon covers every autotile coord, so 1-thick walls always block).
+		"~", "O", "k", "a", "l", "@", "X":
 			return Terrain.WATER
 		"B":
 			return Terrain.WATER_WALKABLE
@@ -63,8 +65,8 @@ static func terrain_of(symbol: String) -> Terrain:
 		"#", "S", "g":
 			return Terrain.PATH
 		_:
-			# grass catch-all — also farm (D/Q) and cobble (c): all walkable,
-			# their look comes from the baked ground image, not the tilemap.
+			# grass catch-all — also farm (D/Q), cobble (c), and interior floor
+			# (_ / > exit-mat): all walkable, their look comes from the baked image.
 			return Terrain.GRASS
 
 
