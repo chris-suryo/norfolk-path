@@ -19,6 +19,10 @@ export/
 __pycache__/
 *.pyc
 
+# Local visual-review snapshots. They are generated per revision and uploaded by
+# the Visual Review workflow, so they do not belong in the source history.
+artifacts/visual-review/
+
 # Raw downloaded asset zips — keep the EXTRACTED art in git, not the archives.
 # (Your backup copies stay on disk; git just ignores them.)
 **/All Zip Files/
@@ -33,3 +37,6 @@ __MACOSX/
 
 # Orphaned old placeholder art (replaced by the real Cute Fantasy pack).
 assets/placeholder/
+
+.vercel
+.env*

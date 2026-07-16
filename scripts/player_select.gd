@@ -17,7 +17,7 @@ enum Stage { MODE, COUNT }
 
 const MAIN_SCENE := "res://scenes/main.tscn"
 const SELECTED := Color(1, 0.9, 0.3)
-const DIMMED := Color(0.6, 0.6, 0.6)
+const DIMMED := Color(0.84, 0.74, 0.60)
 
 var _stage: int = Stage.COUNT
 var _selected := 1

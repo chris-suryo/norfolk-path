@@ -26,6 +26,15 @@ the tileset. It's fine for *mood boards*, useless as a *level*. Cohesion comes
 from the story driving the geography, then fast iteration on the ASCII map with
 the preview render — not from one-shotting an image.
 
+## Visual review snapshots
+
+After a map or prop-layout change, run `python tools/capture_visual_review.py`.
+It stores a revision-labelled full-map image plus west/middle/east crops under
+`artifacts/visual-review/`; GitHub Actions uploads the same set for each push
+and pull request. Review them for route clarity, repeated sprites, isolated
+props, and awkward overlaps before treating a layout as ready for live
+playtesting. See `docs/visual-review.md` for the checklist.
+
 ## The map
 
 The whole level is an ASCII grid in `scripts/island_map.gd` (the `MAP` const).

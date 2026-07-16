@@ -18,24 +18,34 @@ var walk_fps := 6.0
 var can_wander := false
 var wander_radius := 16.0
 var move_speed := 10.0
+var can_fly := false
+var flight_radius := 8.0
+var flight_period := 3.0
 
 var _home := Vector2.ZERO
 var _target := Vector2.ZERO
 var _moving := false
 var _wait := 0.0
 var _time := 0.0
+var _flight_phase := 0.0
 
 
 func _ready() -> void:
 	_home = position
 	_target = position
 	_wait = randf_range(1.0, 3.0)
+	# Offset each actor's cycle so nearby animals never animate in lockstep.
+	_time = randf_range(0.0, 8.0)
+	_flight_phase = randf_range(0.0, TAU)
+	flip_h = randf() < 0.5
 	frame = idle_row * hframes
 
 
 func _process(delta: float) -> void:
 	_time += delta
-	if can_wander and walk_row >= 0:
+	if can_fly:
+		_fly()
+	elif can_wander and walk_row >= 0:
 		_wander(delta)
 	var fps := walk_fps if _moving else idle_fps
 	var row := walk_row if _moving else idle_row
@@ -64,3 +74,10 @@ func _wander(delta: float) -> void:
 				)
 			)
 			_moving = true
+
+
+func _fly() -> void:
+	# A small figure-eight feels alive without drifting away from its scene.
+	var angle := _time * TAU / flight_period + _flight_phase
+	position = _home + Vector2(cos(angle) * flight_radius, sin(angle * 2.0) * flight_radius * 0.45)
+	flip_h = cos(angle) < 0.0

@@ -48,7 +48,18 @@ const ANIMAL_ANIM := {
 	"o": {"idle": 0, "idle_n": 4},
 	"p": {"idle": 0, "idle_n": 4},
 	"e": {"idle": 0, "idle_n": 4},
-	"C": {"idle": 0, "idle_n": 4},
+	"C":
+	{"idle": 0, "idle_n": 4, "walk": 1, "walk_n": 6, "wander": true, "radius": 12.0, "speed": 8.0},
+	"y":
+	{
+		"frame_size": 16,
+		"idle": 0,
+		"idle_n": 4,
+		"fly": true,
+		"radius": 9.0,
+		"period": 2.8,
+		"idle_fps": 5.0
+	},
 	"a": {"idle": 8, "idle_n": 4},
 	"l": {"idle": 8, "idle_n": 3},
 	"k": {"idle": 0, "idle_n": 9},
@@ -132,6 +143,7 @@ func _spawn_props() -> void:
 			var region: Rect2 = spec[1]
 			var offset: Vector2 = spec[2]
 			var collider: Vector2 = spec[3]
+			var collider_offset: Vector2 = spec[4] if spec.size() > 4 else Vector2.ZERO
 			var sprite := Sprite2D.new()
 			sprite.texture = _texture(spec[0])
 			sprite.region_enabled = true
@@ -148,6 +160,7 @@ func _spawn_props() -> void:
 				var rect := RectangleShape2D.new()
 				rect.size = collider
 				shape.shape = rect
+				shape.position = collider_offset
 				body.add_child(shape)
 				_world.add_child(body)
 
@@ -160,17 +173,23 @@ func _spawn_animal(sym: String, spec: Array, base: Vector2) -> void:
 	var tex := _texture(spec[0])
 	var animal := AmbientAnimal.new()
 	animal.texture = tex
-	animal.hframes = int(tex.get_width() / 32.0)
-	animal.vframes = int(tex.get_height() / 32.0)
+	var frame_size: float = cfg.get("frame_size", 32.0)
+	animal.hframes = int(tex.get_width() / frame_size)
+	animal.vframes = int(tex.get_height() / frame_size)
 	animal.offset = spec[2]
 	animal.position = base
 	animal.idle_row = cfg["idle"]
 	animal.idle_count = cfg["idle_n"]
 	animal.walk_row = cfg.get("walk", -1)
 	animal.walk_count = cfg.get("walk_n", 6)
+	animal.idle_fps = cfg.get("idle_fps", 2.0)
+	animal.walk_fps = cfg.get("walk_fps", 6.0)
 	animal.can_wander = cfg.get("wander", false)
 	animal.wander_radius = cfg.get("radius", 16.0)
 	animal.move_speed = cfg.get("speed", 10.0)
+	animal.can_fly = cfg.get("fly", false)
+	animal.flight_radius = cfg.get("radius", 8.0)
+	animal.flight_period = cfg.get("period", 3.0)
 	_world.add_child(animal)
 
 

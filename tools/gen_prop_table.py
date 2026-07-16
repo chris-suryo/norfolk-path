@@ -144,17 +144,16 @@ SPEC = {
 
 # Buildings drawn via blit_building (whole sheet, foot offset) — derive region +
 # offset from the sheet dims so we don't hand-copy 240x192 etc.
-BUILDINGS = {  # sym: (sheet_key, foot, collider_w, collider_h)
-    # Collider widths cover the visible ground-floor mass (buildings aren't
-    # enterable, so a full-base wall is correct). Earlier values only spanned the
-    # central door, leaving the wings walk-through (playtest collision audit).
-    "L": ("inn", 8, 210, 18),  # base ~230 wide, was 90
-    "A": ("house_a", 8, 52, 14),  # compact house, base ~67 — already fine
-    "G": ("house_g", 8, 112, 14),  # 144-wide L-shape, was 52
-    "J": ("house_j", 8, 76, 14),  # base ~84, was 52
-    "E": ("house_e", 8, 112, 14),  # 144-wide L-shape, was 52
-    "Y": ("barn", 8, 92, 16),  # base ~100, was 60
-    "W": ("well", 6, 20, 12),
+BUILDINGS = {  # sym: (sheet_key, foot, collider_w, collider_h, collider_y)
+    # The collider covers the solid ground-floor mass, inset from decorative
+    # eaves so the visual silhouette does not feel wider than the walkable space.
+    "L": ("inn", 8, 186, 14, -5),  # inset from decorative eaves
+    "A": ("house_a", 8, 46, 12, -4),
+    "G": ("house_g", 8, 96, 12, -4),
+    "J": ("house_j", 8, 64, 12, -4),
+    "E": ("house_e", 8, 96, 12, -4),
+    "Y": ("barn", 8, 76, 12, -4),
+    "W": ("well", 6, 16, 10, -2),
 }
 
 
@@ -168,13 +167,13 @@ def build_table():
         if rx + rw > sw or ry + rh > sh:
             errors.append(f"{sym}: region ({rx},{ry},{rw},{rh}) exceeds {key} {sw}x{sh}")
         used_sheets.add(key)
-        table[sym] = (key, rx, ry, rw, rh, ax + rw / 2.0, ay + rh / 2.0, cw, ch)
-    for sym, (key, foot, cw, ch) in BUILDINGS.items():
+        table[sym] = (key, rx, ry, rw, rh, ax + rw / 2.0, ay + rh / 2.0, cw, ch, 0.0, 0.0)
+    for sym, (key, foot, cw, ch, collider_y) in BUILDINGS.items():
         rel = SHEETS[key]
         sw, sh = dims(rel)
         used_sheets.add(key)
         # whole sheet, centered offset = (0, foot - sh/2)
-        table[sym] = (key, 0, 0, sw, sh, 0.0, foot - sh / 2.0, cw, ch)
+        table[sym] = (key, 0, 0, sw, sh, 0.0, foot - sh / 2.0, cw, ch, 0.0, collider_y)
     return table, used_sheets, errors
 
 
@@ -198,15 +197,15 @@ def emit(table, used_sheets):
         lines.append('\t"%s": "%s",' % (key, res_path(SHEETS[key])))
     lines.append("}")
     lines.append("")
-    lines.append("## symbol -> [sheet_key, region(x,y,w,h), sprite_offset(x,y), collider(w,h)]")
-    lines.append("## collider (0,0) = decor, no collision. Offset is from the cell centre.")
+    lines.append("## symbol -> [sheet_key, region(x,y,w,h), sprite_offset(x,y), collider(w,h), collider_offset(x,y)]")
+    lines.append("## collider (0,0) = decor, no collision. Offsets are from the cell centre.")
     lines.append("const PROPS := {")
     for sym in sorted(table):
-        key, rx, ry, rw, rh, ox, oy, cw, ch = table[sym]
+        key, rx, ry, rw, rh, ox, oy, cw, ch, cox, coy = table[sym]
         esc = '\\"' if sym == '"' else ("\\\\" if sym == "\\" else sym)
         lines.append(
-            '\t"%s": ["%s", Rect2(%d, %d, %d, %d), Vector2(%g, %g), Vector2(%g, %g)],'
-            % (esc, key, rx, ry, rw, rh, ox, oy, cw, ch)
+            '\t"%s": ["%s", Rect2(%d, %d, %d, %d), Vector2(%g, %g), Vector2(%g, %g), Vector2(%g, %g)],'
+            % (esc, key, rx, ry, rw, rh, ox, oy, cw, ch, cox, coy)
         )
     lines.append("}")
     lines.append("")
@@ -221,5 +220,5 @@ if __name__ == "__main__":
             print("  -", e)
         sys.exit(1)
     out = os.path.join(REPO, "scripts", "prop_table.gd")
-    open(out, "w").write(emit(table, used))
+    open(out, "w", encoding="utf-8").write(emit(table, used))
     print(f"wrote scripts/prop_table.gd: {len(table)} symbols, {len(used)} sheets, 0 region errors")
