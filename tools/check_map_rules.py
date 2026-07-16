@@ -29,10 +29,18 @@ BUILDINGS = set("AGJEYLH")
 BOMB_SPAWN = (117, 33)
 
 
+def load_rows(path: Path) -> list:
+    """Rows from either the live island_map.gd or a plain candidate .txt —
+    lets worldgen gate generated maps with the exact same rules as CI."""
+    text = path.read_text(encoding="utf-8")
+    if path.suffix == ".gd":
+        text = re.search(r'const MAP := """\n(.*?)"""', text, re.S).group(1)
+    return text.rstrip("\n").split("\n")
+
+
 def main() -> None:
-    src = (REPO / "scripts" / "island_map.gd").read_text(encoding="utf-8")
-    rows = re.search(r'const MAP := """\n(.*?)"""', src, re.S).group(1)
-    rows = rows.rstrip("\n").split("\n")
+    path = Path(sys.argv[1]) if len(sys.argv) > 1 else REPO / "scripts" / "island_map.gd"
+    rows = load_rows(path)
     height, width = len(rows), len(rows[0])
     problems = []
 
@@ -80,12 +88,17 @@ def main() -> None:
         if not near:
             problems.append(f"doorstep group {group} has no building within 2 cells")
 
-    # 3. singletons stay singleton
+    # 3. singletons stay singleton (0 is fine — a level may not feature the
+    #    prop — but 2+ is a clone bug). Spawn is the exception: every level
+    #    needs exactly one.
     for sym, label in [("x", "chest"), ("W", "well"), ("z", "windmill"),
-                       ("s", "tent"), ("L", "library"), ("H", "stall"), ("S", "spawn")]:
+                       ("s", "tent"), ("L", "library"), ("H", "stall")]:
         n = len(cells(sym))
-        if n != 1:
-            problems.append(f"{label} '{sym}' expected exactly once, found {n}")
+        if n > 1:
+            problems.append(f"{label} '{sym}' appears {n} times — singleton prop cloned")
+    n_spawn = len(cells("S"))
+    if n_spawn != 1:
+        problems.append(f"spawn 'S' expected exactly once, found {n_spawn}")
 
     # 4. no floating fence fragments
     for sym in "F|":
@@ -99,13 +112,66 @@ def main() -> None:
         if d < 10:
             problems.append(f"decor mushroom ({x},{y}) only {d} cells from bombschroom spawn")
 
+    # 6. every connected path region contacts >= 2 distinct POIs — a road goes
+    #    from somewhere TO somewhere (rulebook H10; map audit M1 dead-end class)
+    poi_syms = set(BUILDINGS) | set("WHSBc")
+    seen_p = set()
+    for (x, y) in cells("#"):
+        if (x, y) in seen_p:
+            continue
+        stack, region = [(x, y)], []
+        while stack:
+            cx, cy = stack.pop()
+            if (cx, cy) in seen_p:
+                continue
+            seen_p.add((cx, cy))
+            region.append((cx, cy))
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                nx, ny = cx + dx, cy + dy
+                if 0 <= ny < height and 0 <= nx < width and rows[ny][nx] == "#":
+                    if (nx, ny) not in seen_p:
+                        stack.append((nx, ny))
+        contacts = set()
+        for (px, py) in region:
+            for dy in (-2, -1, 0, 1, 2):
+                for dx in (-2, -1, 0, 1, 2):
+                    nx, ny = px + dx, py + dy
+                    if 0 <= ny < height and 0 <= nx < width and rows[ny][nx] in poi_syms:
+                        contacts.add((nx, ny, rows[ny][nx]))
+        kinds = {c[2] for c in contacts}
+        if len(kinds) < 2:
+            problems.append(
+                f"path region of {len(region)} cells near {region[0]} contacts "
+                f"{sorted(kinds) or 'no'} POI kinds — a road must go from somewhere to somewhere"
+            )
+
+    # 7. no straight line of >= 5 identical decor symbols (rulebook H11; the
+    #    flower-grid-column class from map audit M13)
+    decor = "wfm&ru"
+    for sym in decor:
+        pts = set(cells(sym))
+        for (x, y) in pts:
+            for dx, dy in ((1, 0), (0, 1)):
+                if (x - dx, y - dy) in pts:
+                    continue  # not the run's start
+                n = 0
+                while (x + n * dx, y + n * dy) in pts:
+                    n += 1
+                if n >= 5:
+                    problems.append(
+                        f"decor '{sym}' forms a straight run of {n} from ({x},{y}) — grid artifact"
+                    )
+
     print(f"map rules: checked {width}x{height} map")
     if problems:
         print("FAIL:")
         for p in problems:
             print("  - " + p)
         sys.exit(1)
-    print("OK: hives treed, steps anchored, singletons unique, fences connected, mushrooms clear.")
+    print(
+        "OK: hives treed, steps anchored, singletons unique, fences connected, "
+        "mushrooms clear, paths go somewhere, no decor grids."
+    )
 
 
 if __name__ == "__main__":
