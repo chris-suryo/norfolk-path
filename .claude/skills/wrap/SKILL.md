@@ -1,6 +1,6 @@
 ---
 name: wrap
-description: End-of-session capture for DeveloperOS — land this session's story in Otto. Locally it runs `dos wrap`; in a cloud session it emits the SessionArtifact JSON for `dos post`. Use when the user says /wrap, "wrap it up", "wrap this session", or is ending a working session they want captured.
+description: End-of-session capture for DeveloperOS — land this session's story in Otto. Locally it runs `dos wrap`; in a cloud session it emits the SessionArtifact JSON for `dos post`. Use when the user says /wrap, "wrap it up", "wrap this session" — or signals they're finishing in ANY phrasing ("I'm done", "stop", "gotta go", "calling it", switching to another topic/project): that stop-intent triggers this skill proactively (confirm in one line, then wrap — the auto-wrap norm, docs/seamless-loop.md Phase 2).
 ---
 
 # /wrap — capture this session into Otto
@@ -47,6 +47,12 @@ push fails, skip this step silently; the fence below still works.
 merge/pull latency; the paste relay updates the board immediately and doubles
 as the human review step. Emit EXACTLY ONE fenced ```json block, a single
 object with these fields.
+
+**Self-check before you emit it — never hand over a partial artifact.** Verify
+the JSON is ONE complete, valid object: starts with `{`, ends with `}`, every
+quote/bracket closed, all required fields present (esp. `blockers`,
+`next_task`). If it's getting cut off, say so and re-emit it whole — a truncated
+artifact just fail-closes `dos post` and costs a dead round-trip.
 
 **Encoding rule: the JSON must be ASCII-safe** — escape every non-ASCII
 character as `\uXXXX` (what `json.dumps` with `ensure_ascii=True` produces),

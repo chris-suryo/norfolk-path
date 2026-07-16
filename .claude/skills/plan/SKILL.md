@@ -16,5 +16,10 @@ When invoked (or when a task is non-trivial), do NOT write code yet. Produce:
 
 Then stop and wait for approval. Revise on feedback before writing any code.
 
+When the plan is approved, also **write it into the repo** as
+`docs/<slice>-plan.md` and commit it — not only the session-local plan file. A
+separate build session on a fresh clone can't see the session-local plan; the
+in-repo copy is what survives the handoff. Point PROJECT.md `next:` at it.
+
 Keep it short — a screen, not a document. The point is a shared model before
 implementation, not ceremony.

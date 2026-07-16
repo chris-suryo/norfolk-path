@@ -46,6 +46,15 @@ plain ASCII punctuation. A single JSON object:
 
 ## 3. Deliver — GitHub first, paste as fallback
 
+**Self-check FIRST — never hand over a partial artifact.** Before you write or
+paste anything, verify the JSON is ONE complete, valid object: it starts with
+`{` and ends with `}`, every string/quote/bracket is closed, and all required
+fields are present (`project`, `goal`, `blockers`, `next_task`, `resume_minutes`,
+`session_id`). If you cannot produce the whole object in one piece (e.g. it's
+getting cut off), say so plainly and re-emit it complete — do NOT deliver a
+truncated artifact. `dos post` fail-closes on invalid JSON, so a partial one
+just costs the user a dead round-trip.
+
 **Preferred (automatic):** if this chat can use GitHub tools (the GitHub
 connector), create a new file in the repository **chris-suryo/otto-inbox**,
 branch `main`:
