@@ -1,11 +1,12 @@
 class_name Level
 extends TileMapLayer
 
-## Terrain painter: renders IslandMap.MAP into tiles at runtime.
+## Terrain painter: renders a level's ASCII MAP into tiles at runtime.
 ##
 ## Painting happens in code because this project is authored headlessly
-## (TileMapLayer's packed tile data isn't safe to hand-write), and the map
-## itself lives in scripts/island_map.gd as ASCII. Edge tiles (shorelines,
+## (TileMapLayer's packed tile data isn't safe to hand-write), and each level's
+## map lives in a .gd script as ASCII (main.gd picks the active one via
+## LevelRegistry and calls build()). Edge tiles (shorelines,
 ## path borders) are picked per-cell from the pack's 3x6 edge sheets by
 ## looking at the 8 neighbors — no editor terrain sets needed, and the same
 ## algorithm is mirrored in the scratchpad preview renderer, so layouts are
@@ -42,8 +43,11 @@ const EDGE_BY_LAND_MASK := {
 var _rows: PackedStringArray
 
 
-func _ready() -> void:
-	_rows = IslandMap.rows()
+## Paint the given level's terrain + collision. Called by main.gd._ready() (which
+## runs after this node's _ready, children-first) so the active level is chosen
+## per run rather than hard-wired to one map.
+func build(map_data: MapData) -> void:
+	_rows = map_data.rows()
 	_paint()
 
 

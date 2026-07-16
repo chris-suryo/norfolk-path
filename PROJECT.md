@@ -8,6 +8,26 @@ is learning the engine end-to-end, not shipping commercially.
 
 ## Status
 
+- **STAGE C SHIPPED (headless): the engine is now multi-level.** A level
+  registry (`scripts/level_registry.gd`) keys each level to its map script,
+  baked ground, spawn, encounters, and edge/door transitions; `MapData`
+  (`scripts/map_data.gd`) makes the old `IslandMap` statics per-level, and
+  `level.gd`/`main.gd`/`encounter_manager.gd` build the *active* level chosen by
+  `Game.current_level_id`. ONE Area2D mechanism (`scripts/level_transition.gd`)
+  handles both map-edge crossings and building doors (any player triggers →
+  both travel; arm-on-exit stops arrival bounce). **Save v4** adds the level id;
+  v3 saves migrate keeping appearances. **Cove-s11 is wired as level 2**
+  (peaceful for now), reached from a new east-edge path stub past the boss
+  plaza; valley ground re-baked (diff confined to the stub — otherwise
+  pixel-identical) and all HARD map rules stay green. A defeated boss now stays
+  defeated on re-entry from the cove. Checkers generalized: `check_symbols.py`
+  covers every registered level; `check_map_rules.py` runs per outdoor level
+  (its bombschroom rule self-scopes to the valley). **NOT yet run in-engine** (no
+  Godot in the sandbox) — headless gates green; the transition/cove walkaround
+  need Chris's local run. Next: the interiors prototype (Stage E, a cottage).
+- **COVE PICKED (2026-07-16): candidate cove-s11** — regenerate exactly with
+  `python tools/worldgen/generate.py --brief briefs/cove.json --seeds 1 --seed-base 11 --out artifacts/worldgen/cove`
+  (worldgen is deterministic).
 - **DECIDED (2026-07-16): the valley map is the keeper — `island_map.gd` is
   UNFROZEN.** The cove becomes a future NE-quadrant extension (the map audit
   showed that corner is the natural site), not a world swap; the long-standing

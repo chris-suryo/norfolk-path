@@ -1,0 +1,50 @@
+{
+  "goal": "Round-2 polish from live feedback, then the world-generation epic: rulebook, brief-driven generator, cove gallery",
+  "completed": [
+    "PR #10 (merged+deployed): solo random-color butterflies with organic flight (sheet was 8px frames - frame_size 16 drew a 2x2 block of FOUR as one sprite), readable pause menu, shop reduced to the market stand, all doorstep cobbles removed (paths now reach the two connected doors), barn paddock with animals, title shows v0.2.0 - <git sha> stamped by CI",
+    "PR #11 (merged): docs/map-rulebook.md - 11 HARD rules (CI) + 10 SOFT rules (vision review) each with provenance, per-biome asset tables; 2 new CI rules (paths must contact >=2 POI kinds; no decor grid runs)",
+    "PR #11: tools/worldgen/ brief-driven generator - Bridson Poisson-disc + value-noise fields + jittered desire-line paths on the gen_valley machinery; candidates self-gate through the exact CI rules; deterministic (same brief+seed = byte-identical, md5-verified)",
+    "Cove gallery: round 1 failed its own gates (fragmented paths, phantom lake islands - both machine-caught); round 2 5/6 pass, 3 passed vision review, posted to Chris",
+    "Chris PICKED candidate cove-s11 (briefs/cove.json, seed 11) - recorded in PROJECT.md",
+    "check_map_rules + preview validation made map-portable (exactly-one applies only to spawn); artifacts/ fully gitignored"
+  ],
+  "discovered": [
+    "Butterfly sheet is 2 flap frames x 8 color rows at 8px - the 4-in-formation bug was a frame_size misread, not a flight bug",
+    "Pack inventory: beach + home-interior tilesets complete (interiors not even gdignored); desert/dungeon/shroomlands/cave/volcano/autumn are full libraries; winter + military camp are props-only (NOT buildable)",
+    "gen_valley still stamped doorstep cobbles + yard fences that round-2 removed - generators drift behind accumulated taste unless rules live outside them",
+    "Established-practice check: constructive passes + validators IS the right pattern for semantically-constrained maps; WFC only fits terrain texture"
+  ],
+  "decisions": [
+    "World grows as CONNECTED LEVELS (each biome its own map/scene; one Area2D transition mechanism for map edges AND building doors - interiors are just small levels)",
+    "Beach/cove next; interiors first-class priority after; gallery-of-3-5 pick style; valley stays hand-managed (wider-river/path-reroute = later hand slice)",
+    "Doorstep material: removed entirely; cove pick = cove-s11"
+  ],
+  "lessons": [
+    "Gate generated content through the EXACT CI rules before any human look - round 1's failures cost zero human iterations",
+    "Determinism (seeded rng only, no wall clock) makes picks storable as brief+seed instead of artifacts",
+    "Paths must end at approach points NEAR POIs, never on them (stamps punch holes in bands)",
+    "Confine shore-noise erosion to the shoreline band - interior erosion invents islands"
+  ],
+  "files_changed": [
+    "docs/map-rulebook.md", "tools/worldgen/{core,sampling,passes,generate}.py", "briefs/cove.json",
+    "tools/check_map_rules.py", "tools/preview_map.py", "scripts/ambient_animal.gd", "scripts/main.gd",
+    "scripts/pause_menu.gd", "scripts/player_select.gd", "scripts/build_info.gd", "scenes/shop.tscn",
+    "scripts/island_map.gd", "assets/generated/valley-1-ground.png", "project.godot",
+    ".github/workflows/{deploy-web,playtest}.yml", ".gitignore", "PROJECT.md"
+  ],
+  "open_questions": [
+    "Where exactly does the valley->cove transition sit (east edge vs lake shore)?",
+    "Interiors: which building gets the first walk-in room?"
+  ],
+  "intent": "Context window near its limit after a very long productive session; stopped at the clean seam - pick recorded, Stage C scoped - so a fresh session starts the engine refactor with full headroom",
+  "next_task": "Epic Stage C: connected-levels plumbing (level registry, per-level ground bake, edge+door transition Area2D, save v4 with v3 migration, playtest bot proves valley intact), then wire cove-s11 as level 2",
+  "blockers": null,
+  "resume_minutes": 15,
+  "dont_retry": [
+    "Fetching Actions artifact/log blobs from the cloud sandbox (Azure host egress-blocked); use MCP get_job_logs return_content",
+    "Reaching norfolk-path.vercel.app from the sandbox (policy 403)",
+    "workflow_dispatch on a branch-only workflow (404) - temp push trigger, strip before merge",
+    "Committing anything under artifacts/ (now fully gitignored; worldgen output regenerates from brief+seed)"
+  ],
+  "session_id": "session_01FhtmMU3vN2QW9P1PAUFdCV"
+}
