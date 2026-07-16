@@ -11,6 +11,17 @@ extends Node2D
 
 const GROUND_IMAGE := "res://assets/generated/valley-1-ground.png"
 
+## Cosmetic-variety assets (map audit M7/M10). The alt villager breaks the
+## one-sprite-plays-four-people clone effect; the sail sheet is the windmill's
+## rotating cross, shipped separately from the tower in the pack.
+const VILLAGER_ALT := (
+	"res://assets/cute_fantasy/packs/Cute_Fantasy/Cute_Fantasy" + "/NPCs (Premade)/Chef_Chloe.png"
+)
+const WINDMILL_SAILS := (
+	"res://assets/cute_fantasy/packs/Cute_Fantasy/Cute_Fantasy"
+	+ "/Buildings/Buildings/Unique_Buildings/Windmill/Windmill_Sail_Anim.png"
+)
+
 ## Symbols handled outside PropTable: terrain (painted + baked), fences (F needs
 ## neighbour-aware pieces), spawn, and node anchors ("$" = Ariana, spawned as a
 ## live critter node below — NOT a table prop, else a static duck stacks on her).
@@ -48,8 +59,11 @@ const ANIMAL_ANIM := {
 	"o": {"idle": 0, "idle_n": 4},
 	"p": {"idle": 0, "idle_n": 4},
 	"e": {"idle": 0, "idle_n": 4},
+	# Chicken sheet is 2x2 = 4 frames TOTAL; the old 6-frame walk overran it
+	# every step (p_frame out of bounds — caught by the playtest bot's console
+	# log). Row 0 = 2-frame idle, row 1 = 2-frame walk; wander stays on.
 	"C":
-	{"idle": 0, "idle_n": 4, "walk": 1, "walk_n": 6, "wander": true, "radius": 12.0, "speed": 8.0},
+	{"idle": 0, "idle_n": 2, "walk": 1, "walk_n": 2, "wander": true, "radius": 12.0, "speed": 8.0},
 	"y":
 	{
 		"frame_size": 16,
@@ -150,6 +164,7 @@ func _spawn_props() -> void:
 			sprite.region_enabled = true
 			sprite.region_rect = region
 			sprite.offset = offset
+			_style_prop(sprite, sym, spec[0], x, y)
 			if collider == Vector2.ZERO and collision_segments.is_empty():
 				sprite.position = base
 				_world.add_child(sprite)
@@ -161,7 +176,32 @@ func _spawn_props() -> void:
 					_add_collision_shape(body, collider, collider_offset)
 				for segment in collision_segments:
 					_add_collision_shape(body, segment[0], segment[1])
+				if sym == "z":
+					body.add_child(_make_windmill_sails())
 				_world.add_child(body)
+
+
+## Per-cell cosmetic variation (map audit M10/M12), deterministic by cell so
+## runs, saves, and the review composites always agree.
+func _style_prop(sprite: Sprite2D, sym: String, sheet_key: String, x: int, y: int) -> void:
+	if sym == "N" and x % 2 == 1:
+		sprite.texture = load(VILLAGER_ALT)
+	elif sheet_key == "oak" or sheet_key == "oak_s":
+		sprite.flip_h = (x * 31 + y * 17) % 2 == 1
+
+
+## The windmill tower ships without its rotating cross (map audit M7 read it
+## as "broken"); the pack keeps the animated sails in a separate 4-frame sheet
+## mounted at the mast top.
+func _make_windmill_sails() -> Sprite2D:
+	var sails := Critter.new()
+	sails.texture = load(WINDMILL_SAILS)
+	sails.hframes = 4
+	sails.position = Vector2(0, -64)
+	sails.fps = 4.0
+	sails.frame_count = 4
+	sails.first_frame = 0
+	return sails
 
 
 func _add_collision_shape(body: StaticBody2D, size: Vector2, offset: Vector2) -> void:
