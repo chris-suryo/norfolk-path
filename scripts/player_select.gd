@@ -26,9 +26,11 @@ var _selected := 1
 @onready var _option1: Label = $Frame/Box/Option1
 @onready var _option2: Label = $Frame/Box/Option2
 @onready var _hint: Label = $Frame/Box/Hint
+@onready var _build_version: Label = $Frame/BuildVersion
 
 
 func _ready() -> void:
+	_build_version.text = "v%s" % ProjectSettings.get_setting("application/config/version", "dev")
 	if Game.has_save():
 		_stage = Stage.MODE
 	_wire_mouse()

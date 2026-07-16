@@ -198,7 +198,7 @@ def building(g, bx, by, sym, fence=True, lamps=True):
     ty = path_y(bx)
     step = 1 if ty > by else -1                 # direction from building to path
     DOORS.append((bx, by, step))
-    for distance in range(1, 3):                # a deliberate, two-tile doorstep
+    for distance in range(1, 2):                # a single-row, subtle doorstep
         y = by + step * distance
         for dx in (0, 1):
             if g[y][bx + dx] in ".fF":

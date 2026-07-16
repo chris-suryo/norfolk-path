@@ -145,15 +145,16 @@ SPEC = {
 # Buildings drawn via blit_building (whole sheet, foot offset) — derive region +
 # offset from the sheet dims so we don't hand-copy 240x192 etc.
 BUILDINGS = {  # sym: (sheet_key, foot, collider_w, collider_h, collider_y)
-    # The collider covers the solid ground-floor mass, inset from decorative
-    # eaves so the visual silhouette does not feel wider than the walkable space.
-    "L": ("inn", 8, 186, 14, -5),  # inset from decorative eaves
-    "A": ("house_a", 8, 46, 12, -4),
-    "G": ("house_g", 8, 96, 12, -4),
-    "J": ("house_j", 8, 64, 12, -4),
-    "E": ("house_e", 8, 96, 12, -4),
-    "Y": ("barn", 8, 76, 12, -4),
-    "W": ("well", 6, 16, 10, -2),
+    # Keep collision in the upper wall/foundation band. The player can stand on
+    # the visible doorstep and move close to a door, without walking through a
+    # building's interior.
+    "L": ("inn", 8, 186, 6, -12),  # inset from decorative eaves
+    "A": ("house_a", 8, 46, 6, -11),
+    "G": ("house_g", 8, 96, 6, -11),
+    "J": ("house_j", 8, 64, 6, -11),
+    "E": ("house_e", 8, 96, 6, -11),
+    "Y": ("barn", 8, 76, 6, -11),
+    "W": ("well", 6, 16, 8, -5),
 }
 
 
