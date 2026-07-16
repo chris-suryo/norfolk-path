@@ -36,13 +36,19 @@ const REVIVE_RADIUS := 130.0
 var _areas: Array = []
 var _world: Node2D
 var _hud: Node
+var _map: MapData
 var _beacons := {}
 
 
-func setup(hud: Node) -> void:
+func setup(hud: Node, encounters_id: String, map_data: MapData) -> void:
 	_world = get_parent()
 	_hud = hud
-	_build_areas()
+	_map = map_data
+	_build_areas(encounters_id)
+	# Peaceful level (no areas): nothing to spawn, and _apply_resume would index
+	# an empty list. The checkpoint/respawn system is valley-internal.
+	if _areas.is_empty():
+		return
 	_spawn_beacons()
 	for area in _areas:
 		_spawn_area(area)
@@ -76,7 +82,10 @@ func _process(_delta: float) -> void:
 		_update_coop_revive()
 
 
-func _build_areas() -> void:
+func _build_areas(encounters_id: String) -> void:
+	if encounters_id != "valley":
+		_areas = []
+		return
 	# center cell (checkpoint road spot) + [scene, cell] enemy specs — all on
 	# walkable tiles of the valley-1 (192x48) map, west -> east along the road:
 	# spawn/west village (slimes) -> lone forest skeleton (a taste) -> the forest
@@ -114,11 +123,11 @@ func _build_areas() -> void:
 func _make_area(id: int, center_cell: Vector2i, beacon_cell: Vector2i, specs: Array) -> Dictionary:
 	var built: Array = []
 	for spec in specs:
-		built.append({"scene": spec[0], "pos": IslandMap.cell_center(spec[1])})
+		built.append({"scene": spec[0], "pos": _map.cell_center(spec[1])})
 	return {
 		"id": id,
-		"center": IslandMap.cell_center(center_cell),
-		"beacon_center": IslandMap.cell_center(beacon_cell),
+		"center": _map.cell_center(center_cell),
+		"beacon_center": _map.cell_center(beacon_cell),
 		"specs": built,
 		"instances": [],
 		"cleared": false,
