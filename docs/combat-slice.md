@@ -42,6 +42,9 @@ clone doesn't have to regenerate them.
   `scenes/enemy_slime.tscn`, `enemy_skeleton.tscn`.
 - **Boss:** `max_hp` (36) / `throw_interval` (1.7) / `move_speed` on
   `scenes/boss_irene.tscn`; her three lines are exported strings there too.
+  Irene resets to FULL HP on a party wipe — that is intended difficulty (decided
+  after playtest round 1): a wipe restarts the attempt cleanly rather than
+  letting attrition trivialize her. Revisit only if human playtests also bounce.
 - **Encounter + checkpoint positions:** the cell coordinates in
   `scripts/encounter_manager.gd` `_build_areas()` — first-pass placements on
   real walkable cells; nudge in playtest.
