@@ -257,3 +257,33 @@ smaller polish items below.
 - One save-file injection was used to jump back to checkpoint 2 after the
   post-win reset (documented format, `user://save.json`) — used for travel
   only, not to fake any result.
+
+## Combined triage — round 1 (cloud audit + live findings, post-decisions)
+
+Cloud session cross-checked every live finding against the code and the
+scale-2 map composites (west/middle/east), then applied Chris's four decisions
+(post-win identity: KEEP; .import policy: COMMIT generated; boss wipe-reset:
+INTENDED; map polish: data-level only, layout frozen). Status of every item:
+
+| # | Finding | Verdict | Action |
+|---|---|---|---|
+| 1 | Font missing space glyph (web tofu) | CONFIRMED — U+0020 absent from cmap; also `_`, `–`, `—` | **FIXED**: fontTools patch adds empty space glyph (advance 250) + maps both dashes to hyphen; verified by before/after Pillow render of every UI string |
+| 2 | Hand-authored font .import dirties tree | CONFIRMED | Decision: commit editor-generated .import/.uid files — needs one commit from a Godot-editor machine AFTER the font fix merges (regenerates for the patched .ttf). Not in this slice's diff |
+| 3 | Bridge parapet corner pins | CONFIRMED — classic rect-vs-tile-seam catch: player used a 12×12 RectangleShape2D against per-tile water colliders | **FIXED (needs live re-verify)**: player body is now a radius-6 CircleShape2D — circles slide over seams and around corners; no frozen-map edits |
+| 4 | Camp tent rock pocket | Same mechanism as #3 | Same fix; if the pocket still wedges live, next step is a collider tweak on the camp-decor prop (data-level) |
+| 5 | Swing arc opposite the hit | NOT A DEFECT (verdict from code + frames): hitbox is 24×20 at facing×18px — physically cannot hit behind; the anomaly frame shows impact sparks NE with arc W, consistent with swing N−1's persistent FX + slime death anim overlapping swing N's capture. Controlled tests passed | No code change; round-2 live re-test listed to falsify if wrong |
+| 6 | Post-win reset wipes characters, still offers Continue | CONFIRMED — win_screen called reset_run() which reset appearances | **FIXED**: reset_run() now clears run progress only; appearances persist as identity. Continue after a win = fresh run, same characters |
+| 7 | Boss full-HP reset on wipe | Decision: INTENDED difficulty | **DOCUMENTED** in docs/combat-slice.md; revisit only if humans also bounce |
+| 8 | Bombschroom identical to decor amanitas | CONFIRMED | **FIXED**: idle breathe (±10% scale) + faint warm flush — decor mushrooms hold still; needs live look |
+| 9 | Road dead-end near arena / "library missing" | PARTLY CORRECTED: the manor (library) EXISTS north of the road end — composites show it; the playtest never looked north. The blunt stub is real | DEFERRED to the cove/layout decision: routing the road to the manor entrance is an island_map.gd layout edit (frozen) |
+| 10 | Creator + title hints barely legible | CONFIRMED (pale grey on tan) | **FIXED**: hint/legend labels now dark brown (0.45,0.32,0.22) @ size 8 — high contrast on the tan panel |
+| 11 | Dialogue font mismatch | CONFIRMED — boss NameLabel had the pixel font, Dialogue/Line did not | **FIXED**: Line gets the pixel font @ 9 (em-dash/apostrophe coverage secured by fix #1) |
+| 12 | HP bar empty-state unreadable | CONFIRMED (tint_under 0.22,0.24,0.2 ≈ black) | **FIXED**: tint_under lightened to 0.45,0.49,0.42 — empty track reads as a pale pill. P2's mirrored fill left as-is (taste) |
+| 13 | Beacon confusable with NPC/scarecrow | Mechanism confirmed: beacon is a lamp post; decor scarecrows stand nearby and read as figures | DEFERRED: prop placement lives in the frozen map; revisit in the cove pass (candidate: move/swap the two checkpoint-adjacent scarecrows) |
+| — | West quadrant (cloud audit) | No new blockers; minor: floating cobble patches, two similar red-roof houses | Noted only |
+
+Round-2 live checklist (next Godot session): bridge + tent un-stick with the
+circle body; web build spaces render everywhere (title, hints, creator); post-win
+Continue keeps the created look; bombschroom breathe reads as a tell; arc-vs-hit
+one deliberate rapid-turn swing test; roll i-frames + roll-through-hit (human
+timing); bombschroom windup flash + gas visuals; win screen screenshot.

@@ -83,3 +83,9 @@ func _explode() -> void:
 func _idle_anim(delta: float) -> void:
 	_anim_time += delta
 	_sprite.frame = int(_anim_time * idle_fps) % 2
+	# Threat tell (playtest round-1): decor amanitas hold perfectly still, so a
+	# visible breathe + faint warm flush marks this one as alive and dangerous
+	# before the player is inside detonate_radius.
+	var breathe := 0.5 + 0.5 * sin(_anim_time * 3.5)
+	_sprite.scale = Vector2.ONE * (1.0 + 0.1 * breathe)
+	_sprite.modulate = Color(1.0, 1.0 - 0.12 * breathe, 1.0 - 0.12 * breathe)

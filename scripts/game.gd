@@ -2,11 +2,12 @@ extends Node
 
 ## Global run state + persistence (autoload "Game").
 ##
-## Tiny save: the current checkpoint, player count, and whether the boss is down.
-## On web the payload goes to localStorage via JavaScriptBridge (synchronous,
-## survives a refresh with threads off); on desktop it is a user:// JSON file.
-## Only ints/bools are stored, so wrapping the JSON in a single-quoted JS string
-## for localStorage is safe (no inner single quotes to escape).
+## Tiny save: the current checkpoint, player count, whether the boss is down,
+## and both appearance profiles (v3). On web the payload goes to localStorage
+## via JavaScriptBridge (synchronous, survives a refresh with threads off); on
+## desktop it is a user:// JSON file. Stored strings all come from the curated
+## AppearanceCatalog IDs — none contain a single quote or backslash, so wrapping
+## the JSON in a single-quoted JS string for localStorage stays safe.
 
 const SAVE_KEY := "norfolk_path"
 const SAVE_PATH := "user://save.json"
@@ -40,10 +41,13 @@ func set_player_count(count: int) -> void:
 	player_count = clampi(count, 1, 2)
 
 
+## Clears RUN progress only. Appearances are identity, not run state: they
+## survive a post-win reset so Continue never silently swaps a customized
+## character for the seed default (playtest round-1 finding). New Game still
+## re-creates from scratch — player_select seeds its own creator defaults.
 func reset_run() -> void:
 	checkpoint = 0
 	boss_defeated = false
-	appearances = [AppearanceCatalog.default_profile(1), AppearanceCatalog.default_profile(2)]
 
 
 func appearance_for_player(player_index: int) -> Dictionary:
