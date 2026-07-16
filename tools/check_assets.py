@@ -17,6 +17,7 @@ Run before every commit:  python tools/check_assets.py
 """
 import os
 import re
+import struct
 import sys
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -58,6 +59,54 @@ def animal_symbols():
     return set(re.findall(r'^\t"(.)":', block.group(1), re.M)) if block else set()
 
 
+def png_size(path):
+    with open(path, "rb") as fh:
+        head = fh.read(24)
+    if head[:8] != b"\x89PNG\r\n\x1a\n" or head[12:16] != b"IHDR":
+        return None
+    return struct.unpack(">II", head[16:24])
+
+
+def animal_frame_problems():
+    """Every ANIMAL_ANIM idle/walk index must fit its sheet (hframes*vframes).
+
+    Bug class caught by the playtest bot's console log: the chicken declared a
+    6-frame walk on a 4-frame sheet — silent per-frame set_frame errors and a
+    stuck animation that no human playtest noticed.
+    """
+    src = read("scripts/main.gd")
+    block = re.search(r"const ANIMAL_ANIM :=\s*\{(.*?)\n\}", src, re.S).group(1)
+    pt = read("scripts/prop_table.gd")
+    sheets = dict(re.findall(r'"(\w+)":\s*\n?\s*"res://([^"]+)"', pt))
+    props = dict(re.findall(r'^\t"(.)": \["(\w+)"', pt, re.M))
+    problems = []
+    for m in re.finditer(r'"(.)":\s*\n?\s*\{([^}]*)\}', block, re.S):
+        sym, body = m.group(1), m.group(2)
+
+        def field(key, default=None):
+            f = re.search(r'"%s":\s*(\d+)' % key, body)
+            return int(f.group(1)) if f else default
+
+        sheet = sheets.get(props.get(sym, ""))
+        if not sheet:
+            continue  # missing prop entry is reported elsewhere
+        size = png_size(os.path.join(REPO, sheet))
+        if not size:
+            continue
+        fs = field("frame_size", 32)
+        hframes, vframes = size[0] // fs, size[1] // fs
+        total = hframes * vframes
+        top = field("idle", 0) * hframes + field("idle_n", 1) - 1
+        if field("walk") is not None:
+            top = max(top, field("walk") * hframes + field("walk_n", 6) - 1)
+        if top >= total:
+            problems.append(
+                f"ANIMAL_ANIM '{sym}': max frame index {top} exceeds sheet "
+                f"{sheet} ({hframes}x{vframes} = {total} frames)"
+            )
+    return problems
+
+
 def prop_keys():
     block = re.search(r"const PROPS :=\s*\{(.*?)\n\}", read("scripts/prop_table.gd"), re.S)
     keys = re.findall(r'^\t"((?:\\.|[^"])+)":', block.group(1), re.M)
@@ -79,6 +128,7 @@ def main():
     props = prop_keys()
     for sym in sorted(animal_symbols() - props):
         problems.append(f"ANIMAL_ANIM key '{sym}' has no prop-table entry")
+    problems += animal_frame_problems()
 
     print(f"checked {len(refs)} asset references; {len(ignored)} gdignored dirs.")
     if problems:
