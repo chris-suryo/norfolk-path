@@ -17,6 +17,8 @@ const SAVE_PATH := "user://save.json"
 # v2 -> v3, and appearances are kept (only the level field is new).
 const SAVE_VERSION := 4
 const PREVIOUS_SAVE_VERSION := 3
+## How long each half of the scene-change fade takes (out, then back in).
+const FADE_HALF := 0.22
 
 var player_count := 1
 var checkpoint := 0
@@ -45,6 +47,49 @@ var current_entry := ""
 ## and keeping it out of the saved dict preserves the ints/bools-only JSON note
 ## above. Empty until the first save.
 var last_saved := ""
+
+## Runtime-only: true while a dialogue box is open. The pause menu ignores Esc
+## during dialogue so the two overlays can't fight over the paused tree.
+var dialogue_active := false
+
+var _fading := false
+var _fade_rect: ColorRect
+
+
+## The autoload survives scene changes, so it hosts the fade overlay: a
+## full-screen black rect on a top CanvasLayer, alpha-tweened around every
+## change_scene() call (the abrupt-cut fix for doors and map edges).
+func _ready() -> void:
+	# Fades must run even when the tree is paused (pause menu, dialogue).
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	var layer := CanvasLayer.new()
+	layer.layer = 100
+	_fade_rect = ColorRect.new()
+	_fade_rect.color = Color.BLACK
+	_fade_rect.modulate.a = 0.0
+	_fade_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_fade_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.add_child(_fade_rect)
+	add_child(layer)
+
+
+## Every scene change goes through here: fade to black, swap, fade back in.
+## Re-entrant calls during the fade are dropped (a second door touched
+## mid-crossing must not queue a second swap).
+func change_scene(path: String) -> void:
+	if _fading:
+		return
+	_fading = true
+	var out_tween := create_tween()
+	out_tween.tween_property(_fade_rect, "modulate:a", 1.0, FADE_HALF)
+	await out_tween.finished
+	var err := get_tree().change_scene_to_file(path)
+	if err != OK:
+		push_error("Game.change_scene: could not load %s (error %d)" % [path, err])
+	var in_tween := create_tween()
+	in_tween.tween_property(_fade_rect, "modulate:a", 0.0, FADE_HALF)
+	await in_tween.finished
+	_fading = false
 
 
 func set_player_count(count: int) -> void:

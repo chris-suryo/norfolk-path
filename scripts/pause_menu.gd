@@ -84,6 +84,10 @@ func _on_option_click(event: InputEvent, index: int) -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
+		# The dialogue box owns the paused tree while a conversation is open —
+		# Esc must not stack the pause menu on top of it.
+		if Game.dialogue_active:
+			return
 		_toggle()
 		get_viewport().set_input_as_handled()
 		return
@@ -147,7 +151,7 @@ func _save_now() -> void:
 
 func _return_to_title() -> void:
 	get_tree().paused = false
-	get_tree().change_scene_to_file(SELECT_SCENE)
+	Game.change_scene(SELECT_SCENE)
 
 
 func _sync_zoom_label() -> void:

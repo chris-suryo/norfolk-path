@@ -8,6 +8,20 @@ is learning the engine end-to-end, not shipping commercially.
 
 ## Status
 
+- **WORLD-ALIVE SLICE (headless): fades, every house enterable, dialogue.**
+  (1) Every scene change now fades through black (`Game.change_scene()` — the
+  autoload hosts the overlay), fixing the abrupt door cut. (2) **All 6 cottages
+  + the barn are enterable**, each with its own generated interior —
+  `tools/bake_interior.py` is spec-driven (room size / wall / floor / furniture
+  mini-story per id) and emits every map+PNG pair in one run; the wall-seam
+  "slits" are fixed (seamless mid-section wall tiles). Door triggers moved to
+  the **door-mouth cell itself** — the old trigger sat on the village path, so
+  walking past cottage G yanked you inside (the real "abrupt" bug). (3) **The
+  dialogue system is in**: E (P2: Enter) talks to villagers/Ariana/the sealed
+  library door; bottom textbox pauses the tree; ALL LINES ARE PLACEHOLDERS —
+  the story session's slot-in file is `scripts/dialogue_data.gd` (stable npc
+  ids, name+lines per id, no code edits needed). Live-verify: door feel w/
+  fade, 2P dialogue ergonomics, textbox readability at zoom.
 - **STAGE E PROTOTYPE (headless): a walk-in cottage interior.** The same door
   mechanism reaches interiors — cottage G's door (valley) is a `LevelTransition`
   into a small 13×9 interior level (`scripts/cottage_map.gd`), and the interior's
@@ -161,6 +175,26 @@ trees.
 **SHIPPED means:** two people open a browser link, pick 1P or 2P, walk the level,
 fight the NPCs (including the friend-based ones) and the boss, see a "quest complete"
 screen, and their progress survives a refresh.
+
+## Parallel work map (how to split sessions without collisions)
+
+The MVP push splits into independent tracks. Each runs in its OWN session on
+its OWN branch; merge each PR while green before the next track's PR rebases.
+The shared hotspots are `scripts/main.gd` and `scripts/level_registry.gd` —
+only one open PR should touch them at a time.
+
+| Track | Session type | Files it owns | Conflicts |
+|---|---|---|---|
+| Story/dialogue | claude.ai chat or CC | `scripts/dialogue_data.gd` ONLY (names + lines per npc id) | none — pure data |
+| Combat (weapons, enemy types, difficulty) | CC cloud | `scripts/player.gd`, `scripts/enemy.gd`, new enemy scenes, `encounter_manager.gd` areas | low; avoid main.gd |
+| UI/settings (options menu, controls card, HUD polish) | CC cloud | `pause_menu.*`, `player_select.*`, `hud.*` | low |
+| New biome as level 3 (desert/dungeon via worldgen) | CC cloud | new brief + map + bake; one registry entry | registry (tiny, mergeable) |
+| Interior/level design iteration | CC cloud | `tools/bake_interior.py` specs, briefs | none |
+
+Story workflow: the story session reads `scripts/dialogue_data.gd` for the id
+list (villager_<x>_<y>, ariana, library_door), writes names + lines in place,
+and hands back just that file. Ids are stable; the build session never rewords
+content (same writer/coder split as the map briefs, docs/level-design.md).
 
 ## Locations
 

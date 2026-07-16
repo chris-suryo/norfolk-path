@@ -10,6 +10,8 @@ extends Node2D
 ## (water/wall blocks; walkable tiles free) and rendered transparent — its
 ## visuals are superseded by the baked image.
 
+const DIALOGUE_BOX_SCENE := preload("res://scenes/dialogue_box.tscn")
+
 ## Cosmetic-variety assets (map audit M7/M10). The alt villager breaks the
 ## one-sprite-plays-four-people clone effect; the sail sheet is the windmill's
 ## rotating cross, shipped separately from the tower in the pack.
@@ -118,10 +120,33 @@ func _ready() -> void:
 	_spawn_props()
 	_spawn_fences()
 	_spawn_transitions()
+	_spawn_talkers()
 	# Encounters/checkpoints/respawn — AFTER players are positioned so a
 	# saved-checkpoint resume can override the default spawn.
 	$World/EncounterManager.setup($HUD, _def.encounters, _map)
 	_bind_hud()
+
+
+## One Interactable per talkable map symbol: villagers "N", Ariana "$" (ids the
+## story session fills in scripts/dialogue_data.gd), and the sealed library "L".
+## The shared DialogueBox is instanced first so the talkers can find it by group.
+func _spawn_talkers() -> void:
+	var box := DIALOGUE_BOX_SCENE.instantiate()
+	box.add_to_group("dialogue_box")
+	add_child(box)
+	for cell in _map.find_all("N"):
+		_add_talker("villager_%d_%d" % [cell.x, cell.y], _map.cell_center(cell))
+	if _def.has_ariana:
+		_add_talker("ariana", _map.cell_center(_map.find_one("$")))
+	for cell in _map.find_all("L"):
+		_add_talker("library_door", _map.cell_center(cell))
+
+
+func _add_talker(npc_id: String, at: Vector2) -> void:
+	var talker := Interactable.new()
+	talker.npc_id = npc_id
+	talker.position = at
+	_world.add_child(talker)
 
 
 ## The cell the players spawn on: the named entry they arrived through (a door /

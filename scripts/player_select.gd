@@ -153,9 +153,8 @@ func _on_creator_backed() -> void:
 
 
 func _go() -> void:
-	var err: int = get_tree().change_scene_to_file(MAIN_SCENE)
-	if err != OK:
-		push_error("player_select: could not load %s (error %d)" % [MAIN_SCENE, err])
+	# Fade + error handling live in Game.change_scene.
+	Game.change_scene(MAIN_SCENE)
 
 
 func _refresh() -> void:
