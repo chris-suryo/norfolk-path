@@ -53,7 +53,7 @@ biome-agnostic; only the table changes.
   (`Cliff_Tile`), water/waterfall, boat/chest/reeds; palms absent in temperate pack —
   dressing comes from rocks/driftwood/reeds/fishing props. Cast: waterfowl, capybara, crab
   (check sheet), Fisherman Fin NPC.
-- **interior-home** (prototype LIVE — the cottage): `Buildings/Houses_Interiors`
+- **interior-home** (LIVE — 7 rooms: 6 cottages + barn): `Buildings/Houses_Interiors`
   walls/floors + `House_Decor` (~28 furniture sheets: beds, tables, chairs,
   bookshelves, kitchen, fireplaces, carpets, windows, doors, lamps). Not gdignored.
   Small fixed-size rooms; furniture placed as mini-stories (bed+rug+fireplace).

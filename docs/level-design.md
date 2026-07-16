@@ -82,14 +82,22 @@ symbols. Editing a live level's `MAP` means re-baking its ground
 (`preview_map.py --ground-only`) so the collision map and the baked image agree.
 
 **Interiors** are small levels with their own baker: `python
-tools/bake_interior.py` emits BOTH the collision map (`scripts/cottage_map.gd`,
-symbols `X` wall / `_` floor / `S` spawn / `>` exit-mat) AND the composited
-ground PNG from one room layout. Walls collide by reusing the water tile source
-(`level.gd.terrain_of`); the baked PNG carries floor + walls + furniture.
-Interiors skip `preview_map.py` / `check_map_rules.py` (the outdoor validators
-would trip on 1-tile walls) — only `check_symbols.py` covers them. A building
-door is just a `transition` on the cottage's door cell pointing at the interior,
-paired with the interior's exit-mat transition back.
+tools/bake_interior.py` is spec-driven — its `INTERIORS` dict maps each room id
+to size, wall style, floor style, windows, and a furniture mini-story, and one
+run emits EVERY room's collision map (`scripts/<id>_map.gd`, symbols `X` wall /
+`_` floor / `S` spawn / `>` exit-mat) plus its composited ground PNG. Use only
+the SEAMLESS mid-section wall tiles (plaster/stone/brick — the framed edge
+tiles create vertical seams, and the wood tile camouflages against wooden
+floors). Furniture rects are enclosing boxes auto-trimmed to the sprite bbox;
+measure exact boxes by alpha-scanning the sheet (sprites pack edge-to-edge).
+Walls collide by reusing the water tile source (`level.gd.terrain_of`); the
+baked PNG carries floor + walls + furniture. Interiors skip `preview_map.py` /
+`check_map_rules.py` (the outdoor validators would trip on 1-tile walls) —
+only `check_symbols.py` covers them. A building door is a `transition` on the
+building's **door-mouth cell (its anchor)** — every building sprite has a
+centered collision door gap, and the trigger must NOT sit on a walk-by path —
+paired with the interior's exit-mat transition returning to the cell in front
+of the door.
 
 ### Legend
 
