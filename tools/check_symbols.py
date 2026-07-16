@@ -2,10 +2,13 @@
 """Symbol-coverage self-check (the sandbox-runnable twin of main.gd's
 _check_symbol_coverage assert).
 
-Fails LOUD if any unique character in scripts/island_map.gd's MAP is not handled
-by the prop table (scripts/prop_table.gd PROPS) OR the terrain/fence symbol sets
+Fails LOUD if any unique character in a level's MAP is not handled by the prop
+table (scripts/prop_table.gd PROPS) OR the terrain/fence symbol sets
 (scripts/main.gd TERRAIN_SYMS / FENCE_SYMS) — i.e. anything that would silently
-render as blank grass in-engine (the 47-symbol gap this slice exists to close).
+render as blank grass in-engine.
+
+Covers EVERY level map registered in scripts/level_registry.gd (its preload
+paths), so a second level can never ship an unhandled symbol.
 
 Run before every commit:  python tools/check_symbols.py
 """
@@ -20,11 +23,21 @@ def read(rel):
     return open(os.path.join(REPO, rel), encoding="utf-8").read()
 
 
-def map_symbols():
-    src = read("scripts/island_map.gd")
+def level_map_scripts():
+    """The map .gd scripts registered in LevelRegistry (its preload paths), so
+    this check stays in sync with the levels the game can actually load."""
+    src = read("scripts/level_registry.gd")
+    paths = re.findall(r'preload\("res://(scripts/[\w/]+\.gd)"\)', src)
+    if not paths:
+        sys.exit("check_symbols: no level map preloads found in level_registry.gd")
+    return paths
+
+
+def map_symbols(rel):
+    src = read(rel)
     m = re.search(r'const MAP :=\s*"""\n(.*?)"""', src, re.S)
     if not m:
-        sys.exit("check_symbols: could not find MAP const in island_map.gd")
+        sys.exit(f"check_symbols: could not find MAP const in {rel}")
     body = m.group(1).strip("\n")
     return set(ch for row in body.split("\n") for ch in row)
 
@@ -51,14 +64,20 @@ def const_array(name):
 
 
 def main():
-    used = map_symbols()
     handled = prop_keys() | const_array("TERRAIN_SYMS") | const_array("FENCE_SYMS")
-    missing = sorted(used - handled)
-    print(f"map uses {len(used)} unique symbols; {len(handled)} are handled.")
-    if missing:
-        print("FAIL: unhandled symbols (would render as blank grass): " + "".join(missing))
+    scripts = level_map_scripts()
+    failed = False
+    for rel in scripts:
+        used = map_symbols(rel)
+        missing = sorted(used - handled)
+        status = "MISSING " + "".join(missing) if missing else "all handled"
+        print(f"{rel}: {len(used)} unique symbols — {status}")
+        if missing:
+            failed = True
+    if failed:
+        print("FAIL: unhandled symbols would render as blank grass.")
         sys.exit(1)
-    print("OK: every map symbol is covered by the prop table / terrain / fence sets.")
+    print(f"OK: every symbol across {len(scripts)} level map(s) is covered.")
 
 
 if __name__ == "__main__":

@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""CI rules for island_map.gd — bug classes found by audits, enforced forever.
+"""CI rules for level maps — bug classes found by audits, enforced forever.
+
+Runs on any level map (pass a path; defaults to the valley). Rules that are
+inherently valley-specific self-scope: rule 5 applies only where the bombschroom
+actually spawns (its cell in bounds).
 
 Every rule here started life as a real finding (docs/map-visual-audit.md,
 docs/playtest-findings.md). When a future audit finds a new CLASS of map bug,
@@ -106,11 +110,14 @@ def main() -> None:
             if sym not in nb8(x, y):
                 problems.append(f"fence '{sym}' at ({x},{y}) is a floating fragment")
 
-    # 5. decor mushrooms keep distance from the bombschroom
-    for (x, y) in cells("m"):
-        d = abs(x - BOMB_SPAWN[0]) + abs(y - BOMB_SPAWN[1])
-        if d < 10:
-            problems.append(f"decor mushroom ({x},{y}) only {d} cells from bombschroom spawn")
+    # 5. decor mushrooms keep distance from the bombschroom — but only on the map
+    #    that actually hosts it (its spawn cell is in bounds). Other levels have no
+    #    bombschroom, so the valley's coordinate must not gate them.
+    if 0 <= BOMB_SPAWN[0] < width and 0 <= BOMB_SPAWN[1] < height:
+        for (x, y) in cells("m"):
+            d = abs(x - BOMB_SPAWN[0]) + abs(y - BOMB_SPAWN[1])
+            if d < 10:
+                problems.append(f"decor mushroom ({x},{y}) only {d} cells from bombschroom spawn")
 
     # 6. every connected path region contacts >= 2 distinct POIs — a road goes
     #    from somewhere TO somewhere (rulebook H10; map audit M1 dead-end class)

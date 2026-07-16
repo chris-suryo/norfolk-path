@@ -38,4 +38,7 @@ jobs:
           python tools/check_symbols.py
           python tools/check_assets.py
           python tools/check_character_layers.py
-          python tools/check_map_rules.py
+          # Map rules run per OUTDOOR level (interiors are exempt — 1-thick walls,
+          # no shorelines). check_symbols already covers every registered level.
+          python tools/check_map_rules.py scripts/island_map.gd
+          python tools/check_map_rules.py scripts/cove_map.gd

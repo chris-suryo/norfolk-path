@@ -57,6 +57,30 @@ edit: `gen_valley.py` → `preview_map.py --ground-only` (re-bake ground) →
 references an asset that is missing or lives under a `.gdignore`'d dir (the guard
 for trimming the web build), and that `ANIMAL_ANIM` only keys real props.
 
+**Per-level bake + register (connected levels).** Each level has its own map
+script + baked ground, listed in `scripts/level_registry.gd`. To add one from a
+worldgen candidate (the cove is the worked example):
+
+```
+# 1. regenerate the candidate (deterministic from brief + seed)
+python tools/worldgen/generate.py --brief briefs/cove.json --seeds 1 \
+    --seed-base 11 --out artifacts/worldgen/cove
+# 2. wrap the .txt into a packed-in .gd MAP const (Web export needs a resource)
+python tools/map_txt_to_gd.py artifacts/worldgen/cove/cove-s11.txt \
+    scripts/cove_map.gd --source "<regen cmd>"
+# 3. bake its below-player ground (validates H1/spawn/singletons too)
+python tools/preview_map.py --map scripts/cove_map.gd --ground-only \
+    --out assets/generated/cove-s11-ground.png
+# 4. add a LEVELS entry (map script, ground, biome, entries, transitions)
+# 5. gate it: check_symbols.py (auto-covers every registered level) +
+#    check_map_rules.py scripts/cove_map.gd
+```
+
+Travel between levels is registry data — `transitions` (cell rects → target
+level + entry) become `LevelTransition` Area2D volumes at runtime; no new map
+symbols. Editing a live level's `MAP` means re-baking its ground
+(`preview_map.py --ground-only`) so the collision map and the baked image agree.
+
 ### Legend
 
 | Symbol | Meaning | Walkable? |
@@ -184,8 +208,14 @@ fake it with what we have, or cut it. Don't silently assume it exists.
    has corners and edges but **no 1-tile strip pieces**, so a 1-wide channel
    can't render. `tools/preview_map.py` flags violations.
 2. **Keep the map rectangular** — every row the same width.
-3. **One level → one boss** (v1 scope). This is a single connected island, not
-   a multi-map world. Don't design a second zone without raising scope first.
+3. **The world is CONNECTED LEVELS** (decided 2026-07-16, superseding the old
+   single-island rule). Each biome is its own map + baked ground, registered in
+   `scripts/level_registry.gd` and joined by ONE Area2D transition mechanism
+   (`scripts/level_transition.gd`) that serves both map-edge crossings and
+   building doors — interiors are just small levels. The valley remains the one
+   boss fight; new levels default to peaceful until encounters are added as
+   registry data. Adding a level is a registry entry (map script + baked ground
+   + entries/transitions), not an engine change.
 4. **Spawn (`S`) on path; shop (`H`) and chicken (`C`) on grass.** The validator
    checks this.
 5. Entities and props draw with **y-sorting** — things lower on screen overlap
