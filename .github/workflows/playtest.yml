@@ -1,0 +1,90 @@
+name: playtest
+
+# Automated browser playtest: export the Web preset (exact same pinned steps as
+# deploy-web.yml — copied, not refactored, so deploy stays untouched), serve it
+# inside the runner, drive it with real trusted keyboard input via Playwright,
+# and upload checkpoint screenshots as an artifact.
+#
+# What it proves per run: the exported build boots in a browser, the canvas
+# actually renders (non-blank assertion), keyboard input reaches the game
+# (menu-highlight assertion — fail-loud, never vacuous), and the core loop
+# title -> creator -> in-game walk/sword/roll produces sane frames for a human
+# (or agent) to review from the artifact.
+#
+# What it deliberately does NOT do: game-state assertions (window.np_debug is a
+# recorded deferral) and timing-sensitive tests (roll i-frames stay human).
+#
+# Dispatch-only for now: run it from the Actions tab or the API. Promote to a
+# schedule/PR trigger once a few runs have proven it stable.
+
+on:
+  workflow_dispatch: {}
+  # Every merge to main gets a bot run (~3.5 min): a screenshot record of the
+  # actual playable build, alongside deploy-web shipping it.
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: playtest
+  cancel-in-progress: true
+
+jobs:
+  browser-playtest:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Export Web build
+        uses: firebelley/godot-export@v8.0.0
+        with:
+          godot_executable_download_url: https://github.com/godotengine/godot/releases/download/4.7-stable/Godot_v4.7-stable_linux.x86_64.zip
+          godot_export_templates_download_url: https://github.com/godotengine/godot/releases/download/4.7-stable/Godot_v4.7-stable_export_templates.tpz
+          relative_project_path: ./
+          use_preset_export_path: true
+          presets_to_export: Web
+          cache: true
+
+      - name: Locate export output
+        id: locate
+        run: |
+          found="$(find export/web -maxdepth 4 -name index.html | head -n1)"
+          if [ -z "$found" ]; then
+            echo "::error::no index.html found anywhere under export/web"
+            exit 1
+          fi
+          echo "dir=$(dirname "$found")" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install driver dependencies
+        run: |
+          pip install "Pillow==10.4.0" "playwright==1.61.0"
+          python -m playwright install --with-deps chromium
+
+      - name: Serve the build
+        run: |
+          nohup python -m http.server 8060 --directory "${{ steps.locate.outputs.dir }}" > server.log 2>&1 &
+          for i in $(seq 1 20); do
+            curl -sf -o /dev/null http://127.0.0.1:8060/ && break
+            sleep 1
+          done
+          curl -sf -o /dev/null http://127.0.0.1:8060/ || { echo "::error::server never came up"; cat server.log; exit 1; }
+
+      - name: Drive the game
+        run: python tools/playtest/ci_driver.py artifacts/playtest
+
+      - name: Upload playtest screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playtest-${{ github.sha }}
+          path: artifacts/playtest
+          if-no-files-found: error
+          retention-days: 90
