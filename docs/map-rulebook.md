@@ -53,10 +53,17 @@ biome-agnostic; only the table changes.
   (`Cliff_Tile`), water/waterfall, boat/chest/reeds; palms absent in temperate pack —
   dressing comes from rocks/driftwood/reeds/fishing props. Cast: waterfowl, capybara, crab
   (check sheet), Fisherman Fin NPC.
-- **interior-home** (priority): `Buildings/Houses_Interiors` walls/floors/stairs +
-  `House_Decor` (~28 furniture sheets: beds, tables, chairs, bookshelves, kitchen,
-  fireplaces, carpets, windows, doors, lamps). Not gdignored. Small fixed-size rooms;
-  furniture placed as mini-stories (bed+rug+nightstand; table+chairs+kitchen).
+- **interior-home** (prototype LIVE — the cottage): `Buildings/Houses_Interiors`
+  walls/floors + `House_Decor` (~28 furniture sheets: beds, tables, chairs,
+  bookshelves, kitchen, fireplaces, carpets, windows, doors, lamps). Not gdignored.
+  Small fixed-size rooms; furniture placed as mini-stories (bed+rug+fireplace).
+  Baked by `tools/bake_interior.py` (emits the collision map `.gd` + the ground
+  PNG together). **Interior maps are EXEMPT from the outdoor HARD rules** (H1
+  ≥2-wide, shoreline/beehive/fence/path-POI rules): 1-tile walls and furniture
+  stories are the norm, not violations. They are NOT run through
+  `check_map_rules.py` / `preview_map.py` (see `ci.yml`); `check_symbols.py`
+  still covers them (every registered level). Walls collide by reusing the water
+  tile source (`level.gd.terrain_of`, "X"); the baked PNG carries all visuals.
 - **library-interior** (later): dungeon/stone walls + bookshelves — Irene's library inside.
 - Full standalone libraries on disk (gdignored, copy-out per `docs/pack-arrival.md`):
   desert, dungeon x2, shroomlands, cave, volcano, autumn. NOT buildable: winter,

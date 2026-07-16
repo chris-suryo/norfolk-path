@@ -8,6 +8,16 @@ is learning the engine end-to-end, not shipping commercially.
 
 ## Status
 
+- **STAGE E PROTOTYPE (headless): a walk-in cottage interior.** The same door
+  mechanism reaches interiors — cottage G's door (valley) is a `LevelTransition`
+  into a small 13×9 interior level (`scripts/cottage_map.gd`), and the interior's
+  exit-mat sends you back out in front of the cottage. `tools/bake_interior.py`
+  emits BOTH the collision map and the composited ground PNG (stone walls,
+  parquet floor, fireplace + bed + rug). Walls collide by reusing the water tile
+  source; the camera centres on the sub-viewport room (`follow_camera` guard).
+  Interiors are exempt from the outdoor HARD rules (docs/map-rulebook.md). **The
+  interior LOOK + door in/out are taste-gated + need a local run** (no Godot in
+  the sandbox; the playtest bot doesn't walk to the cottage).
 - **STAGE C SHIPPED (headless): the engine is now multi-level.** A level
   registry (`scripts/level_registry.gd`) keys each level to its map script,
   baked ground, spawn, encounters, and edge/door transitions; `MapData`
