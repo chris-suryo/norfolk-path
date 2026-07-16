@@ -90,7 +90,7 @@ func _ready() -> void:
 	_spawn_fences()
 	# Encounters/checkpoints/respawn — AFTER players are positioned so a
 	# saved-checkpoint resume can override the default spawn.
-	$World/EncounterManager.setup()
+	$World/EncounterManager.setup($HUD)
 	_bind_hud()
 
 
@@ -144,25 +144,33 @@ func _spawn_props() -> void:
 			var offset: Vector2 = spec[2]
 			var collider: Vector2 = spec[3]
 			var collider_offset: Vector2 = spec[4] if spec.size() > 4 else Vector2.ZERO
+			var collision_segments: Array = spec[5] if spec.size() > 5 else []
 			var sprite := Sprite2D.new()
 			sprite.texture = _texture(spec[0])
 			sprite.region_enabled = true
 			sprite.region_rect = region
 			sprite.offset = offset
-			if collider == Vector2.ZERO:
+			if collider == Vector2.ZERO and collision_segments.is_empty():
 				sprite.position = base
 				_world.add_child(sprite)
 			else:
 				var body := StaticBody2D.new()
 				body.position = base
 				body.add_child(sprite)
-				var shape := CollisionShape2D.new()
-				var rect := RectangleShape2D.new()
-				rect.size = collider
-				shape.shape = rect
-				shape.position = collider_offset
-				body.add_child(shape)
+				if collider != Vector2.ZERO:
+					_add_collision_shape(body, collider, collider_offset)
+				for segment in collision_segments:
+					_add_collision_shape(body, segment[0], segment[1])
 				_world.add_child(body)
+
+
+func _add_collision_shape(body: StaticBody2D, size: Vector2, offset: Vector2) -> void:
+	var shape := CollisionShape2D.new()
+	var rect := RectangleShape2D.new()
+	rect.size = size
+	shape.shape = rect
+	shape.position = offset
+	body.add_child(shape)
 
 
 ## Animals become a live AmbientAnimal (idle-bob + optional wander) instead of a

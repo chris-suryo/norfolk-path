@@ -18,6 +18,7 @@ var _bars := {}
 
 @onready var _p2_name: Label = $P2Name
 @onready var _p2_bar: TextureProgressBar = $P2Bar
+@onready var _checkpoint_toast: Label = $CheckpointToast
 
 
 func _ready() -> void:
@@ -40,3 +41,12 @@ func _on_health_changed(current: int, maximum: int, idx: int) -> void:
 	var bar: TextureProgressBar = _bars[idx]
 	bar.max_value = maximum
 	bar.value = current
+
+
+func show_checkpoint_saved() -> void:
+	_checkpoint_toast.modulate.a = 1.0
+	_checkpoint_toast.visible = true
+	var tween := create_tween()
+	tween.tween_interval(1.1)
+	tween.tween_property(_checkpoint_toast, "modulate:a", 0.0, 0.35)
+	tween.tween_callback(func(): _checkpoint_toast.visible = false)

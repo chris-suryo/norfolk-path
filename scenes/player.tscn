@@ -7,7 +7,7 @@
 size = Vector2(12, 12)
 
 [sub_resource type="RectangleShape2D" id="Sword_1"]
-size = Vector2(18, 18)
+size = Vector2(24, 20)
 
 [node name="Player" type="CharacterBody2D"]
 motion_mode = 1

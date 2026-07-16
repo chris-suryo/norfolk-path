@@ -325,10 +325,15 @@ def build(variant):
     # two DISTINCT farms: mixed veggies (west) + wheat (east, windmill + scarecrow)
     rect(g, 6, 38, 12, 42, "D")
     rect(g, 44, 37, 51, 42, "Q")
-    put(g, 55, 35, "z")                        # windmill beside the wheat, clear of crop rows
+    # A deliberate landmark clearing east of the wheat: the windmill has room
+    # for its full silhouette instead of reading as an accidental field prop.
+    for y in range(36, 43):
+        for x in range(53, 60):
+            g[y][x] = "."
+    put(g, 56, 39, "z")
     put(g, 43, 38, "K")                        # scarecrow
     scatter(g, [(43, 40), (52, 38), (52, 41)], "2")    # hay bales
-    scatter(g, [(53, 34)], "%")                         # one purposeful hive by the orchard edge
+    scatter(g, [(52, 33)], "%")                         # one purposeful hive by the orchard edge
     scatter(g, [(53, 33), (42, 41), (13, 39)], "y")     # butterflies around flowers and the hive
     # livestock pen + NEW horse paddock, each with a trough, flocks not rows
     pen(g, 16, 37, 25, 43)

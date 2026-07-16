@@ -36,6 +36,20 @@ texture_under = SubResource("pill_green")
 texture_progress = SubResource("pill_green")
 tint_under = Color(0.22, 0.24, 0.2, 1)
 
+[node name="CheckpointToast" type="Label" parent="."]
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 42.0
+offset_bottom = 58.0
+grow_horizontal = 2
+theme_override_colors/font_outline_color = Color(0.18, 0.1, 0.05, 1)
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("3_font")
+theme_override_font_sizes/font_size = 10
+text = "CHECKPOINT SAVED"
+horizontal_alignment = 1
+visible = false
+
 [node name="P2Name" type="Label" parent="."]
 anchor_left = 1.0
 anchor_right = 1.0

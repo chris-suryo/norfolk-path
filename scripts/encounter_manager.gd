@@ -35,16 +35,29 @@ const REVIVE_RADIUS := 130.0
 
 var _areas: Array = []
 var _world: Node2D
+var _hud: Node
+var _beacons := {}
 
 
-func setup() -> void:
+func setup(hud: Node) -> void:
 	_world = get_parent()
+	_hud = hud
 	_build_areas()
+	_spawn_beacons()
 	for area in _areas:
 		_spawn_area(area)
 	for player in get_tree().get_nodes_in_group("players"):
 		player.downed.connect(_on_downed)
 	_apply_resume()
+
+
+func _spawn_beacons() -> void:
+	for area in _areas:
+		var beacon := CheckpointBeacon.new()
+		beacon.position = area.center
+		_world.add_child(beacon)
+		_beacons[area.id] = beacon
+		beacon.set_active(area.id <= Game.checkpoint)
 
 
 func _process(_delta: float) -> void:
@@ -153,8 +166,16 @@ func _update_checkpoint() -> void:
 	if reached > Game.checkpoint:
 		Game.checkpoint = reached
 		Game.save()
+		_activate_beacon(reached)
+		_hud.show_checkpoint_saved()
 		if reached >= BOSS_ID:
 			_activate_area(_area_by_id(BOSS_ID))
+
+
+func _activate_beacon(id: int) -> void:
+	var beacon: CheckpointBeacon = _beacons.get(id)
+	if beacon != null:
+		beacon.set_active(true, true)
 
 
 func _on_downed() -> void:

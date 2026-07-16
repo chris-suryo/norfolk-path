@@ -45,7 +45,7 @@ const ATTACK_FRAMES := 4
 const ATTACK_DURATION := 0.4
 const ATTACK_ACTIVE_START := 0.1
 const ATTACK_ACTIVE_END := 0.28
-const SWORD_REACH := 12.0
+const SWORD_REACH := 18.0
 
 const ROLL_DURATION := 0.3
 # Dash distance = ROLL_SPEED * ROLL_DURATION. Dropped 150 -> 105 (~45px -> ~31px)
@@ -71,7 +71,7 @@ const DEATH_DURATION := 0.7
 @export var friction: float = 800.0
 
 @export var max_hp: int = 6
-@export var attack_damage: int = 3
+@export var attack_damage: int = 4
 
 var _action_prefix: String
 var _facing := Vector2.DOWN

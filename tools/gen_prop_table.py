@@ -144,18 +144,19 @@ SPEC = {
 
 # Buildings drawn via blit_building (whole sheet, foot offset) — derive region +
 # offset from the sheet dims so we don't hand-copy 240x192 etc.
-BUILDINGS = {  # sym: (sheet_key, foot, collider_w, collider_h, collider_y)
-    # Keep collision in the upper wall/foundation band. The player can stand on
-    # the visible doorstep and move close to a door, without walking through a
-    # building's interior.
-    "L": ("inn", 8, 186, 6, -12),  # inset from decorative eaves
-    "A": ("house_a", 8, 46, 6, -11),
-    "G": ("house_g", 8, 96, 6, -11),
-    "J": ("house_j", 8, 64, 6, -11),
-    "E": ("house_e", 8, 96, 6, -11),
-    "Y": ("barn", 8, 76, 6, -11),
-    "W": ("well", 6, 16, 8, -5),
+BUILDINGS = {  # sym: (sheet_key, foot, foundation_width, foundation_y)
+    # Each doorway has a 20px recess. Low left/right foundations stop a player
+    # at the visible facade; the shallow rear backstop keeps the recess exterior
+    # until buildings gain real enter/exit scenes.
+    "L": ("inn", 8, 186, -4),
+    "A": ("house_a", 8, 46, -4),
+    "G": ("house_g", 8, 96, -4),
+    "J": ("house_j", 8, 64, -4),
+    "E": ("house_e", 8, 96, -4),
+    "Y": ("barn", 8, 76, -4),
 }
+
+WELL = ("well", 6, 16, 8, -5)
 
 
 def build_table():
@@ -169,12 +170,22 @@ def build_table():
             errors.append(f"{sym}: region ({rx},{ry},{rw},{rh}) exceeds {key} {sw}x{sh}")
         used_sheets.add(key)
         table[sym] = (key, rx, ry, rw, rh, ax + rw / 2.0, ay + rh / 2.0, cw, ch, 0.0, 0.0)
-    for sym, (key, foot, cw, ch, collider_y) in BUILDINGS.items():
+    for sym, (key, foot, width, foundation_y) in BUILDINGS.items():
         rel = SHEETS[key]
         sw, sh = dims(rel)
         used_sheets.add(key)
         # whole sheet, centered offset = (0, foot - sh/2)
-        table[sym] = (key, 0, 0, sw, sh, 0.0, foot - sh / 2.0, cw, ch, 0.0, collider_y)
+        side_width = (width - 20.0) / 2.0
+        segments = [
+            (side_width, 8.0, -(10.0 + side_width / 2.0), foundation_y),
+            (side_width, 8.0, 10.0 + side_width / 2.0, foundation_y),
+            (20.0, 6.0, 0.0, foundation_y - 11.0),
+        ]
+        table[sym] = (key, 0, 0, sw, sh, 0.0, foot - sh / 2.0, 0.0, 0.0, 0.0, 0.0, segments)
+    key, foot, cw, ch, collider_y = WELL
+    sw, sh = dims(SHEETS[key])
+    used_sheets.add(key)
+    table["W"] = (key, 0, 0, sw, sh, 0.0, foot - sh / 2.0, cw, ch, 0.0, collider_y, [])
     return table, used_sheets, errors
 
 
@@ -198,15 +209,19 @@ def emit(table, used_sheets):
         lines.append('\t"%s": "%s",' % (key, res_path(SHEETS[key])))
     lines.append("}")
     lines.append("")
-    lines.append("## symbol -> [sheet_key, region(x,y,w,h), sprite_offset(x,y), collider(w,h), collider_offset(x,y)]")
-    lines.append("## collider (0,0) = decor, no collision. Offsets are from the cell centre.")
+    lines.append("## symbol -> [sheet, region, sprite_offset, collider, collider_offset, collision_segments].")
+    lines.append("## collision_segments are [size, offset] pairs; buildings use a doorway recess + rear backstop.")
     lines.append("const PROPS := {")
     for sym in sorted(table):
-        key, rx, ry, rw, rh, ox, oy, cw, ch, cox, coy = table[sym]
+        key, rx, ry, rw, rh, ox, oy, cw, ch, cox, coy, *rest = table[sym]
+        segments = rest[0] if rest else []
         esc = '\\"' if sym == '"' else ("\\\\" if sym == "\\" else sym)
+        segment_text = "[" + ", ".join(
+            "[Vector2(%g, %g), Vector2(%g, %g)]" % segment for segment in segments
+        ) + "]"
         lines.append(
-            '\t"%s": ["%s", Rect2(%d, %d, %d, %d), Vector2(%g, %g), Vector2(%g, %g), Vector2(%g, %g)],'
-            % (esc, key, rx, ry, rw, rh, ox, oy, cw, ch, cox, coy)
+            '\t"%s": ["%s", Rect2(%d, %d, %d, %d), Vector2(%g, %g), Vector2(%g, %g), Vector2(%g, %g), %s],'
+            % (esc, key, rx, ry, rw, rh, ox, oy, cw, ch, cox, coy, segment_text)
         )
     lines.append("}")
     lines.append("")
