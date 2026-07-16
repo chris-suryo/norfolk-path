@@ -8,6 +8,11 @@ is learning the engine end-to-end, not shipping commercially.
 
 ## Status
 
+- **COVE PICKED (2026-07-16): candidate cove-s11** — regenerate exactly with
+  `python tools/worldgen/generate.py --brief briefs/cove.json --seeds 1 --seed-base 11 --out artifacts/worldgen/cove`
+  (worldgen is deterministic). Next: epic Stage C (connected-levels plumbing:
+  level registry, per-level bake, edge+door transitions, save v4 + migration),
+  then wire cove-s11 as level 2, then the interiors prototype (Stage E).
 - **DECIDED (2026-07-16): the valley map is the keeper — `island_map.gd` is
   UNFROZEN.** The cove becomes a future NE-quadrant extension (the map audit
   showed that corner is the natural site), not a world swap; the long-standing
