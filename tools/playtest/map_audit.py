@@ -1,8 +1,11 @@
 """Mechanical audit of island_map.gd: clones, floating props, singleton reuse."""
 import re
+import sys
 from pathlib import Path
 
-SRC = Path(r"E:\code\norfolk-path\scripts\island_map.gd").read_text(encoding="utf-8")
+# repo root derived from this file's location; override with argv[1] if needed
+_REPO = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().parents[2]
+SRC = (_REPO / "scripts" / "island_map.gd").read_text(encoding="utf-8")
 m = re.search(r'const MAP := """\n(.*?)"""', SRC, re.S)
 rows = m.group(1).rstrip("\n").split("\n")
 W, H = len(rows[0]), len(rows)

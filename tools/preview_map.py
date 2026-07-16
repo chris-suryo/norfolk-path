@@ -538,8 +538,9 @@ def render(rows, out_path, scale=1, crop_box=None, ground_only=False):
         elif sym == "N":
             blit(canvas, cw, ch, villager, 0, 0, 64, 64, px_ - 32, py_ - 54)
         elif sym == "S":
+            # ONE sprite only: rendering the 2P offset twin here made the spawn
+            # read as cloned NPCs in audits (map-visual-audit correction #2).
             blit(canvas, cw, ch, player, 0, 0, 32, 32, px_ - 16, py_ - 24)
-            blit(canvas, cw, ch, player, 0, 0, 32, 32, px_ - 16 + 18, py_ - 24)
         elif sym == "F":
             piece = _fence_piece(rows, x, y)
             blit(canvas, cw, ch, fences, piece[0] * 16, piece[1] * 16, 16, 16, px_ - 8, py_ - 8)
@@ -696,7 +697,12 @@ def main():
     problems = validate(rows)
     box = tuple(int(v) for v in args.crop.split(",")) if args.crop else None
     cw, ch = render(rows, args.out, args.scale, box, ground_only=args.ground_only)
-    print(f"rendered {cw}x{ch}px -> {os.path.relpath(args.out, REPO)}")
+    try:
+        shown = os.path.relpath(args.out, REPO)
+    except ValueError:
+        # Windows: --out on a different drive than the repo has no relpath.
+        shown = str(args.out)
+    print(f"rendered {cw}x{ch}px -> {shown}")
     if problems:
         print(f"\n{len(problems)} validation problem(s):")
         for p in problems:
