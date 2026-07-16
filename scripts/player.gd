@@ -47,12 +47,12 @@ const ATTACK_ACTIVE_START := 0.1
 const ATTACK_ACTIVE_END := 0.28
 const SWORD_REACH := 18.0
 
-const ROLL_DURATION := 0.3
-# Dash distance = ROLL_SPEED * ROLL_DURATION. Dropped 150 -> 105 (~45px -> ~31px)
-# per playtest ("dash feels too long"); ROLL_DURATION unchanged so the i-frame
-# window stays the same.
-const ROLL_SPEED := 105.0
-const ROLL_COOLDOWN := 0.5
+## A brisk ~29px evasive step. The immunity window is deliberately shorter than
+## the travel so a roll must be timed through a hit rather than held as safety.
+const ROLL_DURATION := 0.24
+const ROLL_IFRAME_DURATION := 0.16
+const ROLL_SPEED := 120.0
+const ROLL_COOLDOWN := 0.4
 
 const HURT_DURATION := 0.25
 const KNOCKBACK_SPEED := 120.0
@@ -171,8 +171,10 @@ func _process_attack(_delta: float) -> void:
 
 
 func _process_roll(_delta: float) -> void:
-	# Dash in the roll direction; alpha pulse signals the i-frame window.
-	_sprite.modulate.a = 0.55 if int(_state_time * 20.0) % 2 == 0 else 1.0
+	# Only the early evasive part flashes; the recovery remains fully readable.
+	_sprite.modulate.a = (
+		0.55 if _state_time < ROLL_IFRAME_DURATION and int(_state_time * 24.0) % 2 == 0 else 1.0
+	)
 	_animate_move(true, _delta)
 	if _state_time >= ROLL_DURATION:
 		_sprite.modulate.a = 1.0
@@ -231,7 +233,7 @@ func _enter_roll(input_vector: Vector2) -> void:
 	_state = State.ROLL
 	_state_time = 0.0
 	_roll_cd = ROLL_COOLDOWN
-	_invuln_time = ROLL_DURATION
+	_invuln_time = ROLL_IFRAME_DURATION
 	velocity = dir * ROLL_SPEED
 
 
@@ -270,6 +272,14 @@ func _apply_sword_hits() -> void:
 		if body.has_method("take_damage"):
 			_hit_this_swing.append(body)
 			body.take_damage(attack_damage, global_position)
+			_spawn_hit_impact(body)
+
+
+func _spawn_hit_impact(body: Node2D) -> void:
+	var impact := SwordImpact.new()
+	impact.global_position = body.global_position
+	impact.direction = (body.global_position - global_position).normalized()
+	get_parent().add_child(impact)
 
 
 func _attack_row() -> int:
@@ -306,8 +316,8 @@ func _set_frame(row: int, column: int) -> void:
 	_sprite.frame = row * SHEET_COLUMNS + column
 
 
-## The sheet's sword frames are compact; this brief code-drawn trail reaches the
-## same 30px tip as the 18px-offset, 24px-wide hitbox so combat reads honestly.
+## The free-sheet sword frames are compact, so a short stepped crescent makes the
+## same forward hit zone visible without reading as a projectile or an arrow.
 func _draw() -> void:
 	if (
 		_state != State.ATTACK
@@ -317,11 +327,12 @@ func _draw() -> void:
 		return
 	var progress := inverse_lerp(ATTACK_ACTIVE_START, ATTACK_ACTIVE_END, _state_time)
 	var direction := _facing.normalized()
-	var side := Vector2(-direction.y, direction.x)
-	var start := direction * 9.0
-	var tip := direction * lerpf(22.0, 30.0, progress)
-	var outer := Color(0.96, 0.63, 0.2, 0.78)
-	var inner := Color(1.0, 0.92, 0.58, 0.96)
-	draw_line(start + side * 4.0, tip + side, outer, 2.0, false)
-	draw_line(start - side * 4.0, tip - side, outer, 2.0, false)
-	draw_line(start, tip, inner, 2.0, false)
+	var arc_head := lerpf(-0.95, 0.95, progress)
+	var outer := Color(0.72, 0.30, 0.08, 0.88)
+	var inner := Color(1.0, 0.85, 0.34, 1.0)
+	for step in 5:
+		var angle := arc_head - float(step) * 0.16
+		var radius := 20.0 + float(step) * 1.5
+		var point := direction.rotated(angle) * radius
+		draw_rect(Rect2(point - Vector2(2, 2), Vector2(4, 4)), outer)
+		draw_rect(Rect2(point - Vector2.ONE, Vector2(2, 2)), inner)
