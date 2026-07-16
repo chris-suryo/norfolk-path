@@ -71,7 +71,20 @@ func _apply_bounds() -> void:
 	# Convert the tilemap's used-cell rect into world-space pixel limits.
 	var top_left := _bounds_source.to_global(Vector2(used.position * tile))
 	var bottom_right := _bounds_source.to_global(Vector2(used.end * tile))
-	limit_left = int(top_left.x)
-	limit_top = int(top_left.y)
-	limit_right = int(bottom_right.x)
-	limit_bottom = int(bottom_right.y)
+	# A level smaller than the view (an interior room) would jam the camera to a
+	# corner; instead lock that axis to a view-sized window centred on the room.
+	# Outdoor levels are far larger than the view, so they clamp normally.
+	var view := get_viewport_rect().size / zoom
+	var x := _axis_limits(top_left.x, bottom_right.x, view.x)
+	var y := _axis_limits(top_left.y, bottom_right.y, view.y)
+	limit_left = x[0]
+	limit_right = x[1]
+	limit_top = y[0]
+	limit_bottom = y[1]
+
+
+func _axis_limits(lo: float, hi: float, view: float) -> Array:
+	if hi - lo >= view:
+		return [int(lo), int(hi)]
+	var mid := (lo + hi) / 2.0
+	return [int(mid - view / 2.0), int(mid + view / 2.0)]

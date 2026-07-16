@@ -26,7 +26,9 @@ const WINDMILL_SAILS := (
 ## live critter node below — NOT a table prop, else a static duck stacks on her).
 ## Used by the build-time coverage assert so a future map edit can never silently
 ## reintroduce the old blank-grass gap.
-const TERRAIN_SYMS := [".", "#", "S", "~", "B", "D", "Q", "c", "g", "O", "k", "a", "l", "@", "$"]
+const TERRAIN_SYMS := [
+	".", "#", "S", "~", "B", "D", "Q", "c", "g", "O", "k", "a", "l", "@", "$", "_", "X", ">"
+]
 const FENCE_SYMS := ["F", "|"]
 
 ## Ambient-animal animation, keyed by map symbol (from the audited sheet layout —

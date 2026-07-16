@@ -81,6 +81,16 @@ level + entry) become `LevelTransition` Area2D volumes at runtime; no new map
 symbols. Editing a live level's `MAP` means re-baking its ground
 (`preview_map.py --ground-only`) so the collision map and the baked image agree.
 
+**Interiors** are small levels with their own baker: `python
+tools/bake_interior.py` emits BOTH the collision map (`scripts/cottage_map.gd`,
+symbols `X` wall / `_` floor / `S` spawn / `>` exit-mat) AND the composited
+ground PNG from one room layout. Walls collide by reusing the water tile source
+(`level.gd.terrain_of`); the baked PNG carries floor + walls + furniture.
+Interiors skip `preview_map.py` / `check_map_rules.py` (the outdoor validators
+would trip on 1-tile walls) — only `check_symbols.py` covers them. A building
+door is just a `transition` on the cottage's door cell pointing at the interior,
+paired with the interior's exit-mat transition back.
+
 ### Legend
 
 | Symbol | Meaning | Walkable? |
