@@ -3,7 +3,8 @@ extends Node
 ## Global run state + persistence (autoload "Game").
 ##
 ## Tiny save: the current checkpoint, player count, whether the boss is down,
-## and both appearance profiles (v3). On web the payload goes to localStorage
+## the current level id (v4), and both appearance profiles. On web the payload
+## goes to localStorage
 ## via JavaScriptBridge (synchronous, survives a refresh with threads off); on
 ## desktop it is a user:// JSON file. Stored strings all come from the curated
 ## AppearanceCatalog IDs — none contain a single quote or backslash, so wrapping
@@ -11,14 +12,18 @@ extends Node
 
 const SAVE_KEY := "norfolk_path"
 const SAVE_PATH := "user://save.json"
-# v3 adds two plain-JSON appearance profiles. v2 saves remain valid and gain
-# defaults on load, so existing checkpoint progress is never discarded.
-const SAVE_VERSION := 3
-const PREVIOUS_SAVE_VERSION := 2
+# v4 adds the current level id (the connected-world position). v3 saves remain
+# valid and default to the valley on load — same forward-compatible migration as
+# v2 -> v3, and appearances are kept (only the level field is new).
+const SAVE_VERSION := 4
+const PREVIOUS_SAVE_VERSION := 3
 
 var player_count := 1
 var checkpoint := 0
 var boss_defeated := false
+## The level the players are on (LevelRegistry id). Saved, so Continue returns to
+## it; New Game / reset starts in the valley.
+var current_level_id := "valley"
 var appearances: Array[Dictionary] = [
 	AppearanceCatalog.default_profile(1),
 	AppearanceCatalog.default_profile(2),
@@ -29,6 +34,11 @@ var appearances: Array[Dictionary] = [
 ## only resumes a saved position when this is true, so a stale save never drops a
 ## new game next to a late-game checkpoint.
 var resume_requested := false
+
+## Runtime-only: the named entry the players arrived through (set by
+## LevelTransition before a scene reload). main.gd picks the spawn cell from it;
+## not persisted — a Continue uses the level's own spawn/checkpoint.
+var current_entry := ""
 
 ## Runtime-only "HH:MM" of the last save this session (autosave or manual). NOT
 ## persisted — it is display-state for the pause menu's "Save Now" confirmation,
@@ -48,6 +58,8 @@ func set_player_count(count: int) -> void:
 func reset_run() -> void:
 	checkpoint = 0
 	boss_defeated = false
+	current_level_id = "valley"
+	current_entry = ""
 
 
 func appearance_for_player(player_index: int) -> Dictionary:
@@ -72,6 +84,7 @@ func save() -> void:
 		"checkpoint": checkpoint,
 		"player_count": player_count,
 		"boss_defeated": boss_defeated,
+		"level": current_level_id,
 		"appearances": appearances,
 	}
 	var text := JSON.stringify(data)
@@ -122,8 +135,12 @@ func _apply(text: String) -> bool:
 		checkpoint = int(parsed.get("checkpoint", 0))
 		player_count = clampi(int(parsed.get("player_count", 1)), 1, 2)
 		boss_defeated = bool(parsed.get("boss_defeated", false))
+		# Missing "level" (a v3 save) defaults to the valley.
+		current_level_id = str(parsed.get("level", "valley"))
 		var loaded: Array[Dictionary] = []
-		if version == SAVE_VERSION and parsed.get("appearances") is Array:
+		# Appearances exist in v3 AND v4 (only "level" is new this bump), so read
+		# them for either version — dropping them would reset a customized look.
+		if parsed.get("appearances") is Array:
 			for item in parsed.appearances:
 				if item is Dictionary:
 					loaded.append(item)
