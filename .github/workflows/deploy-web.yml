@@ -1,7 +1,7 @@
 name: deploy-web
 
-# Continuous deploy: on every push to the working branch, headlessly export the
-# Godot "Web" preset and ship it straight to the existing Vercel project.
+# Continuous deploy: on every push to main, headlessly export the Godot "Web"
+# preset and ship it straight to the existing Vercel project.
 #
 # Why this lives in GitHub Actions and not the build session's own sandbox: that
 # sandbox's egress policy blocks godotengine.org/github.com release downloads
@@ -19,7 +19,10 @@ name: deploy-web
 
 on:
   push:
-    branches: [claude/slice-1-godot-toolchain-ij6e9w]
+    # Was the slice-1 feature branch while the demo was pre-merge; that branch is
+    # now merged into main and deleted, so the trigger moves to main — production
+    # redeploys on every merge to the delivery branch.
+    branches: [main]
   # Lets a run be started on demand (GitHub UI "Run workflow" button, or the
   # API) without needing a throwaway commit — useful for testing right after
   # the three secrets below are first added.
