@@ -8,6 +8,21 @@ is learning the engine end-to-end, not shipping commercially.
 
 ## Status
 
+- **DECIDED (2026-07-16): the valley map is the keeper — `island_map.gd` is
+  UNFROZEN.** The cove becomes a future NE-quadrant extension (the map audit
+  showed that corner is the natural site), not a world swap; the long-standing
+  "pick a cove" item is closed. Round-1 playtest (PR #5) + map audit (PR #7)
+  produced fixes now LIVE: web font space glyph, circle player collision,
+  post-win keeps characters, UI legibility, bombschroom tell (PR #6), and the
+  full M1–M13 map-polish slice (road→library approach, aligned doorsteps,
+  treed beehives, closed pens, camp cleanup, windmill sails, villager/oak
+  variety). **The testing loop is standardized** (`docs/testing-loop.md`):
+  ci (lint + static rules incl. `check_map_rules.py`), visual-review
+  composites, and a browser **playtest bot** that runs on every merge to main
+  (`playtest.yml`) — its first run caught the broken chicken walk animation.
+  Live-verify list for the next local round is at the end of
+  `docs/playtest-findings.md`; the `.import` editor-generated commit is still
+  outstanding (needs a Godot editor).
 - **Continuous deploy is LIVE and verified end-to-end.** The 3 repo secrets
   (`VERCEL_TOKEN` / `VERCEL_ORG_ID` / `VERCEL_PROJECT_ID`) are set, and a real
   run of `.github/workflows/deploy-web.yml` went fully green: every push to the
@@ -79,8 +94,9 @@ is learning the engine end-to-end, not shipping commercially.
   rule; the 1P camera drops Player2. Controls: P1 = WASD + Space + C, P2 =
   arrows + `/` + `.`. **Not yet run in-engine** — Chris does the import/run/web
   loop and tunes positions/feel. **Gated next:** boss Phase 2 (minions; report
-  first) and the cove world swap + pack buildings (still needs the cove pick).
-  `scripts/island_map.gd` stays frozen until that swap.
+  first) and the cove world swap + pack buildings. [SUPERSEDED 2026-07-16: no
+  swap — the valley map is the keeper and `island_map.gd` is unfrozen; the
+  cove idea lives on as a future NE-quadrant extension.]
 - earlier next (still open): **Chris picks a final enriched cove from
   `docs/world-options/`.** He
   chose the cove-3 (lakeside) direction; it's now enriched into three

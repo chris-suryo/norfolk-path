@@ -116,7 +116,10 @@ SPEC = {
     "8": ("apple_t", 0, 0, 32, 64, -16, -56, 8, 6),
     "9": ("cherry_t", 0, 0, 32, 64, -16, -56, 8, 6),
     "g": ("bower", 96, 80, 96, 80, -48, -64, 0, 0),
-    "z": ("windmill", 0, 0, 128, 112, -64, -104, 28, 14),
+    # Tower half only (the sheet's right half is the static sail cross; the
+    # game overlays the ANIMATED sail sheet instead — main.gd M7 fix). Using
+    # the full 128px region drew tower + detached sails side by side.
+    "z": ("windmill", 0, 0, 64, 112, -32, -104, 28, 14),
     "s": ("tent", 0, 0, 48, 96, -24, -88, 26, 12),
     "0": ("campfire", 0, 0, 16, 32, -8, -24, 12, 10),
     "1": ("campdecor", 0, 0, 16, 16, -8, -8, 10, 8),

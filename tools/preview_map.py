@@ -216,7 +216,7 @@ def edge_pick(rows, x, y, kind, has_inner=True):
     return EDGE_BY_LAND_MASK.get(mask, CENTER)
 
 
-def blit(canvas, cw, ch, src, sx, sy, sw, sh, dx, dy):
+def blit(canvas, cw, ch, src, sx, sy, sw, sh, dx, dy, hflip=False):
     w, _, px = src
     for yy in range(sh):
         ty = dy + yy
@@ -226,7 +226,7 @@ def blit(canvas, cw, ch, src, sx, sy, sw, sh, dx, dy):
             tx = dx + xx
             if tx < 0 or tx >= cw:
                 continue
-            o = ((sy + yy) * w + (sx + xx)) * 4
+            o = ((sy + yy) * w + (sx + (sw - 1 - xx if hflip else xx))) * 4
             a = px[o + 3]
             if a == 0:
                 continue
@@ -330,6 +330,7 @@ def render(rows, out_path, scale=1, crop_box=None, ground_only=False):
     horse = tex2("Animals/Horse/Horse_01.png")
     capy = tex2("Animals/Kapybara/Static/Kapybara_Idle.png")
     villager = tex2("NPCs (Premade)/Farmer_Bob.png")
+    villager2 = tex2("NPCs (Premade)/Chef_Chloe.png")  # M10: odd-column variant
 
     # --- round-4 additions: distinct shop, crops, waterlife, more animals, boat ---
     shop = tex2("Buildings/Buildings/Unique_Buildings/Fisherman_House/Fisherman_House_Base_Red.png")
@@ -517,9 +518,12 @@ def render(rows, out_path, scale=1, crop_box=None, ground_only=False):
     for y, sym, x in sorted(items, key=lambda i: i[0]):
         px_, py_ = x * TILE + 8, y * TILE + 8
         if sym == "T":
-            blit(canvas, cw, ch, oak, 0, 0, 64, 80, px_ - 32, py_ - 70)
+            # mirrors main.gd _style_prop: deterministic flip de-tiles the oaks
+            blit(canvas, cw, ch, oak, 0, 0, 64, 80, px_ - 32, py_ - 70,
+                 hflip=(x * 31 + y * 17) % 2 == 1)
         elif sym == "t":
-            blit(canvas, cw, ch, oak_s, 32, 0, 32, 48, px_ - 16, py_ - 40)
+            blit(canvas, cw, ch, oak_s, 32, 0, 32, 48, px_ - 16, py_ - 40,
+                 hflip=(x * 31 + y * 17) % 2 == 1)
         elif sym == "H":                                 # Evan's market stall (blue awning)
             blit(canvas, cw, ch, stall, 96, 0, 48, 48, px_ - 24, py_ + 8 - 48)
         elif sym in buildings:
@@ -536,7 +540,9 @@ def render(rows, out_path, scale=1, crop_box=None, ground_only=False):
         elif sym == "h":
             blit(canvas, cw, ch, horse, 0, 0, 32, 32, px_ - 16, py_ - 26)
         elif sym == "N":
-            blit(canvas, cw, ch, villager, 0, 0, 64, 64, px_ - 32, py_ - 54)
+            # mirrors main.gd _style_prop: odd columns wear Chloe's outfit
+            sheet = villager2 if x % 2 == 1 else villager
+            blit(canvas, cw, ch, sheet, 0, 0, 64, 64, px_ - 32, py_ - 54)
         elif sym == "S":
             # ONE sprite only: rendering the 2P offset twin here made the spawn
             # read as cloned NPCs in audits (map-visual-audit correction #2).

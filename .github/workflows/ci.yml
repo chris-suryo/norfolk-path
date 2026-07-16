@@ -31,3 +31,11 @@ jobs:
         run: gdformat --check scripts/
       - name: Lint GDScript
         run: gdlint scripts/
+      # Static project rules (all stdlib — no extra installs). Each rule set
+      # encodes bug classes found by playtests/audits; see docs/testing-loop.md.
+      - name: Project checks (symbols, assets, character layers, map rules)
+        run: |
+          python tools/check_symbols.py
+          python tools/check_assets.py
+          python tools/check_character_layers.py
+          python tools/check_map_rules.py
