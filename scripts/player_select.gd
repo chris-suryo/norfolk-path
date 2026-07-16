@@ -13,7 +13,7 @@ extends Control
 ## own attack keys AND a raw Enter/Space check, so a quirk in one binding can't
 ## make "start" dead. A failed scene load is reported loudly, not silent.
 
-enum Stage { MODE, COUNT }
+enum Stage { MODE, COUNT, CREATOR }
 
 const MAIN_SCENE := "res://scenes/main.tscn"
 const SELECTED := Color(1, 0.9, 0.3)
@@ -21,16 +21,22 @@ const DIMMED := Color(0.84, 0.74, 0.60)
 
 var _stage: int = Stage.COUNT
 var _selected := 1
+var _creator_slot := 1
+var _pending_appearances: Array[Dictionary] = []
 
 @onready var _title: Label = $Frame/Box/Title
 @onready var _option1: Label = $Frame/Box/Option1
 @onready var _option2: Label = $Frame/Box/Option2
 @onready var _hint: Label = $Frame/Box/Hint
 @onready var _build_version: Label = $Frame/BuildVersion
+@onready var _creator: CharacterCreator = $Creator
 
 
 func _ready() -> void:
 	_build_version.text = "v%s" % ProjectSettings.get_setting("application/config/version", "dev")
+	_creator.close()
+	_creator.accepted.connect(_on_creator_accepted)
+	_creator.backed.connect(_on_creator_backed)
 	if Game.has_save():
 		_stage = Stage.MODE
 	_wire_mouse()
@@ -64,7 +70,10 @@ func _on_option_click(event: InputEvent, index: int) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_up") or event.is_action_pressed("ui_down"):
+	if _stage == Stage.CREATOR:
+		_creator.handle_input(event)
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("ui_up") or event.is_action_pressed("ui_down"):
 		_selected = 3 - _selected
 		_refresh()
 	elif _is_confirm(event):
@@ -110,7 +119,35 @@ func _confirm() -> void:
 			_show_stage()
 	else:
 		Game.set_player_count(_selected)
-		_go()
+		Game.resume_requested = false
+		_pending_appearances = [
+			AppearanceCatalog.default_profile(1), AppearanceCatalog.default_profile(2)
+		]
+		_creator_slot = 1
+		_stage = Stage.CREATOR
+		_creator.begin(_creator_slot, _pending_appearances[_creator_slot - 1])
+
+
+func _on_creator_accepted(profile: Dictionary) -> void:
+	_pending_appearances[_creator_slot - 1] = AppearanceCatalog.normalized(profile)
+	if _creator_slot < Game.player_count:
+		_creator_slot += 1
+		_creator.begin(_creator_slot, _pending_appearances[_creator_slot - 1])
+		return
+	Game.set_appearances(_pending_appearances)
+	Game.save()
+	_creator.close()
+	_go()
+
+
+func _on_creator_backed() -> void:
+	if _creator_slot > 1:
+		_creator_slot -= 1
+		_creator.begin(_creator_slot, _pending_appearances[_creator_slot - 1])
+		return
+	_creator.close()
+	_stage = Stage.COUNT
+	_show_stage()
 
 
 func _go() -> void:

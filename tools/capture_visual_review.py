@@ -18,6 +18,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 PREVIEW = ROOT / "tools" / "preview_map.py"
+CHARACTER_CAPTURE = ROOT / "tools" / "capture_character_review.py"
 
 # The live Valley 1 map is 192 x 48 tiles. These crops overlap neither content
 # nor each other, making it easy to compare a changed zone to an earlier run.
@@ -50,6 +51,20 @@ def capture(output_dir: Path, scale: int) -> list[dict[str, str]]:
         subprocess.run(command, cwd=ROOT, check=True)
         images.append({"name": name, "file": destination.name, "crop": crop or "full map"})
 
+    character_destination = output_dir / "character-creator.png"
+    subprocess.run(
+        [sys.executable, str(CHARACTER_CAPTURE), "--output", str(character_destination)],
+        cwd=ROOT,
+        check=True,
+    )
+    images.append(
+        {
+            "name": "character-creator",
+            "file": character_destination.name,
+            "crop": "representative modular P1/P2 animation frames",
+        }
+    )
+
     return images
 
 
@@ -59,13 +74,14 @@ def write_readme(output_dir: Path, revision: str, created_at: str, images: list[
         "",
         f"- Revision: `{revision}`",
         f"- Captured: {created_at}",
-        "- Source: `scripts/island_map.gd` rendered through `tools/preview_map.py`",
+        "- Sources: `scripts/island_map.gd` rendered through `tools/preview_map.py`; modular player layers rendered through `tools/capture_character_review.py`",
         "",
         "## Review order",
         "",
         "1. Read `overview.png` for route clarity, pacing, and repeated visual motifs.",
         "2. Review west, middle, and east at native pixel scale for awkward overlaps, isolated props, and empty space.",
-        "3. Cross-check any traversal concern in the running game; this renderer validates layout, not live collisions or animation.",
+        "3. Review `character-creator.png` for readable P1/P2 contrast and aligned modular layers.",
+        "4. Cross-check any traversal concern in the running game; these renderers validate layout and static frames, not live collisions or input.",
         "",
         "## Questions for each zone",
         "",

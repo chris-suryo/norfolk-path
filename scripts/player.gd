@@ -10,12 +10,9 @@ extends CharacterBody2D
 ## constants (max_speed/acceleration/friction) are the tuning surface: a
 ## human-in-editor call on Windows, not something the headless build verifies.
 ##
-## Sprite frames come from the Cute Fantasy Player.png sheet (32x32, 6 cols x 10
-## rows): rows 0/1/2 idle down/side/up, rows 3/4/5 walk down/side/up, rows 6/7/8
-## the sword swing down/side/up (4 frames), row 9 the collapse/death. Side rows
-## face RIGHT, so moving/attacking left flips the sprite. The free sheet has no
-## dedicated roll frames, so the roll reads through a dash + an alpha flash;
-## a real roll animation is a later art swap (premium sheet / Player Generator).
+## Player visuals use the Cute Fantasy modular 64px sheets: aligned body, hair,
+## shirt, pants, shoes, and an optional hat. Gameplay collision stays at the
+## original footprint; the visual layers are selected from Game appearances.
 
 ## Emitted once when HP hits 0 and the collapse animation finishes. The
 ## EncounterManager decides what happens next (solo respawn, or co-op wait for a
@@ -35,13 +32,19 @@ const WALK_ROW_DOWN := 3
 const WALK_ROW_SIDE := 4
 const WALK_ROW_UP := 5
 const ATTACK_ROW_DOWN := 6
-const ATTACK_ROW_SIDE := 7
-const ATTACK_ROW_UP := 8
-const DEATH_ROW := 9
-const SHEET_COLUMNS := 6
+const ATTACK_ROW_SIDE := 9
+const ATTACK_ROW_UP := 12
+const ROLL_ROW_DOWN := 17
+const ROLL_ROW_SIDE := 18
+const ROLL_ROW_UP := 19
+const DEATH_ROW := 53
+const SHEET_COLUMNS := 9
 const WALK_FPS := 8.0
+const MOVE_FRAMES := 6
 
 const ATTACK_FRAMES := 4
+const ROLL_FRAMES := 8
+const DEATH_FRAMES := 6
 const ATTACK_DURATION := 0.4
 const ATTACK_ACTIVE_START := 0.1
 const ATTACK_ACTIVE_END := 0.28
@@ -84,13 +87,14 @@ var _hp: int = 6
 var _hit_this_swing: Array = []
 var _downed_emitted := false
 
-@onready var _sprite: Sprite2D = $Sprite2D
+@onready var _appearance: AppearanceRenderer = $Appearance
 @onready var _sword: Area2D = $SwordHitbox
 @onready var _sword_shape: CollisionShape2D = $SwordHitbox/CollisionShape2D
 
 
 func _ready() -> void:
 	_action_prefix = "p%d_" % player_index
+	_appearance.apply_profile(Game.appearance_for_player(player_index))
 	_hp = max_hp
 	add_to_group("players")
 	_sword.monitoring = true
@@ -172,26 +176,26 @@ func _process_attack(_delta: float) -> void:
 
 func _process_roll(_delta: float) -> void:
 	# Only the early evasive part flashes; the recovery remains fully readable.
-	_sprite.modulate.a = (
+	_appearance.modulate.a = (
 		0.55 if _state_time < ROLL_IFRAME_DURATION and int(_state_time * 24.0) % 2 == 0 else 1.0
 	)
-	_animate_move(true, _delta)
+	_animate_roll()
 	if _state_time >= ROLL_DURATION:
-		_sprite.modulate.a = 1.0
+		_appearance.modulate.a = 1.0
 		_enter_normal()
 
 
 func _process_hurt(delta: float) -> void:
 	velocity = velocity.move_toward(Vector2.ZERO, friction * 0.5 * delta)
-	_sprite.modulate = Color(1.0, 0.5, 0.5) if int(_state_time * 20.0) % 2 == 0 else Color.WHITE
+	_appearance.modulate = Color(1.0, 0.5, 0.5) if int(_state_time * 20.0) % 2 == 0 else Color.WHITE
 	if _state_time >= HURT_DURATION:
-		_sprite.modulate = Color.WHITE
+		_appearance.modulate = Color.WHITE
 		_enter_normal()
 
 
 func _process_down(delta: float) -> void:
 	velocity = velocity.move_toward(Vector2.ZERO, friction * delta)
-	var column := mini(ATTACK_FRAMES - 1, int(_state_time / DEATH_DURATION * ATTACK_FRAMES))
+	var column := mini(DEATH_FRAMES - 1, int(_state_time / DEATH_DURATION * DEATH_FRAMES))
 	_set_frame(DEATH_ROW, column)
 	if _state_time >= DEATH_DURATION and not _downed_emitted:
 		_downed_emitted = true
@@ -214,6 +218,7 @@ func _move_input() -> Vector2:
 func _enter_normal() -> void:
 	_state = State.NORMAL
 	_state_time = 0.0
+	_appearance.set_sword_visible(false)
 	queue_redraw()
 
 
@@ -225,6 +230,7 @@ func _enter_attack(input_vector: Vector2) -> void:
 	velocity = Vector2.ZERO
 	_hit_this_swing.clear()
 	_sword.position = _facing * SWORD_REACH
+	_appearance.set_sword_visible(true)
 
 
 func _enter_roll(input_vector: Vector2) -> void:
@@ -243,6 +249,7 @@ func _enter_hurt(from: Vector2) -> void:
 	_invuln_time = INVULN_AFTER_HURT
 	velocity = (position - from).normalized() * KNOCKBACK_SPEED
 	_sword_shape.disabled = true
+	_appearance.set_sword_visible(false)
 
 
 func _enter_down() -> void:
@@ -250,6 +257,7 @@ func _enter_down() -> void:
 	_state_time = 0.0
 	velocity = Vector2.ZERO
 	_sword_shape.disabled = true
+	_appearance.set_sword_visible(false)
 
 
 ## Full-HP revive at a position. Called by the EncounterManager for both a solo
@@ -259,7 +267,8 @@ func respawn_at(pos: Vector2) -> void:
 	_hp = max_hp
 	_invuln_time = INVULN_AFTER_HURT
 	_downed_emitted = false
-	_sprite.modulate = Color.WHITE
+	_appearance.modulate = Color.WHITE
+	_appearance.set_sword_visible(false)
 	_sword_shape.disabled = true
 	health_changed.emit(_hp, max_hp)
 	_enter_normal()
@@ -304,16 +313,24 @@ func _animate_move(moving: bool, delta: float) -> void:
 	var column := 0
 	if moving:
 		_anim_time += delta
-		column = int(_anim_time * WALK_FPS) % SHEET_COLUMNS
+		column = int(_anim_time * WALK_FPS) % MOVE_FRAMES
 	else:
 		_anim_time = 0.0
-	_sprite.flip_h = flip
-	_sprite.frame = row * SHEET_COLUMNS + column
+	_appearance.set_frame(row, column, flip)
 
 
 func _set_frame(row: int, column: int) -> void:
-	_sprite.flip_h = absf(_facing.x) >= absf(_facing.y) and _facing.x < 0.0
-	_sprite.frame = row * SHEET_COLUMNS + column
+	_appearance.set_frame(row, column, absf(_facing.x) >= absf(_facing.y) and _facing.x < 0.0)
+
+
+func _animate_roll() -> void:
+	var row := ROLL_ROW_SIDE
+	var flip := _facing.x < 0.0
+	if absf(_facing.y) > absf(_facing.x):
+		row = ROLL_ROW_UP if _facing.y < 0.0 else ROLL_ROW_DOWN
+		flip = false
+	var column := mini(ROLL_FRAMES - 1, int(_state_time / ROLL_DURATION * ROLL_FRAMES))
+	_appearance.set_frame(row, column, flip)
 
 
 ## The free-sheet sword frames are compact, so a short stepped crescent makes the

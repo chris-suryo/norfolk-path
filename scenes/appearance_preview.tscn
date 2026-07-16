@@ -1,0 +1,34 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/appearance_renderer.gd" id="1_renderer"]
+
+[node name="AppearancePreview" type="Node2D"]
+script = ExtResource("1_renderer")
+
+[node name="Body" type="Sprite2D" parent="."]
+hframes = 9
+vframes = 56
+
+[node name="Pants" type="Sprite2D" parent="."]
+hframes = 9
+vframes = 56
+
+[node name="Shoes" type="Sprite2D" parent="."]
+hframes = 9
+vframes = 56
+
+[node name="Shirt" type="Sprite2D" parent="."]
+hframes = 9
+vframes = 56
+
+[node name="Sword" type="Sprite2D" parent="."]
+hframes = 4
+vframes = 9
+
+[node name="Hair" type="Sprite2D" parent="."]
+hframes = 9
+vframes = 56
+
+[node name="Hat" type="Sprite2D" parent="."]
+hframes = 9
+vframes = 56

@@ -1,9 +1,13 @@
 # Distinct P1/P2 player sprites — modular sheet mapping (prep, not yet wired)
 
-**Status:** investigation complete, ready for Chris's approval. **Nothing here is
+<!-- Historical pre-wiring status:
 wired into the game** — per the standing rule, the modular player animations must
 be verified live (each animation, in-engine) with Chris present, so this is a
-mapping + plan for a future focused slice, not a build.
+mapping + plan for a future focused slice, not a build. -->
+
+**Current status:** Character Creator v1 uses this mapping through the shared
+renderer. Validate the final in-game animation alignment with the browser checks
+in `docs/character-skins.md`.
 
 ## Why this was previously deferred, and what changed
 

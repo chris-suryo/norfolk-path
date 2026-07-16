@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/player_select.gd" id="1_select"]
 [ext_resource type="Texture2D" path="res://assets/game/UI_Frames.png" id="2_frames"]
@@ -6,6 +6,7 @@
 [ext_resource type="Texture2D" path="res://assets/generated/valley-1-ground.png" id="4_ground"]
 [ext_resource type="Texture2D" path="res://assets/cute_fantasy/packs/Cute_Fantasy/Cute_Fantasy/Outdoor decoration/Outdoor_Decor_Animations/Other_Animations/Campfire_Anim.png" id="5_fire"]
 [ext_resource type="Script" path="res://scripts/critter.gd" id="6_critter"]
+[ext_resource type="PackedScene" path="res://scenes/character_creator.tscn" id="7_creator"]
 
 [sub_resource type="Theme" id="theme"]
 default_font = ExtResource("3_font")
@@ -136,3 +137,5 @@ grow_vertical = 0
 modulate = Color(0.55, 0.45, 0.35, 1)
 theme_override_font_sizes/font_size = 7
 horizontal_alignment = 1
+
+[node name="Creator" parent="." instance=ExtResource("7_creator")]
