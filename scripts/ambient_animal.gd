@@ -27,7 +27,8 @@ var _target := Vector2.ZERO
 var _moving := false
 var _wait := 0.0
 var _time := 0.0
-var _flight_phase := 0.0
+var _heading := 0.0
+var _turn := 0.0
 
 
 func _ready() -> void:
@@ -36,15 +37,19 @@ func _ready() -> void:
 	_wait = randf_range(1.0, 3.0)
 	# Offset each actor's cycle so nearby animals never animate in lockstep.
 	_time = randf_range(0.0, 8.0)
-	_flight_phase = randf_range(0.0, TAU)
+	_heading = randf_range(0.0, TAU)
 	flip_h = randf() < 0.5
+	if can_fly:
+		# The butterfly sheet is 2 flap frames x 8 color rows — each flier
+		# picks a random color so no two read as copies (playtest round 2).
+		idle_row = randi() % maxi(vframes, 1)
 	frame = idle_row * hframes
 
 
 func _process(delta: float) -> void:
 	_time += delta
 	if can_fly:
-		_fly()
+		_fly(delta)
 	elif can_wander and walk_row >= 0:
 		_wander(delta)
 	var fps := walk_fps if _moving else idle_fps
@@ -76,8 +81,15 @@ func _wander(delta: float) -> void:
 			_moving = true
 
 
-func _fly() -> void:
-	# A small figure-eight feels alive without drifting away from its scene.
-	var angle := _time * TAU / flight_period + _flight_phase
-	position = _home + Vector2(cos(angle) * flight_radius, sin(angle * 2.0) * flight_radius * 0.45)
-	flip_h = cos(angle) < 0.0
+func _fly(delta: float) -> void:
+	# Organic wander (was a shared figure-eight, so every butterfly flew the
+	# same synced track — playtest round 2): smoothed random turning gives
+	# each its own path; a home pull that grows with distance keeps it near
+	# its flowers. flight_period still paces it (one loop's travel per period).
+	_turn = clampf(_turn + randf_range(-8.0, 8.0) * delta, -3.0, 3.0)
+	_heading += _turn * delta
+	var speed := TAU * flight_radius / maxf(flight_period, 0.1)
+	var pull := (_home - position) / maxf(flight_radius * 2.0, 1.0)
+	var dir := (Vector2.from_angle(_heading) + pull).normalized()
+	position += dir * speed * delta
+	flip_h = dir.x < 0.0

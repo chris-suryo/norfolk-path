@@ -31,10 +31,15 @@ const TERRAIN_SYMS := [".", "#", "S", "~", "B", "D", "Q", "c", "g", "O", "k", "a
 const FENCE_SYMS := ["F", "|"]
 
 ## Ambient-animal animation, keyed by map symbol (from the audited sheet layout —
-## all 32px frames). "idle"/"idle_n" = the idle row + frame count; the optional
-## "walk"/"walk_n" + "wander" enable a slow random stroll for land animals with a
-## walk cycle. Water animals (a/l swimming, k/@ capybara) bob in place only.
-## hframes/vframes are derived from each sheet at spawn (_spawn_animal).
+## 32px frames unless "frame_size" says otherwise). "idle"/"idle_n" = the idle
+## row + frame count; the optional "walk"/"walk_n" + "wander" enable a slow
+## random stroll for land animals with a walk cycle. Water animals (a/l swimming,
+## k/@ capybara) bob in place only. hframes/vframes derive per sheet at spawn.
+## Two sheet quirks (both playtest-caught): the chicken "C" is 2x2 = 4 frames
+## total (row 0 idle, row 1 walk — a 6-frame walk overran it every step), and
+## the butterfly "y" is 8px frames, 2 flaps x 8 color rows — frame_size 16 drew
+## a 2x2 block of FOUR butterflies as one sprite; the color row is randomized
+## per instance in ambient_animal.gd.
 const ANIMAL_ANIM := {
 	"d":
 	{"idle": 0, "idle_n": 2, "walk": 1, "walk_n": 6, "wander": true, "radius": 18.0, "speed": 12.0},
@@ -59,20 +64,17 @@ const ANIMAL_ANIM := {
 	"o": {"idle": 0, "idle_n": 4},
 	"p": {"idle": 0, "idle_n": 4},
 	"e": {"idle": 0, "idle_n": 4},
-	# Chicken sheet is 2x2 = 4 frames TOTAL; the old 6-frame walk overran it
-	# every step (p_frame out of bounds — caught by the playtest bot's console
-	# log). Row 0 = 2-frame idle, row 1 = 2-frame walk; wander stays on.
 	"C":
 	{"idle": 0, "idle_n": 2, "walk": 1, "walk_n": 2, "wander": true, "radius": 12.0, "speed": 8.0},
 	"y":
 	{
-		"frame_size": 16,
+		"frame_size": 8,
 		"idle": 0,
-		"idle_n": 4,
+		"idle_n": 2,
 		"fly": true,
 		"radius": 9.0,
 		"period": 2.8,
-		"idle_fps": 5.0
+		"idle_fps": 6.0
 	},
 	"a": {"idle": 8, "idle_n": 4},
 	"l": {"idle": 8, "idle_n": 3},
