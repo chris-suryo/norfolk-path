@@ -19,6 +19,11 @@ name: playtest
 
 on:
   workflow_dispatch: {}
+  # TEMPORARY bring-up trigger: dispatch-by-API only resolves workflows that
+  # exist on the default branch, so pushes to the dev branch drive the
+  # verification runs. REMOVE before merging to main.
+  push:
+    branches: [claude/norfolk-path-godot-continue-l07jly]
 
 permissions:
   contents: read
