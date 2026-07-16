@@ -20,6 +20,7 @@ extends RefCounted
 ##                {cells: Rect2i (in map cells), to: level_id, entry: entry_id}
 
 const VALLEY_MAP := preload("res://scripts/island_map.gd")
+const COVE_MAP := preload("res://scripts/cove_map.gd")
 
 const LEVELS := {
 	"valley":
@@ -30,8 +31,23 @@ const LEVELS := {
 		"has_shop": true,
 		"has_ariana": true,
 		"encounters": "valley",
-		"entries": {},
-		"transitions": [],
+		# Arrive back from the cove just inside the east-edge path stub.
+		"entries": {"from_cove": Vector2i(186, 25)},
+		# East-edge crossing to the cove (a path stub runs east past the boss).
+		"transitions": [{"cells": Rect2i(190, 24, 2, 5), "to": "cove", "entry": "from_valley"}],
+	},
+	"cove":
+	{
+		"map": COVE_MAP,
+		"ground": "res://assets/generated/cove-s11-ground.png",
+		"biome": "outdoor",
+		"has_shop": false,
+		"has_ariana": false,
+		# Peaceful for now — the plumbing ships; encounters are a later data add.
+		"encounters": "",
+		# Arrive from the valley a few tiles east of the west-edge return volume.
+		"entries": {"from_valley": Vector2i(7, 24)},
+		"transitions": [{"cells": Rect2i(2, 21, 3, 6), "to": "valley", "entry": "from_cove"}],
 	},
 }
 

@@ -149,10 +149,13 @@ func _spawn_area(area: Dictionary) -> void:
 ## Continue only: apply the checkpoint the player-select already loaded. A New
 ## Game (resume_requested false) leaves checkpoint 0 and the village spawn intact.
 func _apply_resume() -> void:
-	if not Game.resume_requested:
-		return
+	# A defeated boss stays defeated on ANY re-entry — a Continue, or walking back
+	# into the valley from the cove (which is not a checkpoint resume). Otherwise
+	# she would respawn at full HP in her already-cleared library.
 	if Game.boss_defeated:
 		_clear_area(_area_by_id(BOSS_ID))
+	if not Game.resume_requested:
+		return
 	if Game.checkpoint <= 0:
 		return
 	var area := _area_by_id(Game.checkpoint)
