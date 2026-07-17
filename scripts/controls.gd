@@ -51,16 +51,19 @@ static func label_for(action: String) -> String:
 	return LABELS.get(action.trim_prefix("p1_").trim_prefix("p2_"), action)
 
 
-## The key currently bound to an action, for display. Shows the FIRST binding
-## (the primary; legacy aliases stay silent so the menu reads clean).
+## The key(s) currently bound to an action, for display — every bound key, primary
+## first, joined by " / " (R4-19: the legacy aliases were live but invisible, so a
+## remapper couldn't see what they were leaving bound). A rebind collapses this
+## back to a single key via rebind().
 static func key_text(action: String) -> String:
+	var keys: Array[String] = []
 	for event in InputMap.action_get_events(action):
 		if event is InputEventKey:
 			var code: Key = (
 				event.physical_keycode if event.physical_keycode != KEY_NONE else event.keycode
 			)
-			return OS.get_keycode_string(code)
-	return "-"
+			keys.append(OS.get_keycode_string(code))
+	return " / ".join(keys) if not keys.is_empty() else "-"
 
 
 ## Bind an action to exactly one physical key (replacing defaults + aliases —

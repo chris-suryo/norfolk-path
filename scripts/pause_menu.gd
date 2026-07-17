@@ -5,11 +5,14 @@ extends CanvasLayer
 ## get_tree().paused — that is how Esc can both open the menu (unpaused) and close
 ## it (paused).
 ##
-## Four options, navigated with up/down + confirm (the project's Label-list +
+## Options, navigated with up/down + confirm (the project's Label-list +
 ## _selected + modulate idiom, same as player_select):
 ##   Resume        -> unpause, hide.
-##   Zoom          -> cycle Far / Normal / Close camera presets live.
+##   Zoom          -> cycle Far / Normal / Close camera presets live; the value
+##                    row also steps with Left/Right, like the character creator.
 ##   Save Now      -> Game.save(), then show the "Saved HH:MM" confirmation.
+##   Controls      -> open the key-remap overlay.
+##   How to Play   -> open the read-only control reference.
 ##   Return to Title-> unpause and go to player-select, KEEPING the checkpoint
 ##                     (no reset_run), so the run resumes where it left off.
 ##
@@ -33,20 +36,22 @@ const ZOOM_PRESETS := [
 var _open := false
 var _selected := 0
 var _zoom_idx := 1
-## True while the Controls overlay is on top — the pause menu goes inert (its
-## panel hidden, its input ignored) until the overlay reports closed.
-var _controls_open := false
+## True while an overlay (Controls or How to Play) is on top — the pause menu goes
+## inert (its panel hidden, its input ignored) until the overlay reports closed.
+var _overlay_open := false
 
 @onready var _panel: Control = $Panel
 @onready var _zoom_label: Label = $Panel/Frame/Box/Zoom
 @onready var _status: Label = $Panel/Frame/Box/Status
 @onready var _camera: Node = get_node_or_null(camera_path)
 @onready var _controls: ControlsMenu = $ControlsMenu
+@onready var _how_to_play: HowToPlay = $HowToPlayMenu
 @onready var _options: Array = [
 	$Panel/Frame/Box/Resume,
 	$Panel/Frame/Box/Zoom,
 	$Panel/Frame/Box/Save,
 	$Panel/Frame/Box/Controls,
+	$Panel/Frame/Box/HowToPlay,
 	$Panel/Frame/Box/ToTitle,
 ]
 
@@ -55,7 +60,8 @@ func _ready() -> void:
 	_panel.visible = false
 	if camera_path.is_empty() or _camera == null:
 		push_error("PauseMenu: camera_path did not resolve — Zoom presets will be inert.")
-	_controls.closed.connect(_on_controls_closed)
+	_controls.closed.connect(_on_overlay_closed)
+	_how_to_play.closed.connect(_on_overlay_closed)
 	_wire_mouse()
 	_sync_zoom_label()
 
@@ -89,7 +95,7 @@ func _on_option_click(event: InputEvent, index: int) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if _controls_open:
+	if _overlay_open:
 		return
 	if event.is_action_pressed("ui_cancel"):
 		# The dialogue box owns the paused tree while a conversation is open —
@@ -107,6 +113,12 @@ func _unhandled_input(event: InputEvent) -> void:
 		_move(-1)
 	elif event.is_action_pressed("ui_down"):
 		_move(1)
+	elif event.is_action_pressed("ui_left") and _selected == 1:
+		_cycle_zoom(-1)
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("ui_right") and _selected == 1:
+		_cycle_zoom(1)
+		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("ui_accept"):
 		_activate()
 		get_viewport().set_input_as_handled()
@@ -146,23 +158,33 @@ func _activate() -> void:
 		3:
 			_open_controls()
 		4:
+			_open_how_to_play()
+		5:
 			_return_to_title()
 
 
 func _open_controls() -> void:
-	_controls_open = true
+	_overlay_open = true
 	_panel.visible = false
 	_controls.open()
 
 
-func _on_controls_closed() -> void:
-	_controls_open = false
+func _open_how_to_play() -> void:
+	_overlay_open = true
+	_panel.visible = false
+	_how_to_play.open()
+
+
+func _on_overlay_closed() -> void:
+	_overlay_open = false
 	_panel.visible = true
 	_refresh()
 
 
-func _cycle_zoom() -> void:
-	_zoom_idx = (_zoom_idx + 1) % ZOOM_PRESETS.size()
+## Steps the zoom preset by dir (+1 forward on accept, -1/+1 on Left/Right so the
+## value row behaves like the character creator's — R4-20). posmod wraps both ways.
+func _cycle_zoom(dir: int = 1) -> void:
+	_zoom_idx = posmod(_zoom_idx + dir, ZOOM_PRESETS.size())
 	if _camera != null and _camera.has_method("set_zoom_preset"):
 		_camera.set_zoom_preset(ZOOM_PRESETS[_zoom_idx]["value"])
 	_sync_zoom_label()

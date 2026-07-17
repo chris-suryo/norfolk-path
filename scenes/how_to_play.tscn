@@ -1,0 +1,91 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/how_to_play.gd" id="1_htp"]
+[ext_resource type="FontFile" path="res://assets/game/fonts/PixelifySans.ttf" id="2_font"]
+
+[sub_resource type="Theme" id="theme"]
+default_font = ExtResource("2_font")
+default_font_size = 11
+
+[sub_resource type="StyleBoxFlat" id="panel_dark"]
+bg_color = Color(0.11, 0.09, 0.08, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.62, 0.47, 0.3, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_left = 2
+corner_radius_bottom_right = 2
+
+[node name="HowToPlay" type="CanvasLayer"]
+process_mode = 3
+layer = 2
+script = ExtResource("1_htp")
+
+[node name="Panel" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = SubResource("theme")
+
+[node name="Dim" type="ColorRect" parent="Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0, 0, 0, 0.55)
+
+[node name="Frame" type="Panel" parent="Panel"]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -190.0
+offset_top = -140.0
+offset_right = 190.0
+offset_bottom = 140.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("panel_dark")
+
+[node name="Box" type="VBoxContainer" parent="Panel/Frame"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 12.0
+offset_right = -16.0
+offset_bottom = -12.0
+grow_horizontal = 2
+grow_vertical = 2
+alignment = 1
+theme_override_constants/separation = 6
+
+[node name="Title" type="Label" parent="Panel/Frame/Box"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "HOW TO PLAY"
+horizontal_alignment = 1
+
+[node name="Grid" type="GridContainer" parent="Panel/Frame/Box"]
+layout_mode = 2
+columns = 4
+theme_override_constants/h_separation = 14
+theme_override_constants/v_separation = 2
+
+[node name="Back" type="Label" parent="Panel/Frame/Box"]
+layout_mode = 2
+text = "BACK"
+horizontal_alignment = 1
+
+[node name="Hint" type="Label" parent="Panel/Frame/Box"]
+modulate = Color(0.72, 0.66, 0.56, 1)
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "ENTER / ESC - BACK"
+horizontal_alignment = 1
