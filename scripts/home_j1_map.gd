@@ -10,7 +10,7 @@ const MAP := """
 XXXXXXXXX
 XXXXXXXXX
 XXX___X_X
-XXX___X_X
+XXX___XXX
 X______XX
 X______XX
 X___S___X
