@@ -37,6 +37,35 @@ var _row := 0
 ]
 
 
+## Mouse support (round-3: the creator was arrow-keys-only) — the same
+## hover/click pattern as player_select and the pause menu.
+func _ready() -> void:
+	for index in _rows.size():
+		var label := _rows[index]
+		label.mouse_filter = Control.MOUSE_FILTER_STOP
+		label.mouse_entered.connect(_on_row_hover.bind(index))
+		label.gui_input.connect(_on_row_click.bind(index))
+
+
+func _on_row_hover(index: int) -> void:
+	_row = index
+	_refresh()
+
+
+## Click on an action row activates it; click on a value row cycles it —
+## the left half of the label steps back, the right half steps forward.
+func _on_row_click(event: InputEvent, index: int) -> void:
+	if not (
+		event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT
+	):
+		return
+	_row = index
+	if ROWS[index] in ["Randomize", "Confirm", "Back"]:
+		_activate()
+		return
+	_adjust(1 if event.position.x >= _rows[index].size.x * 0.5 else -1)
+
+
 func begin(slot: int, initial_profile: Dictionary) -> void:
 	_slot = slot
 	_profile = AppearanceCatalog.normalized(initial_profile)
