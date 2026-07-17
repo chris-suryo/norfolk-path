@@ -287,3 +287,60 @@ circle body; web build spaces render everywhere (title, hints, creator); post-wi
 Continue keeps the created look; bombschroom breathe reads as a tell; arc-vs-hit
 one deliberate rapid-turn swing test; roll i-frames + roll-through-hit (human
 timing); bombschroom windup flash + gas visuals; win screen screenshot.
+
+---
+
+# Playtest findings — round 3
+
+Chris's first real playthrough of the beta build (live web build at
+norfolk-path.vercel.app, post world-alive + combat slices, PR #13-#16
+merged). Findings arrived as annotated feedback with 5 screenshots. This
+round also produced explicit direction decisions: **bugs first**, then combat
+feel, then UI (new CC0 font + dark panels approved), then the library
+interior. Keys: G = sword, H = bow (Space and "/" stay as legacy aliases
+until the remap screen ships); P2 ranged on numpad 1/2/3. Difficulty
+selector: backlog, not now.
+
+## What's working (keep, don't touch)
+
+- Movement + dodge roll: "really solid, you really honestly nailed that."
+- Door entry flow and the interior vibe ("the interior looks great").
+- The cove (second area): "no notes."
+- The harder difficulty curve after the rebalance — likes it.
+- Character creator options are fun (input is the problem, not content).
+- Subtle animations (mushroom breathe etc.) land well.
+
+## Triage
+
+| # | Finding | Root cause (verified in code/art) | Resolution |
+|---|---|---|---|
+| 1 | Walked out through the bottom of a house into the void | `Game.change_scene()` silently dropped a crossing requested during the 0.44s arrival fade; the interior exit mat is 1 tile from the spawn and the trigger's arm was already consumed. Off-map cells have no collision | **FIXED (Slice C1)**: `Game.is_fading()` exposed; LevelTransition polls in `_physics_process` and never consumes its arm on a refused crossing — the mat retries the frame the fade clears |
+| 2 | Clock sitting on the floor | Interior top wall was 1 tile tall, so wall-mounted decor anchored at row 1 hung at floor level | **FIXED (C2)**: baker renders a 2-row hanging band; windows/clock/pans sit ON the wall |
+| 3 | Rug drawn over the bed ("make sure that never happens") | Baker had no overlap rule; home_j1's rug was stamped after the bed | **FIXED (C2)**: fail-loud overlap validator — solid-over-solid and rug-over-solid abort the bake (rug-under stays legal). Caught a real error (chair on spawn cell) on its first run |
+| 4 | No furniture collision | Baked furniture was deliberately decor-only v1 | **FIXED (C2)**: furniture footprints emit collision cells (X) into the interior maps; big pieces solid, rugs/wall decor walkable |
+| 5 | "Not able to enter every house right — door entrance not where it's supposed to be" | Door ART is off-center on 4/6 building sprites (house_a −17px, house_g −43px, house_j −26px, house_e +12px) while the collision gap, trigger and lamps sat at sprite center | **FIXED (C3)**: per-building `door_dx` measured from the art drives the collision gap (gen_prop_table), the trigger cells and entries (registry), and the lamp/walkway placement (map). Valley re-baked, diff confined |
+| 6 | Two flanking lamps "don't make sense" | Lamps flanked the sprite center, not the drawn door | **FIXED (C3)**: lamps moved to flank the real doors |
+| 7 | Redo walkways | Paths led to sprite-center doors | **FIXED (C3)**: cottage G's walkway shifted to the door column; house A got a walkway stub; the rest of the walkway network is a level-design-session item |
+| 8 | Chicken standing on a player's face | Animal Y-sort origin at cell center while visual feet sat up to 11px higher — outside the +9px feet-below-origin convention player/props share | **FIXED (C4)**: measured per-animal `foot` shift moves the sort origin onto the visual feet; sprite offset compensated, pixels unchanged |
+| 9 | Enemies stuck on corners, "more intelligent in how they move" | Straight-line chase re-aimed every frame, pinning enemies into props | **FIXED (C5)**: blocked chasers commit to a collision-tangent slide (exported 0.35s knob) before re-aiming. No pathfinding — live-verify the feel |
+| 10 | Sword keys: G sword / H bow; P2 numpad | Decision, not a defect | **Slice D** (keys + aliases until remap ships) |
+| 11 | Bow should be hold-to-charge with damage by hold time | Current bow is tap-fire | **Slice D** (charge draw, half-speed while drawing, damage/speed scale with hold) |
+| 12 | Sword swing "has fireballs" — wants a white swipe matching the hit region | Orange `_draw()` crescent reads as a projectile | **Slice D** (white/pale swipe arc matched to the real SwordHitbox sweep) |
+| 13 | Menus tan + hard to read; text/font "impossible to read" | Small pixel font + tan-on-tan panels | **Slice E** (new CC0/OFL font + dark panel theme, approved) |
+| 14 | Creator is arrow-keys-only | No gui_input hookup in character_creator.gd | **Slice E** (mouse hover/click, title/pause pattern) |
+| 15 | Key remapping should be the menu focus | — | **Slice E** (Controls screen, InputMap + user://controls.json) |
+| 16 | Change Evan's character to a boy that looks like him | Fruit-stand NPC uses a premade sprite | **Slice E** |
+| 17 | Irene's house (library) should be enterable | Library door is dialogue-locked flavor | **Slice F** (baker-generated study interior via the inn's centered arch) |
+| 18 | Use the top/bottom of the map | Dead bands are a layout property | **DEFERRED (named)**: dedicated level-design session |
+| 19 | Maybe difficulty settings later | — | **BACKLOG** by Chris's call |
+| 20 | Agree on audio | No audio exists yet | **DEFERRED (named)**: no audio track scheduled this epic |
+| 21 | Wants a full-feedback prompt for a fable-model review session | — | **Deliverable G**: docs/review-prompt-round3.md |
+
+## Live-verify list for round 4 (can't be proven headless)
+
+- Enemy corner steering FEEL (the 0.35s knob) around fence posts + camp props.
+- Door-loop walk into every relocated door (bot only proves cottage A).
+- Lamp/walkway look at all 7 doors on the real render.
+- Y-sort: stand directly below/above chicken, cow, capybara.
+- Furniture collision in all 7 interiors; exit mats still reachable.
+- Fade retry: sprint straight down from an interior spawn — must re-exit, never void.
