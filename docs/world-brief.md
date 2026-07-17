@@ -4,8 +4,8 @@
 
 Spawn on the west path → walk east past Evan's shop (a checkpoint beat, no
 gate) → the path continues to the library at the east end, whose reading
-garden borders the pond → Ariana (currently a chicken stand-in, should be a
-duck) is at the pond → Irene, the library's keeper, is the final
+garden borders the pond → Ariana (a goose) is at the pond → Irene, the
+library's keeper, is the final
 confrontation, at or just outside the library itself.
 
 This is a single, linear, unhurried walk — not a maze, not multiple routes.
@@ -41,12 +41,10 @@ The point is a short, complete quest arc a player can finish in one sitting.
   quest resolves.
 - **Who/what lives here:**
   - **Ariana**, at the pond in the reading garden just outside the library
-    (currently the chicken stand-in — flagged in PROJECT.md to become a duck
-    once sourced). Visually present now; in a later slice, defeating Irene
-    restores her here and she delivers the closing line: *"Message received.
-    I'm still renting it again."*
+    (a goose, per the round-4 story pass). Visually present now; in a later
+    slice, defeating Irene restores her here and she delivers her closing line.
   - **Irene**, the library's keeper — final boss. Warm, sincere, completely
-    convinced turning Ariana into a duck over an unreturned DVD rental
+    convinced turning Ariana into a goose over an unreturned DVD rental
     ("Peep and the Big Wide World") was the correct, caring resolution.
     Combat is her normal Attack stat, reflavored through dialogue (no new
     mechanics): *"Oh — you're here about the DVD. I really am sorry it came

@@ -165,7 +165,7 @@ is learning the engine end-to-end, not shipping commercially.
   chose the cove-3 (lakeside) direction; it's now enriched into three
   detailed variants — `cove3-rich-1` (balanced, recommended), `-2` (pastoral
   village with farm pens), `-3` (wild garden) — with animals (cow/pig/sheep +
-  Ariana's chicken), lamp posts, rocks, stumps, wildflowers, garden flowers, a
+  Ariana's goose), lamp posts, rocks, stumps, wildflowers, garden flowers, a
   veg patch, and a chest, all aligned to the brief (see
   `docs/world-options/README.md`). Latest pass (3b) added **farmland fields**,
   signs, wheat, mushrooms and dialed back trees/rocks for texture variety.
@@ -301,12 +301,9 @@ the cloud build session can verify — movement lives in exported constants
   failure. That was a real misdiagnosis: `git hash-object` on the Windows
   working copy matched `git rev-parse HEAD:...` exactly for both PNGs, proving
   the files were byte-identical to what's committed the whole time.
-- **The chicken at the pond is a TEMPORARY stand-in for Ariana, who should be
-  a DUCK.** A duck sprite download was attempted but didn't extract correctly;
-  the pack's `Animals/Chicken/Chicken.png` fills the spot visually until a duck
-  is sourced. Swap = replace the `Chicken` Sprite2D texture in
-  `scenes/main.tscn` (frames are 2×2 of 32×32; adjust `hframes`/`vframes` to
-  the duck sheet).
+- **Ariana at the pond is a goose** (round-4 story pass). The `Ariana` Sprite2D
+  in `scenes/main.tscn` uses the pack's `Animals/Goose/Goose_01.png` sheet
+  (`hframes = 12`, `vframes = 16`, idle-bob via `critter.gd`).
 - **Art pack license caution:** the Cute Fantasy free tier allows
   non-commercial use and modification but **forbids redistribution, even
   modified**. The pack is committed to this repo — fine while the repo is

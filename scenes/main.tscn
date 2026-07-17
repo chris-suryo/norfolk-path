@@ -4,7 +4,7 @@
 [ext_resource type="Script" path="res://scripts/follow_camera.gd" id="8_cam"]
 [ext_resource type="PackedScene" path="res://scenes/level.tscn" id="2_level"]
 [ext_resource type="PackedScene" path="res://scenes/shop.tscn" id="3_shop"]
-[ext_resource type="Texture2D" path="res://assets/game/Duck.png" id="4_duck"]
+[ext_resource type="Texture2D" path="res://assets/cute_fantasy/packs/Cute_Fantasy/Cute_Fantasy/Animals/Goose/Goose_01.png" id="4_goose"]
 [ext_resource type="Script" path="res://scripts/critter.gd" id="5_critter"]
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="6_player"]
 [ext_resource type="Script" path="res://scripts/midpoint.gd" id="7_midpoint"]
@@ -25,10 +25,10 @@ y_sort_enabled = true
 [node name="Shop" parent="World" instance=ExtResource("3_shop")]
 
 [node name="Ariana" type="Sprite2D" parent="World"]
-texture = ExtResource("4_duck")
+texture = ExtResource("4_goose")
 offset = Vector2(0, -6)
-hframes = 8
-vframes = 20
+hframes = 12
+vframes = 16
 script = ExtResource("5_critter")
 fps = 3.0
 frame_count = 2

@@ -6,10 +6,9 @@ extends RefCounted
 ## the map briefs) — ids are stable, the build session never rewords content.
 ##
 ## Ids: villagers are "villager_<map x>_<map y>" (their cell in island_map.gd),
-## plus "ariana" (the duck) and "library_door" (Irene's sealed library).
+## plus "ariana" (the goose) and "library_door" (Irene at the library).
 ##
-## ALL LINES BELOW ARE PLACEHOLDERS awaiting the story pass — deliberately
-## bland so nothing here reads as canon.
+## Lines are the round-4 story pass — final copy, wired in verbatim.
 
 const LINES := {
 	"villager_63_19":
@@ -17,8 +16,8 @@ const LINES := {
 		"name": "Villager",
 		"lines":
 		[
-			"Evan's stand has the freshest goods in the valley.",
-			"Well... it has the ONLY goods in the valley.",
+			"I don't know what a 'six-inch' is. I ask for one every week.",
+			"He used to do surgery, you know. Now it's the sandwiches. Good for him.",
 		],
 	},
 	"villager_166_20":
@@ -26,29 +25,41 @@ const LINES := {
 		"name": "Villager",
 		"lines":
 		[
-			"The library? I'd steer clear.",
-			"Irene takes late returns... personally.",
+			"Best advice: don't mention the DVD, don't make eye contact.",
+			"If it comes to that, most people would rather be the goose. Just so you know.",
 		],
 	},
 	"villager_175_28":
 	{
 		"name": "Villager",
-		"lines": ["Lovely by the lake, isn't it?", "They say the path east goes somewhere new."],
+		"lines":
+		[
+			"I've named every duck on this pond. She's not even a duck — that's the trouble.",
+			"Not really a goose either, if you want the truth. Library business. Irene doesn't warn twice.",
+		],
 	},
 	"villager_46_30":
 	{
 		"name": "Villager",
-		"lines": ["The windmill's been creaking all week.", "Nobody remembers who built it."],
+		"lines":
+		[
+			"I've narrowed it down to three suspects. I'm not naming names yet.",
+			"The blacksmith has an alibi. The blacksmith always has an alibi.",
+		],
 	},
 	"ariana":
 	{
 		"name": "Ariana",
-		"lines": ["Quack.", "(She seems pleased you stopped by.)"],
+		"lines": ["Honk.", "(Translation: she literally does not care.)"],
 	},
 	"evan":
 	{
 		"name": "Evan",
-		"lines": ["Toasted, or the old way?", "Best stand in the valley. Only stand, too."],
+		"lines":
+		[
+			"Welcome to Subway. What can I get started for you today?",
+			"Six-inch or footlong?",
+		],
 	},
 	"library_door":
 	{
