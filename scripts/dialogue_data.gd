@@ -61,6 +61,19 @@ const LINES := {
 			"Six-inch or footlong?",
 		],
 	},
+	# PLACEHOLDER — the onboarding guide at the village spawn. Chris's locked
+	# round-5 copy replaces these lines (quest + teach-the-ropes; see the story
+	# brief). Keeping the control keys in-text is a stand-in until then.
+	"guide":
+	{
+		"name": "Guide",
+		"lines":
+		[
+			"You saw it too, then. The goose — that was Ariana.",
+			"Irene runs the library. She does this when a book comes back late.",
+			"Move with WASD. Talk with E. The library's east. Go bring her home.",
+		],
+	},
 	"library_door":
 	{
 		"name": "Irene",
