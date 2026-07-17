@@ -27,6 +27,9 @@ const WIN_DELAY := 3.0
 
 var player_count := 1
 var checkpoint := 0
+## Persisted only in begin_win_sequence, after the win screen is guaranteed to
+## load — never in BossIrene._die, or a mid-win-delay refresh strands the run
+## (B-03/B-04).
 var boss_defeated := false
 ## The level the players are on (LevelRegistry id). Saved, so Continue returns to
 ## it; New Game / reset starts in the valley.
@@ -131,13 +134,21 @@ func change_scene(path: String) -> void:
 ## always-alive autoload so returning to title or racing a door during the delay
 ## can't drop the coroutine — the win screen still loads and win_pending never
 ## sticks true for the session (B-02). Cleared before the swap since the win
-## screen has no doors to guard.
+## screen has no doors to guard. The boss_defeated record is also persisted here,
+## at the END of the delay, so the ending never hits disk before it is guaranteed
+## to display (B-03/B-04) — see below.
 func begin_win_sequence() -> void:
 	if win_pending:
 		return
 	win_pending = true
 	await get_tree().create_timer(WIN_DELAY).timeout
 	win_pending = false
+	# Persist the ending only now that the win screen is guaranteed to load (moved out
+	# of BossIrene._die — B-03/B-04). Setting boss_defeated in memory AND on disk at the
+	# same instant keeps "in-memory true iff on-disk true", so no save() reachable during
+	# the win delay can ever record a premature boss clear.
+	boss_defeated = true
+	save()
 	change_scene(WIN_SCENE)
 
 
