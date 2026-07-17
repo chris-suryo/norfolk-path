@@ -9,9 +9,9 @@ round 1 proved the shape works.
 | Gate | Workflow | Catches |
 |---|---|---|
 | GDScript lint | `ci.yml` (gdformat + gdlint) | style/syntax drift |
-| Static checks | `ci.yml` → `tools/check_symbols.py`, `check_assets.py`, `check_character_layers.py`, `check_map_rules.py` | missing assets, unhandled map symbols, broken character layers, map-rule regressions (floating beehives, orphan doorsteps, singleton clones) |
+| Static checks | `ci.yml` → `tools/check_symbols.py`, `check_assets.py`, `check_character_layers.py`, `check_map_rules.py`, `check_levels.py` | missing assets, unhandled map symbols, broken character layers, map-rule regressions (floating beehives, orphan doorsteps, singleton clones), connected-world breaks (dangling transitions, unwalkable arrivals, doorless interiors, uncovered talkers) |
 | Map composites | `visual-review.yml` → artifact | layout/composition drift, reviewable by eye |
-| **Browser playtest bot** | `playtest.yml` (push to main + manual) → `playtest-<sha>` artifact | build boots, canvas renders, input works, core loop produces sane frames; console errors surface in the job log |
+| **Browser playtest bot** | `playtest.yml` (push to main + manual) → `playtest-<sha>` artifact | build boots, canvas renders, input works, core loop produces sane frames; **plus, live on the real build:** a cottage door loop (transition + fade + return), a seeded v3 save that must migrate to v4 in place (Continue routing, appearances kept), and a full dialogue open/advance/close — 19 screenshots, console errors surface in the job log |
 
 The bot's first assertion is load-bearing: the title-menu highlight must move on
 a keypress or the run fails — a green run genuinely means "input reached the

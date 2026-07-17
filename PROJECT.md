@@ -8,6 +8,25 @@ is learning the engine end-to-end, not shipping commercially.
 
 ## Status
 
+- **PRESSURE HARNESS + COMBAT TRACK (headless-built, bot-verified).**
+  *Harness:* the world-alive slice is now machine-proven on the real build —
+  the CI bot walks a cottage door loop (57k/57.6k thumbnail pixels changed on
+  each crossing), migrates a seeded v3 save to v4 in place (level field
+  written, custom appearance kept), and holds a full dialogue conversation
+  (90k pixels moved on open AND close); `tools/check_levels.py` perma-checks
+  the transition graph + dialogue coverage in CI. Fixed two pressure-review
+  edges: stale camera limits after an in-room zoom change, and doors eating
+  the win screen during the 3s post-boss delay. *Combat:* the **bow** — P1
+  **F** / P2 **,** fires an arrow (140 px/s, dmg 2, 0.7s cooldown; sword stays
+  the close-range 4) with a modular bow overlay; **four new enemies** on one
+  new script (RangedEnemy): Skeleton **Bowman** (stand-off skirmisher),
+  Skeleton **Mage** (glass-cannon caster), **Bat** (hp-1 swarm at 62 px/s),
+  **Big Red Slime** (hp-10 tank); the west→east gauntlet re-escalated with a
+  new mid-road area + checkpoint (BOSS_ID→4, old saves resume one beat
+  earlier, harmless); **boss phase 2 shipped**: below ½ HP Irene summons bats
+  + tightens throws (all knobs exported). LIVE-VERIFY (feel, not function):
+  bow feel + P2 comma reach, bat speed fairness, big-slime chip length,
+  phase-2 taste, new checkpoint pacing.
 - **WORLD-ALIVE SLICE (headless): fades, every house enterable, dialogue.**
   (1) Every scene change now fades through black (`Game.change_scene()` — the
   autoload hosts the overlay), fixing the abrupt door cut. (2) **All 6 cottages
