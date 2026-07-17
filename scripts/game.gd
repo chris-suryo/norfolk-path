@@ -131,6 +131,9 @@ func change_scene(path: String) -> void:
 	# frees. Clearing it here — on EVERY change — means no scene ever loads frozen
 	# (Esc/dialogue during the win delay or any fade). Cheapest fix in the cluster.
 	get_tree().paused = false
+	# Same class of guard for the intro cutscene: if a swap ever races the cutscene,
+	# its director (in the freed main.tscn) can't clear this — so clear it here too.
+	cutscene_active = false
 	_fading = true
 	var out_tween := create_tween()
 	out_tween.tween_property(_fade_rect, "modulate:a", 1.0, FADE_HALF)
