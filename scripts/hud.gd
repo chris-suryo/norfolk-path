@@ -21,6 +21,7 @@ var _hp_labels := {}
 @onready var _p2_bar: TextureProgressBar = $P2Bar
 @onready var _p2_hp: Label = $P2HP
 @onready var _checkpoint_toast: Label = $CheckpointToast
+@onready var _move_hint: Label = $MoveHint
 
 
 func _ready() -> void:
@@ -58,3 +59,14 @@ func show_checkpoint_saved() -> void:
 	tween.tween_interval(1.6)
 	tween.tween_property(_checkpoint_toast, "modulate:a", 0.0, 0.35)
 	tween.tween_callback(func(): _checkpoint_toast.visible = false)
+
+
+## The one-time "here's how to move" hint at the start of a fresh run — cued by
+## the intro cutscene when it hands control back. Fades on its own after a beat.
+func show_move_hint() -> void:
+	_move_hint.modulate.a = 1.0
+	_move_hint.visible = true
+	var tween := create_tween()
+	tween.tween_interval(4.0)
+	tween.tween_property(_move_hint, "modulate:a", 0.0, 0.4)
+	tween.tween_callback(func(): _move_hint.visible = false)

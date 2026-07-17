@@ -198,6 +198,7 @@ func _ready() -> void:
 	# saved-checkpoint resume can override the default spawn.
 	$World/EncounterManager.setup($HUD, _def.encounters, _map)
 	_bind_hud()
+	_maybe_play_intro()
 
 
 ## One Interactable per talkable map symbol: villagers "N", Ariana "$" (ids the
@@ -230,6 +231,22 @@ func _entry_cell() -> Vector2i:
 	if _def.entries.has(Game.current_entry):
 		return _def.entries[Game.current_entry]
 	return _map.find_one("S")
+
+
+## Play the intro cutscene once, only on a fresh New-Game valley start. main.tscn
+## reloads on every door/Continue, so gate on the run flags: a door sets a
+## non-empty current_entry, Continue sets resume_requested, and the one-shot
+## intro_played blocks a second same-session New Game.
+func _maybe_play_intro() -> void:
+	if (
+		Game.resume_requested
+		or Game.current_entry != ""
+		or Game.current_level_id != "valley"
+		or Game.intro_played
+	):
+		return
+	Game.intro_played = true
+	$CutsceneDirector.play(_map.cell_center(Vector2i(162, 18)), $World/CameraTarget)
 
 
 ## Connect each live player's HP to its HUD bar. Player2 is freed in 1-player, so
