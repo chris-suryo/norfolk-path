@@ -19,6 +19,7 @@ move_speed = 16.0
 contact_damage = 2
 contact_cooldown = 1.0
 knockback_speed = 30.0
+aggro_radius = 110.0
 idle_row = 0
 move_row = 1
 death_row = 2
