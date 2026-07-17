@@ -15,17 +15,23 @@ extends CanvasLayer
 ## widgets are hidden in 1-player, where Player2 is freed.
 
 var _bars := {}
+var _hp_labels := {}
 
 @onready var _p2_name: Label = $P2Name
 @onready var _p2_bar: TextureProgressBar = $P2Bar
+@onready var _p2_hp: Label = $P2HP
 @onready var _checkpoint_toast: Label = $CheckpointToast
 
 
 func _ready() -> void:
 	_bars = {1: $P1Bar, 2: _p2_bar}
+	# A number beside each bar — the bar alone (far corner, no digits) was the only
+	# health readout (R4-21).
+	_hp_labels = {1: $P1HP, 2: _p2_hp}
 	if Game.player_count < 2:
 		_p2_name.visible = false
 		_p2_bar.visible = false
+		_p2_hp.visible = false
 
 
 ## Wire one player's health to its bar and seed the current value immediately.
@@ -41,12 +47,14 @@ func _on_health_changed(current: int, maximum: int, idx: int) -> void:
 	var bar: TextureProgressBar = _bars[idx]
 	bar.max_value = maximum
 	bar.value = current
+	_hp_labels[idx].text = "%d/%d" % [current, maximum]
 
 
 func show_checkpoint_saved() -> void:
 	_checkpoint_toast.modulate.a = 1.0
 	_checkpoint_toast.visible = true
 	var tween := create_tween()
-	tween.tween_interval(1.1)
+	# Hold longer so it isn't lost in motion (R4-22).
+	tween.tween_interval(1.6)
 	tween.tween_property(_checkpoint_toast, "modulate:a", 0.0, 0.35)
 	tween.tween_callback(func(): _checkpoint_toast.visible = false)

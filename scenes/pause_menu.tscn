@@ -1,8 +1,9 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scripts/pause_menu.gd" id="1_pause"]
 [ext_resource type="FontFile" path="res://assets/game/fonts/PixelifySans.ttf" id="3_font"]
 [ext_resource type="PackedScene" path="res://scenes/controls_menu.tscn" id="4_controls"]
+[ext_resource type="PackedScene" path="res://scenes/how_to_play.tscn" id="5_htp"]
 
 [sub_resource type="Theme" id="theme"]
 default_font = ExtResource("3_font")
@@ -92,6 +93,11 @@ layout_mode = 2
 text = "Controls"
 horizontal_alignment = 1
 
+[node name="HowToPlay" type="Label" parent="Panel/Frame/Box"]
+layout_mode = 2
+text = "How to Play"
+horizontal_alignment = 1
+
 [node name="ToTitle" type="Label" parent="Panel/Frame/Box"]
 layout_mode = 2
 text = "Return to Title"
@@ -104,3 +110,5 @@ text = ""
 horizontal_alignment = 1
 
 [node name="ControlsMenu" parent="." instance=ExtResource("4_controls")]
+
+[node name="HowToPlayMenu" parent="." instance=ExtResource("5_htp")]
