@@ -18,11 +18,16 @@ name: playtest
 # schedule/PR trigger once a few runs have proven it stable.
 
 on:
+  # DISPATCH-ONLY to conserve Actions minutes. This job is the most expensive in
+  # the repo — it downloads Godot AND installs Chromium + system deps from
+  # scratch (~4-5 min/run) — and it is a screenshot review aid, not a merge
+  # gate. It also currently produces false greens (its pixel-delta asserts pass
+  # on ambient motion; see docs/review-round4.md section 7), so an unattended
+  # run per merge was paying premium minutes for a compromised signal. Run it
+  # from the Actions tab ("Run workflow") when you actually want a screenshot
+  # record. To restore auto-runs on gameplay changes later, add back a
+  # `push: { branches: [main], paths: [scripts/**, scenes/**, assets/**] }`.
   workflow_dispatch: {}
-  # Every merge to main gets a bot run (~3.5 min): a screenshot record of the
-  # actual playable build, alongside deploy-web shipping it.
-  push:
-    branches: [main]
 
 permissions:
   contents: read

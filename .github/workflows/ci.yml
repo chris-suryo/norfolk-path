@@ -1,5 +1,21 @@
 name: ci
-on: [push, pull_request]
+# Runs on PRs (the merge gate) and on direct pushes to main. Deliberately NOT
+# on every branch push: a branch with an open PR would otherwise run this twice
+# (once for `push`, once for `pull_request`) — pure double-billing of Actions
+# minutes. Docs-only changes are skipped (no GDScript to lint).
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+
+# A newer push to the same ref cancels the stale in-flight run instead of
+# letting both finish.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 # Godot-shaped CI for a GDScript project. This replaces the original Python
 # (uv/pytest) scaffold CI, which no longer fits the codebase.

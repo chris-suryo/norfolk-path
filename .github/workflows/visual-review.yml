@@ -1,12 +1,27 @@
 name: visual-review
 
+# Non-gating review aid (renders map/character preview images). Was firing on
+# every push AND every PR — double-running on any PR branch, and running on
+# every docs push — for images nobody looks at most of the time. Now: only on
+# PRs that touch the map/render inputs, plus on-demand. No bare `push`.
 on:
-  push:
   pull_request:
+    paths:
+      - "scripts/island_map.gd"
+      - "scripts/cove_map.gd"
+      - "scripts/prop_table.gd"
+      - "assets/generated/**"
+      - "tools/preview_map.py"
+      - "tools/capture_visual_review.py"
+      - "tools/capture_character_review.py"
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: visual-review-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   capture-map:

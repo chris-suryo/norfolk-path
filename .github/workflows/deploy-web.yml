@@ -19,13 +19,22 @@ name: deploy-web
 
 on:
   push:
-    # Was the slice-1 feature branch while the demo was pre-merge; that branch is
-    # now merged into main and deleted, so the trigger moves to main — production
-    # redeploys on every merge to the delivery branch.
     branches: [main]
-  # Lets a run be started on demand (GitHub UI "Run workflow" button, or the
-  # API) without needing a throwaway commit — useful for testing right after
-  # the three secrets below are first added.
+    # Only redeploy when something that actually changes the BUILD lands on
+    # main. A docs-only merge used to trigger a full Godot download + export +
+    # deploy (~4 min) for zero visible change — the biggest single source of
+    # wasted Actions minutes. These globs cover everything the Web export bakes
+    # in; a change outside them can still deploy via the dispatch button below.
+    paths:
+      - "scripts/**"
+      - "scenes/**"
+      - "assets/**"
+      - "project.godot"
+      - "export_presets.cfg"
+      - "tools/**"
+      - ".github/workflows/deploy-web.yml"
+  # Deploy on demand (Actions tab "Run workflow", or the API) — the manual
+  # escape hatch for a deploy the path filter above skipped.
   workflow_dispatch: {}
 
 concurrency:
