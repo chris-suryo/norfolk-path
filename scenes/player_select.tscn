@@ -121,7 +121,7 @@ horizontal_alignment = 1
 layout_mode = 2
 modulate = Color(0.45, 0.32, 0.22, 1)
 theme_override_font_sizes/font_size = 8
-text = "P1: WASD + SPACE    P2: ARROWS + /"
+text = "P1: WASD  G SWORD  H BOW    P2: ARROWS + NUMPAD 1/2"
 horizontal_alignment = 1
 
 [node name="BuildVersion" type="Label" parent="Frame"]
