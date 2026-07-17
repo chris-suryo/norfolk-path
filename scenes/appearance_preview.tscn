@@ -25,6 +25,10 @@ vframes = 56
 hframes = 4
 vframes = 9
 
+[node name="Bow" type="Sprite2D" parent="."]
+hframes = 6
+vframes = 3
+
 [node name="Hair" type="Sprite2D" parent="."]
 hframes = 9
 vframes = 56

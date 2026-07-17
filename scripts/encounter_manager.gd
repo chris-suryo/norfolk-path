@@ -24,9 +24,16 @@ extends Node
 const SLIME_SCENE := preload("res://scenes/enemy_slime.tscn")
 const SKELETON_SCENE := preload("res://scenes/enemy_skeleton.tscn")
 const BOMB_SCENE := preload("res://scenes/enemy_bombschroom.tscn")
+const BOWMAN_SCENE := preload("res://scenes/enemy_bowman.tscn")
+const MAGE_SCENE := preload("res://scenes/enemy_mage.tscn")
+const BAT_SCENE := preload("res://scenes/enemy_bat.tscn")
+const BIG_SLIME_SCENE := preload("res://scenes/enemy_slime_big.tscn")
 const BOSS_SCENE := preload("res://scenes/boss_irene.tscn")
 const WIN_SCENE := "res://scenes/win_screen.tscn"
-const BOSS_ID := 3
+# The boss moved to id 4 when the mid-road area landed at 3. An old save with
+# checkpoint 3 now resumes one beat earlier (the new area) and simply walks
+# forward — the checkpoint re-advances monotonically.
+const BOSS_ID := 4
 const WIN_DELAY := 3.0
 
 ## Co-op: a downed teammate revives once no live enemy is within this radius of
@@ -102,7 +109,16 @@ func _build_areas(encounters_id: String) -> void:
 			Vector2i(45, 30),
 			[[SLIME_SCENE, Vector2i(50, 28)], [SLIME_SCENE, Vector2i(55, 28)]]
 		),
-		_make_area(1, Vector2i(70, 26), Vector2i(70, 28), [[SKELETON_SCENE, Vector2i(95, 21)]]),
+		# The lone skeleton gains a bowman on the ridge north of the road bend —
+		# the player's first taste of dodging projectiles (and of shooting back).
+		_make_area(
+			1,
+			Vector2i(70, 26),
+			Vector2i(70, 28),
+			[[SKELETON_SCENE, Vector2i(95, 21)], [BOWMAN_SCENE, Vector2i(101, 18)]]
+		),
+		# The forest camp: melee wall up front, a mage lobbing bolts from the
+		# clearing's north lip, bats harrying the flanks.
 		_make_area(
 			2,
 			Vector2i(108, 24),
@@ -112,6 +128,21 @@ func _build_areas(encounters_id: String) -> void:
 				[SKELETON_SCENE, Vector2i(124, 32)],
 				[SKELETON_SCENE, Vector2i(120, 35)],
 				[SKELETON_SCENE, Vector2i(124, 35)],
+				[MAGE_SCENE, Vector2i(122, 30)],
+				[BAT_SCENE, Vector2i(118, 31)],
+				[BAT_SCENE, Vector2i(126, 34)],
+			]
+		),
+		# Mid-road pacing beat before the library: a tank slime astride the road
+		# with bat escorts.
+		_make_area(
+			3,
+			Vector2i(132, 26),
+			Vector2i(132, 28),
+			[
+				[BIG_SLIME_SCENE, Vector2i(138, 26)],
+				[BAT_SCENE, Vector2i(135, 25)],
+				[BAT_SCENE, Vector2i(141, 27)],
 			]
 		),
 		_make_area(
@@ -223,7 +254,9 @@ func _update_coop_revive() -> void:
 
 
 func _on_boss_defeated() -> void:
-	# Let her defeat line + fade play, then the quest-complete screen.
+	# Let her defeat line + fade play, then the quest-complete screen. Doors are
+	# disabled while the win is pending so a wandering player can't swallow it.
+	Game.win_pending = true
 	await get_tree().create_timer(WIN_DELAY).timeout
 	Game.change_scene(WIN_SCENE)
 
@@ -257,6 +290,11 @@ func _rearm_area(area: Dictionary) -> void:
 		for enemy in area.instances:
 			if is_instance_valid(enemy):
 				enemy.queue_free()
+		# A phase-2 wipe leaves her summons flying around — clear them too, so a
+		# boss retry restarts the whole fight, not the fight plus leftovers.
+		for summon in get_tree().get_nodes_in_group("boss_summons"):
+			if is_instance_valid(summon):
+				summon.queue_free()
 		area.instances = []
 		area.spawned = false
 		_spawn_area(area)

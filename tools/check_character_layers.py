@@ -11,7 +11,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 CREATOR = ROOT / "assets" / "game" / "creator"
 SIZE = (576, 3584)
-SWORD_SIZE = (256, 576)
+# The weapon overlays have their own sheet geometries (64px frames):
+# sword = 4x9 attack frames, bow = 6x3 draw/release frames.
+TOOL_SIZES = {
+    Path("tool/Iron_Sword.png"): (256, 576),
+    Path("tool/Wooden_Bow.png"): (384, 192),
+}
 
 HAIR_COLORS = ("Black", "Blonde", "Brown", "Ginger", "Grey")
 SHIRT_COLORS = {
@@ -36,7 +41,7 @@ def expected_files() -> set[Path]:
             files.update(Path(f"shirt/{style}_1_{color}.png") for color in colors)
     files.update(Path(f"pants/Pants_1_{color}.png") for color in PANTS_COLORS)
     files.update(Path(f"shoes/Shoes_1_{color}.png") for color in SHOES_COLORS)
-    files.add(Path("tool/Iron_Sword.png"))
+    files.update(TOOL_SIZES)
     return files
 
 
@@ -63,13 +68,13 @@ def main() -> None:
         except ValueError as error:
             problems.append(f"INVALID PNG: {relative.as_posix()} ({error})")
             continue
-        expected_size = SWORD_SIZE if relative == Path("tool/Iron_Sword.png") else SIZE
+        expected_size = TOOL_SIZES.get(relative, SIZE)
         if size != expected_size:
             problems.append(
                 f"WRONG SIZE: {relative.as_posix()} is {size[0]}x{size[1]}, expected {expected_size[0]}x{expected_size[1]}"
             )
 
-    print(f"checked {len(actual)} character layers; expected {len(expected)} modular sheets plus the 4x9 sword overlay.")
+    print(f"checked {len(actual)} character layers; expected {len(expected)} modular sheets incl. the weapon overlays.")
     if problems:
         print("FAIL:")
         print("\n".join(f"  - {problem}" for problem in problems))

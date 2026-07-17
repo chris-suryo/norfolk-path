@@ -52,6 +52,11 @@ var last_saved := ""
 ## during dialogue so the two overlays can't fight over the paused tree.
 var dialogue_active := false
 
+## Runtime-only: true between the boss falling and the win screen loading.
+## Level transitions no-op while pending — walking into a door during the win
+## delay must not swallow the quest-complete screen.
+var win_pending := false
+
 var _fading := false
 var _fade_rect: ColorRect
 
@@ -105,6 +110,7 @@ func reset_run() -> void:
 	boss_defeated = false
 	current_level_id = "valley"
 	current_entry = ""
+	win_pending = false
 
 
 func appearance_for_player(player_index: int) -> Dictionary:

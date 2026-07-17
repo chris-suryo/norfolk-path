@@ -8,6 +8,7 @@ const ROOT := "res://assets/game/creator"
 const BASE_PATH := ROOT + "/body/Player_Base_animations.png"
 const HAT_PATH := ROOT + "/accessory/Farmer_Hat_1.png"
 const SWORD_PATH := ROOT + "/tool/Iron_Sword.png"
+const BOW_PATH := ROOT + "/tool/Wooden_Bow.png"
 
 const HAIR_COLORS := ["Black", "Blonde", "Brown", "Ginger", "Grey"]
 const SHIRT_STYLES := ["Farmer_Shirt", "Lumberjack_Shirt", "Classic"]

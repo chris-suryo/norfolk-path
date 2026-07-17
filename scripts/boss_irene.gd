@@ -14,11 +14,16 @@ extends Enemy
 signal defeated
 
 const BOOK_SCENE := preload("res://scenes/book_projectile.tscn")
+const BAT_SCENE := preload("res://scenes/enemy_bat.tscn")
 const LINE_DURATION := 3.5
 const FADE_TIME := 1.2
 
 @export var throw_interval: float = 1.7
 @export var keep_distance: float = 44.0
+## PHASE 2 (below half HP): she summons this many bats, once, and her book
+## throws tighten by this factor. Both live-tunable.
+@export var summon_count: int = 2
+@export var phase2_interval_scale: float = 0.75
 @export var start_line := "Oh — you're here about the DVD. I really am sorry it came to this."
 @export var early_line := "You could have just returned it on time, you know."
 @export var mid_line := "This is for your own good, I promise."
@@ -73,6 +78,7 @@ func _physics_process(delta: float) -> void:
 	elif not _said_mid and _hp <= int(max_hp / 2.0):
 		_said_mid = true
 		_show_line(mid_line)
+		_enter_phase2()
 	elif not _said_late and _hp <= int(max_hp / 4.0):
 		_said_late = true
 		_show_line(late_line)
@@ -97,6 +103,19 @@ func _throw_book() -> void:
 	get_parent().add_child(book)
 	book.global_position = global_position + Vector2(0, -8)
 	book.launch(target.global_position - book.global_position)
+
+
+## PHASE 2 — the long-deferred capstone, kept minimal: a one-shot bat summon at
+## her flanks plus a tighter throw rhythm. Summons join "boss_summons" so a
+## wipe-retry can sweep them (EncounterManager._rearm_area).
+func _enter_phase2() -> void:
+	throw_interval *= phase2_interval_scale
+	for i in summon_count:
+		var bat := BAT_SCENE.instantiate()
+		bat.add_to_group("boss_summons")
+		var side := -1.0 if i % 2 == 0 else 1.0
+		get_parent().add_child(bat)
+		bat.global_position = global_position + Vector2(side * 26.0, -10.0)
 
 
 func _update_bar() -> void:

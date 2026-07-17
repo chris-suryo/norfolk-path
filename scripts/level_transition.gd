@@ -48,6 +48,9 @@ func _arm_if_clear() -> void:
 
 
 func _travel() -> void:
+	# The quest-complete screen is queued — don't let a door swallow it.
+	if Game.win_pending:
+		return
 	_armed = false
 	Game.current_level_id = target_level
 	Game.current_entry = target_entry

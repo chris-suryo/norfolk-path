@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=3]
 
-[ext_resource type="Script" path="res://scripts/enemy.gd" id="1_enemy"]
-[ext_resource type="Texture2D" path="res://assets/cute_fantasy/Cute_Fantasy_Free/Enemies/Skeleton.png" id="2_tex"]
+[ext_resource type="Script" path="res://scripts/ranged_enemy.gd" id="1_ranged"]
+[ext_resource type="Texture2D" path="res://assets/cute_fantasy/packs/Cute_Fantasy/Cute_Fantasy/Enemies/Skeleton/Skeleton_Mage.png" id="2_tex"]
 
 [sub_resource type="RectangleShape2D" id="body"]
 size = Vector2(10, 14)
@@ -9,23 +9,27 @@ size = Vector2(10, 14)
 [sub_resource type="CircleShape2D" id="contact"]
 radius = 12.0
 
-[node name="Skeleton" type="CharacterBody2D"]
+[node name="SkeletonMage" type="CharacterBody2D"]
 motion_mode = 1
 collision_layer = 4
 collision_mask = 1
-script = ExtResource("1_enemy")
-max_hp = 5
-move_speed = 34.0
-contact_damage = 2
+script = ExtResource("1_ranged")
+shoot_interval = 2.2
+keep_distance = 110.0
+bolt_speed = 120.0
+bolt_damage = 2
+max_hp = 3
+move_speed = 22.0
+contact_damage = 1
 contact_cooldown = 1.0
-aggro_radius = 110.0
+aggro_radius = 140.0
 directional = true
-sheet_columns = 6
+sheet_columns = 8
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("2_tex")
-hframes = 6
-vframes = 10
+hframes = 8
+vframes = 13
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("body")
