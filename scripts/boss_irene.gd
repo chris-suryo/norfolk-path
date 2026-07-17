@@ -59,8 +59,22 @@ func activate() -> void:
 	_show_line(start_line)
 
 
+## Boss override: she's invulnerable until she wakes, so the bow (which outranges
+## her activation line) can't snipe her dead for a silent, fight-free win. Once
+## active, damage flows through Enemy.take_damage unchanged.
+func take_damage(amount: int, from: Vector2) -> void:
+	if not _active:
+		return
+	super(amount, from)
+
+
 func _physics_process(delta: float) -> void:
 	_tick_line(delta)
+	# This override replaces Enemy._physics_process wholesale, so the contact
+	# cooldown it normally ticks must be ticked here too — otherwise the first
+	# contact hit sets _contact_cd and it never counts back down (she'd land one
+	# touch ever). Mirror enemy.gd's per-frame decrement.
+	_contact_cd = maxf(0.0, _contact_cd - delta)
 	if not _active or _dead:
 		velocity = Vector2.ZERO
 		move_and_slide()
@@ -91,6 +105,7 @@ func _physics_process(delta: float) -> void:
 		else:
 			velocity = Vector2.ZERO
 	move_and_slide()
+	_try_contact_damage()
 	_update_bar()
 	_animate_idle(delta)
 
@@ -123,6 +138,9 @@ func _update_bar() -> void:
 
 
 func _animate_idle(delta: float) -> void:
+	# Decay the take_damage hurt-flash back to white (base enemy.gd's _animate does
+	# this; this override skips _animate, so do it here or she stays red forever).
+	_sprite.modulate = _sprite.modulate.lerp(Color.WHITE, 0.2)
 	_anim_time += delta
 	_sprite.frame = int(_anim_time * anim_fps) % anim_frames
 
