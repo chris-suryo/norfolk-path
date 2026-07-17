@@ -45,6 +45,11 @@ const LINES := {
 		"name": "Ariana",
 		"lines": ["Quack.", "(She seems pleased you stopped by.)"],
 	},
+	"evan":
+	{
+		"name": "Evan",
+		"lines": ["Toasted, or the old way?", "Best stand in the valley. Only stand, too."],
+	},
 	"library_door":
 	{
 		"name": "Library",
