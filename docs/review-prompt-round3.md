@@ -9,10 +9,10 @@ Update the "state as of" line if you run it much later.
 
 You are reviewing **Norfolk Path**, a personal learning project: a top-down
 pixel-art fantasy RPG built in **Godot 4.7**, playable solo or local 2-player
-on one keyboard, exported to HTML5. It is built for my kids — the NPCs are
-named after them — and the goal is a game that is genuinely fun for a family,
-not a commercial product. I want your honest, structured critique of it as a
-GAME and as a CODEBASE.
+on one keyboard, exported to HTML5. It exists so I can learn the engine
+end-to-end and end up with a game that is genuinely fun to play — not a
+commercial product. I want your honest, structured critique of it as a GAME
+and as a CODEBASE.
 
 ## How to look at it
 
@@ -46,7 +46,7 @@ change with the highest fun-per-effort. Be specific — name files, screens, or
 moments. Do not pad; if a section is fine, say so in a sentence.
 
 1. **First five minutes.** Cold start on the live link: title → creator →
-   village. Where does a new player (a 7-year-old; a parent) get confused,
+   village. Where does a first-time player get confused,
    bored, or lost? Is it clear what to do and where to go?
 2. **Combat feel.** Sword timing/reach, charge bow risk-reward, roll, enemy
    variety and readability, boss phases, difficulty curve across the five
