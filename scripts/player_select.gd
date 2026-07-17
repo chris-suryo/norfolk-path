@@ -27,7 +27,6 @@ var _pending_appearances: Array[Dictionary] = []
 @onready var _title: Label = $Frame/Box/Title
 @onready var _option1: Label = $Frame/Box/Option1
 @onready var _option2: Label = $Frame/Box/Option2
-@onready var _hint: Label = $Frame/Box/Hint
 @onready var _build_version: Label = $Frame/BuildVersion
 @onready var _creator: CharacterCreator = $Creator
 
@@ -101,7 +100,6 @@ func _show_stage() -> void:
 	else:
 		_option1.text = "1 PLAYER"
 		_option2.text = "2 PLAYERS"
-	_hint.text = "click or arrows + enter"
 	_refresh()
 
 
@@ -114,9 +112,12 @@ func _confirm() -> void:
 			Game.load_state()
 			_go()
 		else:
-			# New Game: wipe the run, then ask for a player count.
+			# New Game: wipe the run, then ask for a player count. Re-arm the intro
+			# so it replays on EVERY New Game (reset_run deliberately leaves the
+			# once-per-session latch alone; Continue never reaches here).
 			Game.resume_requested = false
 			Game.reset_run()
+			Game.intro_played = false
 			_stage = Stage.COUNT
 			_show_stage()
 	else:
