@@ -5,9 +5,12 @@ extends RefCounted
 ##
 ## The InputMap starts from project.godot's defaults (which include the legacy
 ## aliases — Space sword, F bow, "/" and "," and "." for P2). A remap REPLACES
-## an action's bindings with the one chosen key, saved to user://controls.json
-## (IndexedDB on web) as {action: physical_keycode}. Game._ready applies the
-## file at boot; reset deletes it and restores the project defaults.
+## an action's bindings with the one chosen key; the whole live map is then saved
+## to user://controls.json (IndexedDB on web) as {action: [physical_keycode, ...]}
+## — the full key set per action, so unremapped actions keep their aliases across
+## a reboot. Game._ready applies the file at boot; reset deletes it and restores
+## the project defaults. (Legacy files that stored a bare int per action still
+## load.)
 
 const PATH := "user://controls.json"
 
@@ -92,27 +95,40 @@ static func apply_saved() -> void:
 	for action in parsed:
 		if action not in ACTIONS:
 			continue
-		var code := int(parsed[action])
-		if code <= 0:
+		# Accept the current list-of-keys form and the legacy single-int form
+		# (files written before B-07's fix) so old saves still load.
+		var raw: Variant = parsed[action]
+		var source: Array = raw if raw is Array else [raw]
+		var valid: Array[Key] = []
+		for entry in source:
+			var code := int(entry)
+			if code > 0:
+				valid.append(code as Key)
+		# Only replace the defaults when we have at least one usable key — a
+		# stale/corrupt entry must never leave an action with no binding.
+		if valid.is_empty():
 			continue
 		InputMap.action_erase_events(action)
-		var event := InputEventKey.new()
-		event.physical_keycode = code as Key
-		InputMap.action_add_event(action, event)
+		for code in valid:
+			var event := InputEventKey.new()
+			event.physical_keycode = code
+			InputMap.action_add_event(action, event)
 
 
-## Persist every action that currently has exactly one key binding differing
-## from nothing — i.e. the live map, first key per action.
+## Persist the FULL key set of every action — all bindings, not just the first.
+## (B-07: saving only the first key silently dropped every legacy alias on the
+## next boot, since apply_saved re-applies exactly what was written.)
 static func _save() -> void:
 	var data := {}
 	for action in ACTIONS:
+		var codes := []
 		for event in InputMap.action_get_events(action):
 			if event is InputEventKey:
 				var code: Key = (
 					event.physical_keycode if event.physical_keycode != KEY_NONE else event.keycode
 				)
-				data[action] = int(code)
-				break
+				codes.append(int(code))
+		data[action] = codes
 	var file := FileAccess.open(PATH, FileAccess.WRITE)
 	if file != null:
 		file.store_string(JSON.stringify(data))
