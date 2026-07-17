@@ -78,6 +78,14 @@ func _ready() -> void:
 	add_child(layer)
 
 
+## True while a change_scene fade is in flight. LevelTransition polls this so a
+## crossing requested mid-fade is retried next frame instead of being swallowed
+## (the round-3 "walked out of the house into the void" bug: the exit mat is one
+## tile from the arrival spawn, reachable before the arrival fade finishes).
+func is_fading() -> bool:
+	return _fading
+
+
 ## Every scene change goes through here: fade to black, swap, fade back in.
 ## Re-entrant calls during the fade are dropped (a second door touched
 ## mid-crossing must not queue a second swap).
