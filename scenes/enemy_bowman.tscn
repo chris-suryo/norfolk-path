@@ -22,7 +22,7 @@ max_hp = 4
 move_speed = 28.0
 contact_damage = 1
 contact_cooldown = 1.0
-aggro_radius = 130.0
+aggro_radius = 110.0
 directional = true
 sheet_columns = 6
 
