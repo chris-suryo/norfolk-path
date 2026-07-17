@@ -12,7 +12,9 @@ extends CharacterBody2D
 ## - directional (skeleton, Player-layout 6-col sheet): idle rows 0/1/2 and walk
 ##   rows 3/4/5 chosen by facing (down/side/up, side flips), death on row 9.
 
-const PLAYER_COLUMNS := 6
+# Directional (Player-layout) sheets share row semantics but not width: the
+# skeleton/bowman are 6 columns, the mage 8 — so the stride comes from the
+# exported sheet_columns, not a constant.
 const DIR_IDLE_DOWN := 0
 const DIR_WALK_DOWN := 3
 const DIR_DEATH_ROW := 9
@@ -181,14 +183,14 @@ func _animate_directional(moving: bool, column: int) -> void:
 	elif _facing.y < 0.0:
 		row = base + 2
 	_sprite.flip_h = flip
-	_sprite.frame = row * PLAYER_COLUMNS + column % DIR_FRAMES
+	_sprite.frame = row * sheet_columns + column % DIR_FRAMES
 
 
 func _animate_death(delta: float) -> void:
 	_death_time += delta
 	if directional:
 		var col := mini(DIR_FRAMES - 1, int(_death_time / death_duration * DIR_FRAMES))
-		_sprite.frame = DIR_DEATH_ROW * PLAYER_COLUMNS + col
+		_sprite.frame = DIR_DEATH_ROW * sheet_columns + col
 	else:
 		var col := mini(anim_frames - 1, int(_death_time / death_duration * anim_frames))
 		_sprite.frame = death_row * sheet_columns + col
