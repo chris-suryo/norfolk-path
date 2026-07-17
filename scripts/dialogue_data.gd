@@ -53,7 +53,7 @@ const LINES := {
 	"library_door":
 	{
 		"name": "Library",
-		"lines": ["Locked tight. Irene guards her books — the library opens another day."],
+		"lines": ["Irene's library. The door stands open — mind the shelves."],
 	},
 }
 
