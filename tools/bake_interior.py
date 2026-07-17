@@ -149,37 +149,45 @@ INTERIORS = {
             ("lamp_teal", 1, 6),
         ],
     },
-    # G @ (38,36) — the study.
+    # G @ (38,36) — the fireside parlor. Deliberately shelf-free: the big
+    # bookshelf + grand-clock kit lives ONLY in the library now, so entering this
+    # house no longer pre-spoils the library reveal (R4-14).
     "home_g2": {
         "size": (13, 10),
         "wall": "plaster",
-        "floor": "parquet",
-        "windows": [6],
+        "floor": "tile_blue",
+        "windows": [3, 9],
         "furniture": [
-            ("bookshelf_big", 2, 3),
-            ("bookshelf_small", 4, 3),
-            ("bookshelf_big", 9, 3),
-            ("clock_grand", 11, 3),
-            ("rug_green", 5, 7),
-            ("table_dark", 5, 6),
-            ("chair_left", 8, 6),
+            ("rug_teal", 5, 7),
+            ("fireplace", 2, 3),
+            ("plant_leafy", 5, 3),
+            ("plant_blue", 7, 3),
+            ("table_dark", 8, 5),
+            ("chair_right", 7, 5),
+            ("chair_left", 11, 5),
             ("lamp_gold", 1, 6),
+            ("clock_wall", 6, 1),
         ],
     },
-    # J @ (14,35) — the small bedroom. Rug now clear of the bed (round-3 fix).
+    # J @ (14,35) — a small spare bedroom. Wood walls + a storage crate give it
+    # its own character so it reads as a different household than the cottage's
+    # hearth bedroom (R4-14). Rug clear of the bed (round-3 fix).
     "home_j1": {
         "size": (9, 8),
-        "wall": "plaster",
-        "floor": "wood_dark",
+        "wall": "wood",
+        "floor": "wood_mix",
         "windows": [4],
         "furniture": [
             ("bed", 1, 3),
-            ("rug_teal", 4, 6),
-            ("plant_leafy", 6, 3),
-            ("lamp_cream", 7, 5),
+            ("crate", 7, 3),
+            ("plant_sunflower", 6, 3),
+            ("rug_teal", 3, 6),
+            ("lamp_teal", 7, 5),
         ],
     },
-    # E @ (33,20) — the big family room.
+    # E @ (33,20) — the family living/dining room. No bed (it's a common room,
+    # not a fourth bedroom) so the three bed-centric houses stop reading as one
+    # room at three sizes (R4-14).
     "home_e1": {
         "size": (13, 10),
         "wall": "brick",
@@ -187,9 +195,10 @@ INTERIORS = {
         "windows": [3, 9],
         "furniture": [
             ("fireplace", 6, 3),
-            ("bed", 1, 3),
+            ("plant_big", 1, 4),
             ("clock_wall", 10, 1),
             ("plant_sunflower", 11, 3),
+            ("lamp_cream", 11, 6),
             ("rug_green", 5, 7),
             ("table_dark", 5, 6),
             ("chair_right", 4, 6),

@@ -11,9 +11,9 @@ XXXXXXXXXXXXX
 XXXXXXXXXXXXX
 XXX___XX___XX
 XXX___XX___XX
-X___________X
-X___XXXXX___X
-X___XXXXX___X
+XXX_________X
+X___XXXXX__XX
+X___XXXXX__XX
 X___________X
 X_____S_____X
 XXXXXX>XXXXXX
