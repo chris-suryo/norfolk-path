@@ -43,19 +43,73 @@ const FENCE_SYMS := ["F", "|"]
 ## the butterfly "y" is 8px frames, 2 flaps x 8 color rows — frame_size 16 drew
 ## a 2x2 block of FOUR butterflies as one sprite; the color row is randomized
 ## per instance in ambient_animal.gd.
+##
+## "foot" (px) shifts the node origin so the animal's VISUAL feet land at
+## origin+9, matching the player (feet row 41 of a 64px frame) and the prop
+## baselines — Y-sort compares origins, so a mismatched baseline let a chicken
+## draw over the face of a player standing below it (round-3). The sprite
+## offset is compensated at spawn, so nothing moves visually. Values measured
+## from each sheet's idle-frame alpha bbox by tools/gen_prop_table.py-style
+## scanning: foot = sprite_offset.y - frame/2 + feet_row - 9.
 const ANIMAL_ANIM := {
 	"d":
-	{"idle": 0, "idle_n": 2, "walk": 1, "walk_n": 6, "wander": true, "radius": 18.0, "speed": 12.0},
+	{
+		"foot": -7.0,
+		"idle": 0,
+		"idle_n": 2,
+		"walk": 1,
+		"walk_n": 6,
+		"wander": true,
+		"radius": 18.0,
+		"speed": 12.0
+	},
 	"U":
-	{"idle": 0, "idle_n": 2, "walk": 1, "walk_n": 6, "wander": true, "radius": 18.0, "speed": 12.0},
+	{
+		"foot": -7.0,
+		"idle": 0,
+		"idle_n": 2,
+		"walk": 1,
+		"walk_n": 6,
+		"wander": true,
+		"radius": 18.0,
+		"speed": 12.0
+	},
 	"^":
-	{"idle": 0, "idle_n": 2, "walk": 1, "walk_n": 6, "wander": true, "radius": 16.0, "speed": 12.0},
+	{
+		"foot": -11.0,
+		"idle": 0,
+		"idle_n": 2,
+		"walk": 1,
+		"walk_n": 6,
+		"wander": true,
+		"radius": 16.0,
+		"speed": 12.0
+	},
 	"h":
-	{"idle": 0, "idle_n": 2, "walk": 3, "walk_n": 6, "wander": true, "radius": 24.0, "speed": 16.0},
+	{
+		"foot": -4.0,
+		"idle": 0,
+		"idle_n": 2,
+		"walk": 3,
+		"walk_n": 6,
+		"wander": true,
+		"radius": 24.0,
+		"speed": 16.0
+	},
 	"R":
-	{"idle": 0, "idle_n": 2, "walk": 1, "walk_n": 8, "wander": true, "radius": 16.0, "speed": 10.0},
+	{
+		"foot": -10.0,
+		"idle": 0,
+		"idle_n": 2,
+		"walk": 1,
+		"walk_n": 8,
+		"wander": true,
+		"radius": 16.0,
+		"speed": 10.0
+	},
 	"j":
 	{
+		"foot": -10.0,
 		"idle": 0,
 		"idle_n": 2,
 		"walk": 2,
@@ -64,13 +118,23 @@ const ANIMAL_ANIM := {
 		"radius": 16.0,
 		"speed": 14.0
 	},
-	"o": {"idle": 0, "idle_n": 4},
-	"p": {"idle": 0, "idle_n": 4},
-	"e": {"idle": 0, "idle_n": 4},
+	"o": {"foot": -8.0, "idle": 0, "idle_n": 4},
+	"p": {"foot": -11.0, "idle": 0, "idle_n": 4},
+	"e": {"foot": -11.0, "idle": 0, "idle_n": 4},
 	"C":
-	{"idle": 0, "idle_n": 2, "walk": 1, "walk_n": 2, "wander": true, "radius": 12.0, "speed": 8.0},
+	{
+		"foot": -11.0,
+		"idle": 0,
+		"idle_n": 2,
+		"walk": 1,
+		"walk_n": 2,
+		"wander": true,
+		"radius": 12.0,
+		"speed": 8.0
+	},
 	"y":
 	{
+		"foot": -18.0,
 		"frame_size": 8,
 		"idle": 0,
 		"idle_n": 2,
@@ -79,10 +143,10 @@ const ANIMAL_ANIM := {
 		"period": 2.8,
 		"idle_fps": 6.0
 	},
-	"a": {"idle": 8, "idle_n": 4},
-	"l": {"idle": 8, "idle_n": 3},
-	"k": {"idle": 0, "idle_n": 9},
-	"@": {"idle": 0, "idle_n": 9},
+	"a": {"foot": -6.0, "idle": 8, "idle_n": 4},
+	"l": {"foot": -6.0, "idle": 8, "idle_n": 3},
+	"k": {"foot": 5.0, "idle": 0, "idle_n": 9},
+	"@": {"foot": 5.0, "idle": 0, "idle_n": 9},
 }
 
 var _def := LevelRegistry.get_def(Game.current_level_id)
@@ -273,8 +337,11 @@ func _spawn_animal(sym: String, spec: Array, base: Vector2) -> void:
 	var frame_size: float = cfg.get("frame_size", 32.0)
 	animal.hframes = int(tex.get_width() / frame_size)
 	animal.vframes = int(tex.get_height() / frame_size)
-	animal.offset = spec[2]
-	animal.position = base
+	# Sort-baseline fix: put the origin where the visual feet are (+9px, the
+	# player/prop convention) and pull the sprite back so nothing moves.
+	var foot: float = cfg.get("foot", 0.0)
+	animal.offset = spec[2] - Vector2(0.0, foot)
+	animal.position = base + Vector2(0.0, foot)
 	animal.idle_row = cfg["idle"]
 	animal.idle_count = cfg["idle_n"]
 	animal.walk_row = cfg.get("walk", -1)

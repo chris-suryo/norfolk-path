@@ -37,6 +37,19 @@ func _on_body_exited(_body: Node) -> void:
 	_arm_if_clear()
 
 
+## Retry path for a crossing refused mid-fade: body_entered fires only once, so
+## without this poll a player who reached the volume during the arrival fade
+## would stand on a dead trigger (and could walk off the map through an interior
+## exit mat — the round-3 void-escape bug).
+func _physics_process(_delta: float) -> void:
+	if not _armed or Game.is_fading() or Game.win_pending:
+		return
+	for body in get_overlapping_bodies():
+		if body is Player:
+			_travel()
+			return
+
+
 ## Arm only when no player is inside — the arrival bounce-guard.
 func _arm_if_clear() -> void:
 	if _armed:
@@ -48,8 +61,9 @@ func _arm_if_clear() -> void:
 
 
 func _travel() -> void:
-	# The quest-complete screen is queued — don't let a door swallow it.
-	if Game.win_pending:
+	# Refuse (WITHOUT consuming the arm) while the win screen is queued or a
+	# fade is in flight — _physics_process retries once the coast is clear.
+	if Game.win_pending or Game.is_fading():
 		return
 	_armed = false
 	Game.current_level_id = target_level

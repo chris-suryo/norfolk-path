@@ -2,27 +2,30 @@
 """Bake every interior level: per-room collision map (.gd) + ground image (.png)
 from one spec dict.
 
-Interiors are small levels (docs/level-design.md). They reuse the invisible-
-tilemap trick: walls paint the colliding tile source, floor the non-colliding
-one (level.gd.terrain_of maps X->WATER/collide, _ and > ->GRASS/free), and the
-baked PNG carries ALL the visuals — floor, walls, windows, furniture. Furniture
-is decorative (baked, no per-item collider).
+Interiors are small levels (docs/level-design.md) on the invisible-tilemap
+trick: `X` cells paint the colliding tile source, floor `_`/`>` the free one,
+and the baked PNG carries ALL visuals. v2 (round-3 findings):
 
-Each INTERIORS entry is an archetype: room size, wall/floor style, furniture
-mini-story. Wall styles use the SEAMLESS mid-section tiles of Interior_Walls
-(the framed section-edge tiles caused the vertical seam "slits" Chris flagged).
-Furniture rects are ENCLOSING boxes — grab() trims to the sprite's opaque bbox,
-so a rect only needs to contain its sprite without touching a neighbour.
+- The top wall is TWO rows tall — a real hanging band, so windows, clocks and
+  pan racks sit ON the wall instead of at floor level.
+- SOLID furniture is cell-aligned (bottom-left cell + a cells-wide/tall
+  footprint) and its footprint is emitted as `X` cells — walking into a bed or
+  table now collides, exactly like outdoors. Rugs and wall-mounted decor stay
+  non-solid.
+- Overlap VALIDATION, fail-loud: solid footprints may not overlap each other,
+  the spawn, the exit mat, or the door column; an underlay (rug) listed after
+  a solid item it pixel-overlaps is an ordering error (that was the rug-over-
+  the-bed bug). Rug-first-then-table-on-top remains legal and correct.
 
-Kept OUT of tools/preview_map.py on purpose: that renderer + its validate() are
-for OUTDOOR maps (shorelines, >=2-wide regions); 1-tile interior walls would
-trip H1. Regenerate all interiors with:
+Kept OUT of tools/preview_map.py on purpose (its outdoor validators would trip
+on 1-tile walls). Regenerate all interiors with:
 
     python tools/bake_interior.py
 
 Writes scripts/<id>_map.gd + assets/generated/<id>-ground.png per room.
 """
 
+import math
 from pathlib import Path
 
 from PIL import Image
@@ -32,6 +35,7 @@ PACK = REPO / "assets/cute_fantasy/packs/Cute_Fantasy/Cute_Fantasy/Buildings"
 INT = PACK / "Houses_Interiors"
 DECOR = PACK / "House_Decor"
 TILE = 16
+WALL_TOP_ROWS = 2  # the hanging band
 
 # --- wall styles: (top-row tile, body tile) on Interior_Walls.png -------------
 # Seamless mid-section columns (verified by tiling strips): plaster c1, wood c3,
@@ -53,161 +57,163 @@ FLOORS = {
     "tile_blue": (64, 64, 32, 32),
 }
 
-# --- furniture library: name -> (sheet file, enclosing rect px) ---------------
+# --- furniture library: name -> (sheet file, enclosing rect px, kind) ---------
+# kind: "solid" (cell-aligned, collides), "underlay" (rug — draw first, walk
+# over), "wall" (hangs in the wall band, no collision).
 SPRITES = {
-    "fireplace": ("Fireplaces.png", (32, 0, 32, 48)),
-    "bed": ("Beds.png", (0, 0, 32, 32)),
-    "rug_teal": ("Carpets.png", (0, 80, 48, 48)),
-    "rug_green": ("Carpets.png", (0, 160, 48, 48)),
-    "bookshelf_big": ("BookShelves.png", (17, 1, 30, 28)),
-    "bookshelf_small": ("BookShelves.png", (1, 1, 14, 28)),
-    "table_dark": ("Tables.png", (8, 88, 48, 32)),
+    "fireplace": ("Fireplaces.png", (32, 0, 32, 48), "solid"),
+    "bed": ("Beds.png", (0, 0, 32, 32), "solid"),
+    "rug_teal": ("Carpets.png", (0, 80, 48, 48), "underlay"),
+    "rug_green": ("Carpets.png", (0, 160, 48, 48), "underlay"),
+    "bookshelf_big": ("BookShelves.png", (17, 1, 30, 28), "solid"),
+    "bookshelf_small": ("BookShelves.png", (1, 1, 14, 28), "solid"),
+    "table_dark": ("Tables.png", (8, 88, 48, 32), "solid"),
     # dark chair set (matches table_dark): named by the way the chair FACES.
-    "chair_right": ("Chairs.png", (129, 8, 12, 21)),
-    "chair_up": ("Chairs.png", (146, 8, 12, 21)),
-    "chair_down": ("Chairs.png", (162, 11, 12, 18)),
-    "chair_left": ("Chairs.png", (179, 8, 12, 21)),
-    "lamp_cream": ("Standing_Lamps.png", (0, 0, 16, 32)),
-    "lamp_teal": ("Standing_Lamps.png", (32, 0, 16, 32)),
-    "lamp_gold": ("Standing_Lamps.png", (128, 0, 16, 32)),
-    "plant_leafy": ("House_Plants.png", (16, 0, 16, 32)),
-    "plant_sunflower": ("House_Plants.png", (64, 0, 16, 32)),
-    "plant_blue": ("House_Plants.png", (112, 0, 16, 32)),
-    "plant_big": ("House_Plants.png", (128, 0, 32, 64)),
-    "clock_wall": ("Clocks.png", (32, 0, 16, 16)),
-    "clock_grand": ("Clocks.png", (0, 0, 16, 32)),
-    "window_warm": ("windows.png", (0, 0, 16, 32)),
-    "window_wide": ("windows.png", (48, 0, 32, 32)),
-    "stove": ("Kitchen_Furniture.png", (0, 0, 16, 32)),
-    "sink": ("Kitchen_Furniture.png", (0, 32, 16, 32)),
-    "fridge": ("Kitchen_Furniture.png", (0, 64, 16, 32)),
-    "pans": ("Kitchen_Furniture.png", (64, 72, 32, 20)),
-    "barrel": ("Indoor_Decor.png", (48, 128, 16, 32)),
-    "barrel_water": ("Indoor_Decor.png", (16, 128, 16, 32)),
-    "barrel_berry": ("Indoor_Decor.png", (0, 128, 16, 32)),
-    "crate": ("Indoor_Decor.png", (64, 0, 16, 16)),
+    "chair_right": ("Chairs.png", (129, 8, 12, 21), "solid"),
+    "chair_up": ("Chairs.png", (146, 8, 12, 21), "solid"),
+    "chair_down": ("Chairs.png", (162, 11, 12, 18), "solid"),
+    "chair_left": ("Chairs.png", (179, 8, 12, 21), "solid"),
+    "lamp_cream": ("Standing_Lamps.png", (0, 0, 16, 32), "solid"),
+    "lamp_teal": ("Standing_Lamps.png", (32, 0, 16, 32), "solid"),
+    "lamp_gold": ("Standing_Lamps.png", (128, 0, 16, 32), "solid"),
+    "plant_leafy": ("House_Plants.png", (16, 0, 16, 32), "solid"),
+    "plant_sunflower": ("House_Plants.png", (64, 0, 16, 32), "solid"),
+    "plant_blue": ("House_Plants.png", (112, 0, 16, 32), "solid"),
+    "plant_big": ("House_Plants.png", (128, 0, 32, 64), "solid"),
+    "clock_wall": ("Clocks.png", (32, 0, 16, 16), "wall"),
+    "clock_grand": ("Clocks.png", (0, 0, 16, 32), "solid"),
+    "window_warm": ("windows.png", (0, 0, 16, 32), "wall"),
+    "stove": ("Kitchen_Furniture.png", (0, 0, 16, 32), "solid"),
+    "sink": ("Kitchen_Furniture.png", (0, 32, 16, 32), "solid"),
+    "fridge": ("Kitchen_Furniture.png", (0, 64, 16, 32), "solid"),
+    "pans": ("Kitchen_Furniture.png", (64, 72, 32, 20), "wall"),
+    "barrel": ("Indoor_Decor.png", (48, 128, 16, 32), "solid"),
+    "barrel_water": ("Indoor_Decor.png", (16, 128, 16, 32), "solid"),
+    "barrel_berry": ("Indoor_Decor.png", (0, 128, 16, 32), "solid"),
+    "crate": ("Indoor_Decor.png", (64, 0, 16, 16), "solid"),
 }
 
 # --- the rooms ----------------------------------------------------------------
-# furniture: (sprite name, col, row) — bottom-center of the trimmed sprite lands
-# on the bottom-center of that cell. windows: list of top-wall columns.
+# furniture: (name, col, row) — for "solid"/"underlay": the BOTTOM-LEFT cell of
+# a cell-aligned footprint (footprint = ceil(w/16) x ceil(h/16) cells ending on
+# that row). For "wall": drawn hanging in the wall band at that column (row is
+# the band row the piece's bottom sits on). windows: top-wall band columns.
+# Floor area: rows WALL_TOP_ROWS .. h-2 (row h-1 is the bottom wall + doorway).
 INTERIORS = {
     # G @ (21,17) — the original cozy hearth room (id kept for save-v4 compat).
     "cottage": {
-        "size": (13, 9),
+        "size": (13, 10),
         "wall": "stone",
         "floor": "parquet",
         "windows": [3, 9],
         "furniture": [
             ("rug_teal", 5, 6),
-            ("fireplace", 2, 2),
-            ("bed", 9, 2),
-            ("plant_leafy", 11, 2),
-            ("lamp_cream", 1, 2),
+            ("fireplace", 2, 3),
+            ("bed", 9, 3),
+            ("plant_leafy", 11, 3),
+            ("lamp_cream", 1, 4),
             ("clock_wall", 6, 1),
         ],
     },
-    # A @ (10,19) — kitchen/dining home. (Stone walls: the seamless wood wall
-    # tile camouflages against wooden floors — the room frame vanished.)
+    # A @ (10,19) — kitchen/dining home.
     "home_a1": {
-        "size": (11, 8),
+        "size": (11, 9),
         "wall": "stone",
         "floor": "wood_mix",
         "windows": [4, 7],
         "furniture": [
-            ("stove", 1, 2),
-            ("sink", 2, 2),
+            ("stove", 1, 3),
+            ("sink", 2, 3),
             ("pans", 3, 1),
-            ("fridge", 9, 2),
+            ("fridge", 9, 3),
             ("clock_wall", 6, 1),
-            ("rug_green", 4, 5),
-            ("table_dark", 4, 4),
-            ("chair_right", 2, 4),
-            ("chair_left", 6, 4),
+            ("rug_green", 4, 6),
+            ("table_dark", 4, 5),
+            ("chair_right", 3, 5),
+            ("chair_left", 7, 5),
         ],
     },
     # A @ (27,34) — the plant-lover's home.
     "home_a2": {
-        "size": (11, 8),
+        "size": (11, 9),
         "wall": "plaster",
         "floor": "diag",
         "windows": [2, 5, 8],
         "furniture": [
-            ("plant_big", 1, 3),
-            ("plant_sunflower", 3, 2),
-            ("plant_blue", 9, 2),
-            ("plant_leafy", 9, 5),
-            ("rug_teal", 4, 5),
-            ("bed", 6, 2),
-            ("lamp_teal", 8, 2),
+            ("plant_big", 1, 4),
+            ("plant_sunflower", 3, 3),
+            ("bed", 6, 3),
+            ("plant_blue", 9, 3),
+            ("rug_teal", 4, 6),
+            ("plant_leafy", 9, 6),
+            ("lamp_teal", 1, 6),
         ],
     },
     # G @ (38,36) — the study.
     "home_g2": {
-        "size": (13, 9),
+        "size": (13, 10),
         "wall": "plaster",
         "floor": "parquet",
         "windows": [6],
         "furniture": [
-            ("bookshelf_big", 2, 2),
-            ("bookshelf_small", 4, 2),
-            ("bookshelf_big", 9, 2),
-            ("clock_grand", 11, 2),
-            ("rug_green", 6, 6),
-            ("table_dark", 6, 5),
-            ("chair_up", 6, 6),
-            ("lamp_gold", 1, 5),
+            ("bookshelf_big", 2, 3),
+            ("bookshelf_small", 4, 3),
+            ("bookshelf_big", 9, 3),
+            ("clock_grand", 11, 3),
+            ("rug_green", 5, 7),
+            ("table_dark", 5, 6),
+            ("chair_left", 8, 6),
+            ("lamp_gold", 1, 6),
         ],
     },
-    # J @ (14,35) — the small bedroom (J is the smallest house).
+    # J @ (14,35) — the small bedroom. Rug now clear of the bed (round-3 fix).
     "home_j1": {
-        "size": (9, 7),
+        "size": (9, 8),
         "wall": "plaster",
         "floor": "wood_dark",
         "windows": [4],
         "furniture": [
-            ("bed", 2, 2),
-            ("rug_teal", 3, 4),
-            ("plant_leafy", 6, 2),
-            ("lamp_cream", 7, 4),
+            ("bed", 1, 3),
+            ("rug_teal", 4, 6),
+            ("plant_leafy", 6, 3),
+            ("lamp_cream", 7, 5),
         ],
     },
     # E @ (33,20) — the big family room.
     "home_e1": {
-        "size": (13, 9),
+        "size": (13, 10),
         "wall": "brick",
         "floor": "parquet",
         "windows": [3, 9],
         "furniture": [
-            ("fireplace", 6, 2),
-            ("bed", 2, 2),
+            ("fireplace", 6, 3),
+            ("bed", 1, 3),
             ("clock_wall", 10, 1),
-            ("plant_sunflower", 11, 2),
-            ("rug_green", 6, 6),
-            ("table_dark", 6, 5),
-            ("chair_right", 4, 5),
-            ("chair_left", 9, 5),
+            ("plant_sunflower", 11, 3),
+            ("rug_green", 5, 7),
+            ("table_dark", 5, 6),
+            ("chair_right", 4, 6),
+            ("chair_left", 8, 6),
         ],
     },
-    # Y @ (43,17) — barn storage. (Brick walls read barn-red; wood-wall tiles
-    # camouflage against the plank floor.)
+    # Y @ (43,17) — barn storage.
     "barn_int": {
-        "size": (14, 10),
+        "size": (14, 11),
         "wall": "brick",
         "floor": "wood_dark",
         "windows": [4, 9],
         "furniture": [
-            ("barrel", 1, 2),
-            ("barrel", 2, 2),
-            ("barrel_water", 1, 3),
-            ("barrel_berry", 12, 2),
+            ("barrel", 1, 3),
+            ("barrel", 2, 3),
+            ("barrel_water", 1, 5),
+            ("barrel_berry", 12, 3),
             ("crate", 11, 2),
-            ("crate", 12, 3),
-            ("crate", 6, 4),
-            ("crate", 7, 4),
-            ("barrel", 6, 5),
-            ("crate", 2, 7),
-            ("barrel", 12, 7),
+            ("crate", 12, 4),
+            ("crate", 6, 5),
+            ("crate", 7, 5),
+            ("barrel", 6, 7),
+            ("crate", 2, 8),
+            ("barrel", 12, 8),
         ],
     },
 }
@@ -224,12 +230,17 @@ def sheet(base: Path, name: str) -> Image.Image:
 
 def grab(name: str) -> Image.Image:
     """The named sprite, cropped by its enclosing rect then trimmed to content."""
-    fname, (x, y, w, h) = SPRITES[name]
+    fname, (x, y, w, h), _kind = SPRITES[name]
     img = sheet(DECOR, fname).crop((x, y, x + w, y + h))
     bbox = img.getbbox()
     if bbox is None:
-        raise SystemExit("bake_interior: sprite '%s' rect is empty" % name)
+        raise SystemExit(f"bake_interior: sprite '{name}' rect is empty")
     return img.crop(bbox)
+
+
+def footprint(name: str) -> tuple:
+    spr = grab(name)
+    return math.ceil(spr.width / TILE), math.ceil(spr.height / TILE)
 
 
 def build_grid(w: int, h: int) -> list:
@@ -238,11 +249,58 @@ def build_grid(w: int, h: int) -> list:
     for y in range(h):
         row = []
         for x in range(w):
-            row.append("X" if y == 0 or y == h - 1 or x == 0 or x == w - 1 else "_")
+            wall = y < WALL_TOP_ROWS or y == h - 1 or x == 0 or x == w - 1
+            row.append("X" if wall else "_")
         rows.append(row)
     rows[h - 1][door] = ">"  # exit mat back outside
     rows[h - 2][door] = "S"  # arrival tile just inside the doorway
     return rows
+
+
+def validate_and_stamp(interior_id: str, spec: dict, grid: list) -> None:
+    """Overlap rules + emit solid footprints as X collision cells."""
+    w, h = spec["size"]
+    door = w // 2
+    reserved = {(door, h - 1), (door, h - 2)}  # mat + spawn
+    solid_cells = {}
+    solid_boxes = []  # (name, pixel box) for underlay-ordering checks
+    problems = []
+    for name, col, row in spec["furniture"]:
+        _f, _r, kind = SPRITES[name]
+        spr = grab(name)
+        fw, fh = footprint(name)
+        px = col * TILE + (fw * TILE - spr.width) // 2
+        py = (row + 1) * TILE - spr.height
+        box = (px, py, px + spr.width, py + spr.height)
+        if kind == "wall":
+            continue
+        if kind == "underlay":
+            for prior, pbox in solid_boxes:
+                if box[0] < pbox[2] and pbox[0] < box[2] and box[1] < pbox[3] and pbox[1] < box[3]:
+                    problems.append(
+                        f"{interior_id}: underlay '{name}' at ({col},{row}) is listed AFTER "
+                        f"solid '{prior}' it overlaps — it would draw on top (rug-over-bed bug)"
+                    )
+            continue
+        cells = {(c, r) for c in range(col, col + fw) for r in range(row - fh + 1, row + 1)}
+        for cell in cells:
+            cx, cy = cell
+            if not (0 <= cx < w and 0 <= cy < h):
+                problems.append(f"{interior_id}: '{name}' footprint cell {cell} out of bounds")
+            elif cell in reserved:
+                problems.append(f"{interior_id}: '{name}' blocks the door pocket at {cell}")
+            elif cell in solid_cells:
+                problems.append(
+                    f"{interior_id}: '{name}' footprint overlaps '{solid_cells[cell]}' at {cell}"
+                )
+        for cell in cells:
+            solid_cells[cell] = name
+        solid_boxes.append((name, box))
+    if problems:
+        raise SystemExit("bake_interior FAIL:\n  - " + "\n  - ".join(problems))
+    for (cx, cy) in solid_cells:
+        if 0 <= cx < w and 0 <= cy < h and grid[cy][cx] == "_":
+            grid[cy][cx] = "X"
 
 
 def render(spec: dict, grid: list) -> Image.Image:
@@ -262,21 +320,28 @@ def render(spec: dict, grid: list) -> Image.Image:
         for x in range(w):
             px, py = (x * TILE) % floor.width, (y * TILE) % floor.height
             img.paste(floor.crop((px, py, px + TILE, py + TILE)), (x * TILE, y * TILE))
-    # ... walls on top ...
+    # ... walls: trim on row 0, body below (the 2-row band + borders) ...
     for y in range(h):
         for x in range(w):
-            if grid[y][x] == "X":
+            border = y < WALL_TOP_ROWS or y == h - 1 or x == 0 or x == w - 1
+            if border:
                 tile = wall_top if y == 0 else wall_body
                 img.paste(tile, (x * TILE, y * TILE), tile)
-    # ... windows set into the top wall ...
+    # ... windows set into the wall band ...
     for col in spec.get("windows", []):
         win = grab("window_warm")
-        img.alpha_composite(win, (col * TILE, TILE - win.height // 2))
-    # ... furniture, bottom-center anchored on its cell.
-    for name, cx, cy in spec["furniture"]:
+        img.alpha_composite(win, (col * TILE, WALL_TOP_ROWS * TILE - win.height))
+    # ... furniture in spec order (underlays first by convention, validated).
+    for name, col, row in spec["furniture"]:
         spr = grab(name)
-        px = cx * TILE + (TILE - spr.width) // 2
-        py = (cy + 1) * TILE - spr.height
+        _f, _r, kind = SPRITES[name]
+        fw2, fh2 = footprint(name)
+        if kind == "wall":
+            px = col * TILE + (TILE - spr.width) // 2 if spr.width <= TILE else col * TILE
+            py = (row + 1) * TILE - spr.height + 8  # hang low in the band
+        else:
+            px = col * TILE + (fw2 * TILE - spr.width) // 2
+            py = (row + 1) * TILE - spr.height
         img.alpha_composite(spr, (px, py))
     return img
 
@@ -287,21 +352,23 @@ def write_gd(interior_id: str, grid: list) -> None:
         "extends RefCounted\n\n"
         "## GENERATED interior map — do not hand-edit; regenerate with\n"
         "## `python tools/bake_interior.py` (emits this + the baked ground PNG).\n"
-        "## Symbols: X wall (collision), _ floor, S spawn, > exit mat (back out).\n"
+        "## Symbols: X wall/solid furniture (collision), _ floor, S spawn,\n"
+        "## > exit mat (back out).\n"
         "## Packed into the Web export as a resource; consumed via LevelRegistry.\n\n"
         'const MAP := """\n' + body + '\n"""\n'
     )
-    (REPO / ("scripts/%s_map.gd" % interior_id)).write_text(text, encoding="utf-8")
+    (REPO / f"scripts/{interior_id}_map.gd").write_text(text, encoding="utf-8")
 
 
 def main() -> None:
     for interior_id, spec in INTERIORS.items():
         w, h = spec["size"]
         grid = build_grid(w, h)
+        validate_and_stamp(interior_id, spec, grid)
         write_gd(interior_id, grid)
-        out = REPO / ("assets/generated/%s-ground.png" % interior_id)
+        out = REPO / f"assets/generated/{interior_id}-ground.png"
         render(spec, grid).save(out)
-        print("wrote scripts/%s_map.gd (%dx%d) + %s" % (interior_id, w, h, out.name))
+        print(f"wrote scripts/{interior_id}_map.gd ({w}x{h}) + {out.name}")
 
 
 if __name__ == "__main__":
