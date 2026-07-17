@@ -99,7 +99,7 @@ horizontal_alignment = 1
 layout_mode = 2
 modulate = Color(0.85, 0.71, 0.4, 1)
 theme_override_font_sizes/font_size = 10
-text = "A CO-OP PATH TO IRENE"
+text = "THE LATE FEE HAS ESCALATED."
 horizontal_alignment = 1
 
 [node name="Spacer" type="Control" parent="Frame/Box"]
@@ -127,7 +127,7 @@ horizontal_alignment = 1
 layout_mode = 2
 modulate = Color(0.85, 0.79, 0.68, 1)
 theme_override_font_sizes/font_size = 10
-text = "P1: WASD  G SWORD  H BOW    P2: ARROWS + NUMPAD 1/2"
+text = "P1  WASD  SWORD G  BOW H  ROLL C  TALK E\nP2  ARROWS  SWORD 1  BOW 2  ROLL 3  TALK ENTER"
 horizontal_alignment = 1
 
 [node name="BuildVersion" type="Label" parent="Frame"]
