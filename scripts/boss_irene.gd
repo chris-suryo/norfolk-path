@@ -162,8 +162,11 @@ func _die() -> void:
 	super()
 	_active = false
 	_hud.visible = false
-	Game.boss_defeated = true
-	Game.save()
+	# boss_defeated is intentionally NOT persisted here. Saving it now — ~3s before
+	# the win screen is guaranteed to load — meant a refresh during the win delay left
+	# the boss "already cleared" with the ending permanently unreachable (B-03/B-04).
+	# The flag is now set + saved in Game.begin_win_sequence(), AFTER WIN_DELAY, so a
+	# mid-delay interruption instead respawns the boss and the win is re-earnable.
 	_show_line(defeat_line)
 	defeated.emit()
 	var tween := create_tween()
