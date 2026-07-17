@@ -33,15 +33,20 @@ const ZOOM_PRESETS := [
 var _open := false
 var _selected := 0
 var _zoom_idx := 1
+## True while the Controls overlay is on top — the pause menu goes inert (its
+## panel hidden, its input ignored) until the overlay reports closed.
+var _controls_open := false
 
 @onready var _panel: Control = $Panel
 @onready var _zoom_label: Label = $Panel/Frame/Box/Zoom
 @onready var _status: Label = $Panel/Frame/Box/Status
 @onready var _camera: Node = get_node_or_null(camera_path)
+@onready var _controls: ControlsMenu = $ControlsMenu
 @onready var _options: Array = [
 	$Panel/Frame/Box/Resume,
 	$Panel/Frame/Box/Zoom,
 	$Panel/Frame/Box/Save,
+	$Panel/Frame/Box/Controls,
 	$Panel/Frame/Box/ToTitle,
 ]
 
@@ -50,6 +55,7 @@ func _ready() -> void:
 	_panel.visible = false
 	if camera_path.is_empty() or _camera == null:
 		push_error("PauseMenu: camera_path did not resolve — Zoom presets will be inert.")
+	_controls.closed.connect(_on_controls_closed)
 	_wire_mouse()
 	_sync_zoom_label()
 
@@ -83,6 +89,8 @@ func _on_option_click(event: InputEvent, index: int) -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _controls_open:
+		return
 	if event.is_action_pressed("ui_cancel"):
 		# The dialogue box owns the paused tree while a conversation is open —
 		# Esc must not stack the pause menu on top of it.
@@ -134,7 +142,21 @@ func _activate() -> void:
 		2:
 			_save_now()
 		3:
+			_open_controls()
+		4:
 			_return_to_title()
+
+
+func _open_controls() -> void:
+	_controls_open = true
+	_panel.visible = false
+	_controls.open()
+
+
+func _on_controls_closed() -> void:
+	_controls_open = false
+	_panel.visible = true
+	_refresh()
 
 
 func _cycle_zoom() -> void:

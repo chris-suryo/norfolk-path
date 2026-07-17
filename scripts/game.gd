@@ -65,6 +65,8 @@ var _fade_rect: ColorRect
 ## full-screen black rect on a top CanvasLayer, alpha-tweened around every
 ## change_scene() call (the abrupt-cut fix for doors and map edges).
 func _ready() -> void:
+	# Saved key remaps apply before any scene reads input (defaults otherwise).
+	Controls.apply_saved()
 	# Fades must run even when the tree is paused (pause menu, dialogue).
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	var layer := CanvasLayer.new()
