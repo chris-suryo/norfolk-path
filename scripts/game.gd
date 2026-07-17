@@ -60,6 +60,11 @@ var last_saved := ""
 ## during dialogue so the two overlays can't fight over the paused tree.
 var dialogue_active := false
 
+## Runtime-only: the answer the player gave Irene at the library door ("dvd" or
+## "friend"), which picks the win-screen closing line. Empty if the door was
+## never engaged. Not saved (like dialogue_active); cleared on reset_run.
+var irene_choice := ""
+
 ## Runtime-only: true between the boss falling and the win screen loading.
 ## Level transitions no-op while pending — walking into a door during the win
 ## delay must not swallow the quest-complete screen. The win beat itself lives on
@@ -173,6 +178,7 @@ func reset_run() -> void:
 	current_level_id = "valley"
 	current_entry = ""
 	win_pending = false
+	irene_choice = ""
 	cleared_areas.clear()
 
 

@@ -63,8 +63,29 @@ const LINES := {
 	},
 	"library_door":
 	{
-		"name": "Library",
-		"lines": ["Irene's library. The door stands open — mind the shelves."],
+		"name": "Irene",
+		"lines":
+		[
+			"You're here for Ariana. I assumed as much.",
+			"Go on, then — why are you here?",
+		],
+		"choices":
+		{
+			"at": 1,
+			"options":
+			[
+				{
+					"label": "To return the DVD.",
+					"reply": "Good. That's all this ever needed to be.",
+					"flag": "dvd",
+				},
+				{
+					"label": "To bring my friend back.",
+					"reply": "That's not really what this is about. But go ahead.",
+					"flag": "friend",
+				},
+			],
+		},
 	},
 }
 
