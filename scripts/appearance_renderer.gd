@@ -15,6 +15,7 @@ var _idle_time := 0.0
 @onready var _shoes: Sprite2D = $Shoes
 @onready var _shirt: Sprite2D = $Shirt
 @onready var _sword: Sprite2D = $Sword
+@onready var _bow: Sprite2D = $Bow
 @onready var _hair: Sprite2D = $Hair
 @onready var _hat: Sprite2D = $Hat
 
@@ -30,11 +31,13 @@ func apply_profile(next_profile: Dictionary) -> void:
 	_hair.texture = load(AppearanceCatalog.hair_path(profile))
 	_shirt.texture = load(AppearanceCatalog.shirt_path(profile))
 	_sword.texture = load(AppearanceCatalog.SWORD_PATH)
+	_bow.texture = load(AppearanceCatalog.BOW_PATH)
 	_pants.texture = load(AppearanceCatalog.pants_path(profile))
 	_shoes.texture = load(AppearanceCatalog.shoes_path(profile))
 	_hat.texture = load(AppearanceCatalog.HAT_PATH)
 	_hat.visible = profile.hat
 	_sword.visible = false
+	_bow.visible = false
 
 
 func set_frame(row: int, column: int, flip: bool) -> void:
@@ -44,20 +47,28 @@ func set_frame(row: int, column: int, flip: bool) -> void:
 	for layer in [_body, _pants, _shoes, _shirt, _hair, _hat]:
 		layer.frame = frame
 		layer.flip_h = flip
-	var sword_row := -1
+	# The weapon overlays key off the attack rows (6 down / 9 side / 12 up):
+	# sword sheet is 4 frames per row, bow sheet 6 (draw + release).
+	var weapon_row := -1
 	if row == 6:
-		sword_row = 0
+		weapon_row = 0
 	elif row == 9:
-		sword_row = 1
+		weapon_row = 1
 	elif row == 12:
-		sword_row = 2
-	if sword_row >= 0:
-		_sword.frame = sword_row * 4 + mini(column, 3)
+		weapon_row = 2
+	if weapon_row >= 0:
+		_sword.frame = weapon_row * 4 + mini(column, 3)
 		_sword.flip_h = flip
+		_bow.frame = weapon_row * 6 + mini(column, 5)
+		_bow.flip_h = flip
 
 
 func set_sword_visible(value: bool) -> void:
 	_sword.visible = value
+
+
+func set_bow_visible(value: bool) -> void:
+	_bow.visible = value
 
 
 func animate_idle(delta: float) -> void:

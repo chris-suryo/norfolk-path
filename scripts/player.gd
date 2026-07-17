@@ -23,7 +23,9 @@ signal downed
 ## polling. Carries current + max so a listener needs no other reference.
 signal health_changed(current: int, maximum: int)
 
-enum State { NORMAL, ATTACK, ROLL, HURT, DOWN }
+enum State { NORMAL, ATTACK, ROLL, HURT, DOWN, FIRE }
+
+const ARROW_SCENE := preload("res://scenes/arrow_projectile.tscn")
 
 const IDLE_ROW_DOWN := 0
 const IDLE_ROW_SIDE := 1
@@ -50,6 +52,12 @@ const ATTACK_ACTIVE_START := 0.1
 const ATTACK_ACTIVE_END := 0.28
 const SWORD_REACH := 18.0
 
+## The bow: a quick draw-and-release. The arrow leaves at FIRE_RELEASE so the
+## shot reads as coming off the string, not the keypress.
+const FIRE_DURATION := 0.35
+const FIRE_RELEASE := 0.15
+const FIRE_FRAMES := 3
+
 ## A brisk ~29px evasive step. The immunity window is deliberately shorter than
 ## the travel so a roll must be timed through a hit rather than held as safety.
 const ROLL_DURATION := 0.24
@@ -75,6 +83,10 @@ const DEATH_DURATION := 0.7
 
 @export var max_hp: int = 6
 @export var attack_damage: int = 4
+## The bow's damage per arrow (sword hits harder; the bow buys you distance).
+@export var ranged_damage: int = 2
+## Seconds between shots.
+@export var fire_cooldown: float = 0.7
 
 var _action_prefix: String
 var _facing := Vector2.DOWN
@@ -83,6 +95,8 @@ var _state: int = State.NORMAL
 var _state_time := 0.0
 var _invuln_time := 0.0
 var _roll_cd := 0.0
+var _fire_cd := 0.0
+var _arrow_fired := false
 var _hp: int = 6
 var _hit_this_swing: Array = []
 var _downed_emitted := false
@@ -125,6 +139,7 @@ func take_damage(amount: int, from: Vector2) -> void:
 func _physics_process(delta: float) -> void:
 	_invuln_time = maxf(0.0, _invuln_time - delta)
 	_roll_cd = maxf(0.0, _roll_cd - delta)
+	_fire_cd = maxf(0.0, _fire_cd - delta)
 	_state_time += delta
 
 	match _state:
@@ -138,6 +153,8 @@ func _physics_process(delta: float) -> void:
 			_process_hurt(delta)
 		State.DOWN:
 			_process_down(delta)
+		State.FIRE:
+			_process_fire(delta)
 
 	move_and_slide()
 
@@ -149,6 +166,9 @@ func _process_normal(delta: float) -> void:
 		return
 	if Input.is_action_just_pressed(_action_prefix + "action2") and _roll_cd <= 0.0:
 		_enter_roll(input_vector)
+		return
+	if Input.is_action_just_pressed(_action_prefix + "fire") and _fire_cd <= 0.0:
+		_enter_fire(input_vector)
 		return
 
 	if input_vector != Vector2.ZERO:
@@ -182,6 +202,17 @@ func _process_roll(_delta: float) -> void:
 	_animate_roll()
 	if _state_time >= ROLL_DURATION:
 		_appearance.modulate.a = 1.0
+		_enter_normal()
+
+
+func _process_fire(delta: float) -> void:
+	velocity = velocity.move_toward(Vector2.ZERO, friction * delta)
+	var column := mini(FIRE_FRAMES - 1, int(_state_time / FIRE_DURATION * FIRE_FRAMES))
+	_set_frame(_attack_row(), column)
+	if not _arrow_fired and _state_time >= FIRE_RELEASE:
+		_arrow_fired = true
+		_spawn_arrow()
+	if _state_time >= FIRE_DURATION:
 		_enter_normal()
 
 
@@ -219,6 +250,7 @@ func _enter_normal() -> void:
 	_state = State.NORMAL
 	_state_time = 0.0
 	_appearance.set_sword_visible(false)
+	_appearance.set_bow_visible(false)
 	queue_redraw()
 
 
@@ -231,6 +263,25 @@ func _enter_attack(input_vector: Vector2) -> void:
 	_hit_this_swing.clear()
 	_sword.position = _facing * SWORD_REACH
 	_appearance.set_sword_visible(true)
+
+
+func _enter_fire(input_vector: Vector2) -> void:
+	if input_vector != Vector2.ZERO:
+		_facing = input_vector.normalized()
+	_state = State.FIRE
+	_state_time = 0.0
+	velocity = Vector2.ZERO
+	_fire_cd = fire_cooldown
+	_arrow_fired = false
+	_appearance.set_bow_visible(true)
+
+
+func _spawn_arrow() -> void:
+	var arrow := ARROW_SCENE.instantiate()
+	arrow.damage = ranged_damage
+	arrow.global_position = global_position + _facing * 10.0 + Vector2(0, -6)
+	arrow.launch(_facing)
+	get_parent().add_child(arrow)
 
 
 func _enter_roll(input_vector: Vector2) -> void:
@@ -250,6 +301,7 @@ func _enter_hurt(from: Vector2) -> void:
 	velocity = (position - from).normalized() * KNOCKBACK_SPEED
 	_sword_shape.disabled = true
 	_appearance.set_sword_visible(false)
+	_appearance.set_bow_visible(false)
 
 
 func _enter_down() -> void:
@@ -258,6 +310,7 @@ func _enter_down() -> void:
 	velocity = Vector2.ZERO
 	_sword_shape.disabled = true
 	_appearance.set_sword_visible(false)
+	_appearance.set_bow_visible(false)
 
 
 ## Full-HP revive at a position. Called by the EncounterManager for both a solo
@@ -269,6 +322,7 @@ func respawn_at(pos: Vector2) -> void:
 	_downed_emitted = false
 	_appearance.modulate = Color.WHITE
 	_appearance.set_sword_visible(false)
+	_appearance.set_bow_visible(false)
 	_sword_shape.disabled = true
 	health_changed.emit(_hp, max_hp)
 	_enter_normal()
