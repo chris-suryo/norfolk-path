@@ -18,7 +18,7 @@ extends CanvasLayer
 
 const SELECT_SCENE := "res://scenes/player_select.tscn"
 const SELECTED := Color(1, 0.9, 0.3)
-const DIMMED := Color(0.45, 0.32, 0.22)
+const DIMMED := Color(0.72, 0.66, 0.56)
 
 ## label shown / camera magnification for each Zoom preset (higher = closer).
 const ZOOM_PRESETS := [

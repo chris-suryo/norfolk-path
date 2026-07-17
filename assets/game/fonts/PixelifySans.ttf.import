@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://cnorfolkctf5x9font"
-path="res://.godot/imported/CuteFantasy-5x9.ttf-cf5x9norfolkpathfont000000000.fontdata"
+uid="uid://cnorfolkpixelifysans"
+path="res://.godot/imported/PixelifySans.ttf-pixelifynorfolkpathfont000000.fontdata"
 
 [deps]
 
-source_file="res://assets/game/CuteFantasy-5x9.ttf"
-dest_files=["res://.godot/imported/CuteFantasy-5x9.ttf-cf5x9norfolkpathfont000000000.fontdata"]
+source_file="res://assets/game/fonts/PixelifySans.ttf"
+dest_files=["res://.godot/imported/PixelifySans.ttf-pixelifynorfolkpathfont000000.fontdata"]
 
 [params]
 
