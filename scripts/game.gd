@@ -160,14 +160,32 @@ func begin_win_sequence() -> void:
 		return
 	win_pending = true
 	await get_tree().create_timer(WIN_DELAY).timeout
-	win_pending = false
+	# Reverse cutscene (goose -> human Ariana) between the delay and the win card,
+	# if this scene has a director for it. win_pending stays true across it so doors
+	# stay held; players are frozen by the director anyway.
+	await _play_resolution()
 	# Persist the ending only now that the win screen is guaranteed to load (moved out
-	# of BossIrene._die — B-03/B-04). Setting boss_defeated in memory AND on disk at the
-	# same instant keeps "in-memory true iff on-disk true", so no save() reachable during
-	# the win delay can ever record a premature boss clear.
+	# of BossIrene._die — B-03/B-04) and only AFTER the resolution beat, so a refresh
+	# during the delay OR the cutscene still can't record a premature boss clear.
+	# Setting boss_defeated in memory AND on disk at the same instant keeps
+	# "in-memory true iff on-disk true".
 	boss_defeated = true
 	save()
+	win_pending = false
 	change_scene(WIN_SCENE)
+
+
+## Play the reverse cutscene if the current scene exposes a director for it, awaited
+## on this always-alive autoload so the beat completes before the win-screen swap
+## frees the scene. A no-op on any scene without the director (the coroutine always
+## returns, so begin_win_sequence never hangs).
+func _play_resolution() -> void:
+	var scene := get_tree().current_scene
+	if scene == null:
+		return
+	var director := scene.get_node_or_null("CutsceneDirector")
+	if director != null and director.has_method("play_resolution"):
+		await director.play_resolution()
 
 
 ## Records that an encounter area was cleared this run. Idempotent. Runtime-only;
