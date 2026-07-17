@@ -29,12 +29,10 @@ const MAGE_SCENE := preload("res://scenes/enemy_mage.tscn")
 const BAT_SCENE := preload("res://scenes/enemy_bat.tscn")
 const BIG_SLIME_SCENE := preload("res://scenes/enemy_slime_big.tscn")
 const BOSS_SCENE := preload("res://scenes/boss_irene.tscn")
-const WIN_SCENE := "res://scenes/win_screen.tscn"
 # The boss moved to id 4 when the mid-road area landed at 3. An old save with
 # checkpoint 3 now resumes one beat earlier (the new area) and simply walks
 # forward — the checkpoint re-advances monotonically.
 const BOSS_ID := 4
-const WIN_DELAY := 3.0
 
 ## Co-op: a downed teammate revives once no live enemy is within this radius of
 ## any player (the fight around them is cleared).
@@ -84,6 +82,9 @@ func _process(_delta: float) -> void:
 		area.instances = alive
 		if alive.is_empty():
 			area.cleared = true
+			# Record on the autoload so this clear survives a change_scene: a door
+			# round-trip must not respawn a beaten area (R4-43).
+			Game.mark_area_cleared(area.id)
 	_update_checkpoint()
 	if Game.player_count >= 2:
 		_update_coop_revive()
@@ -177,26 +178,47 @@ func _spawn_area(area: Dictionary) -> void:
 	area.spawned = true
 
 
-## Continue only: apply the checkpoint the player-select already loaded. A New
-## Game (resume_requested false) leaves checkpoint 0 and the village spawn intact.
+## Re-derive persistent run state after setup() rebuilt every area from scratch:
+## re-clear beaten areas (Game.cleared_areas + the saved checkpoint) and re-wake
+## the boss if the run reached her — on EVERY entry, so a door round-trip doesn't
+## resurrect the gauntlet (R4-43/44). Only the final party-reposition is Continue-
+## specific; a New Game (checkpoint 0, empty cleared_areas) is left untouched.
 func _apply_resume() -> void:
 	# A defeated boss stays defeated on ANY re-entry — a Continue, or walking back
 	# into the valley from the cove (which is not a checkpoint resume). Otherwise
 	# she would respawn at full HP in her already-cleared library.
 	if Game.boss_defeated:
 		_clear_area(_area_by_id(BOSS_ID))
-	if not Game.resume_requested:
-		return
-	if Game.checkpoint <= 0:
-		return
-	var area := _area_by_id(Game.checkpoint)
+	# Cleared + boss-awake state is re-derived on EVERY entry, not just a Continue:
+	# every door/edge crossing sets resume_requested false, and this manager (with
+	# its per-area `cleared` flags) was just freed and rebuilt by the scene swap.
+	# Only the party-reposition at the end is Continue-specific.
+	#
+	# Areas the party already beat stay beaten — Game.cleared_areas survived the
+	# swap. This is what stops a door round-trip resurrecting the camp (R4-43),
+	# regardless of where the checkpoint happens to sit.
+	for area in _areas:
+		if area.id in Game.cleared_areas and not area.cleared:
+			_clear_area(area)
+	# A saved checkpoint also implies the earlier areas are done — clear them too.
+	# Covers a cold Continue (fresh launch) where cleared_areas is empty but the
+	# checkpoint was loaded from disk.
 	for prior in _areas:
 		if prior.id < Game.checkpoint and not prior.cleared:
 			_clear_area(prior)
-	for player in get_tree().get_nodes_in_group("players"):
-		player.global_position = area.center
+	# Wake the boss whenever the run has reached her checkpoint, however the party
+	# arrived. Reaching the library (its door is east of her x-only checkpoint)
+	# wakes her on approach; this re-wakes her after a library round-trip respawns
+	# her inert — which _update_checkpoint cannot, since `reached` can't exceed the
+	# max checkpoint once you're there (R4-44).
 	if Game.checkpoint >= BOSS_ID:
 		_activate_area(_area_by_id(BOSS_ID))
+	# Continue only: drop the party onto the saved checkpoint spot. A door/edge
+	# entry keeps main.gd's entry-cell spawn instead.
+	if Game.resume_requested and Game.checkpoint > 0:
+		var target := _area_by_id(Game.checkpoint)
+		for player in get_tree().get_nodes_in_group("players"):
+			player.global_position = target.center
 
 
 ## Progress-based checkpoint: advance to the furthest area whose road spot a live
@@ -254,11 +276,11 @@ func _update_coop_revive() -> void:
 
 
 func _on_boss_defeated() -> void:
-	# Let her defeat line + fade play, then the quest-complete screen. Doors are
-	# disabled while the win is pending so a wandering player can't swallow it.
-	Game.win_pending = true
-	await get_tree().create_timer(WIN_DELAY).timeout
-	Game.change_scene(WIN_SCENE)
+	# The win beat lives on the Game autoload, not this freeable node: a
+	# return-to-title or co-op door race during the delay must not drop the
+	# coroutine and strand the ending (B-02). Doors stay disabled while it's
+	# pending so a wandering player can't swallow the quest-complete screen.
+	Game.begin_win_sequence()
 
 
 func _all_players_down() -> bool:
@@ -321,6 +343,7 @@ func _clear_area(area: Dictionary) -> void:
 			enemy.queue_free()
 	area.instances = []
 	area.cleared = true
+	Game.mark_area_cleared(area.id)
 
 
 func _area_by_id(id: int) -> Dictionary:
