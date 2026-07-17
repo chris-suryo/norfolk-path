@@ -15,7 +15,7 @@ it from memory.
 | Actions-usage cuts (paths filters, dispatch-only playtest) | **DONE** — merged (PR #21) |
 | CORE — scene-state ownership (R4-43/44, B-01…B-06) | **DONE** — merged + verified (PR #23) |
 | QUICKFIX — integrity one-liners (R4-01, B-27/B-11/B-10, B-16/R4-10, B-07) | **DONE** — merged + verified (PR #22) |
-| B-03/B-04 — defer `boss_defeated` save until win is guaranteed | **PR OPEN** (#24), branch `claude/norfolk-round4-playtest-km5bvj` |
+| B-03/B-04 — defer `boss_defeated` save until win is guaranteed | **DONE** — merged (PR #24). Native playtest still owed (see below). |
 | STORY — dialogue pass (`dialogue_data.gd` + 2 labels) | **IN PROGRESS** — Chris, offline, from [story-brief-round4.md](story-brief-round4.md) |
 | FEEL / WORLD / UI tracks | **NOT STARTED** — each wants its own grill+plan |
 | Native Windows playtest of all merged fixes | **NOT DONE** — the human gate before "confirmed playable" |
@@ -23,10 +23,12 @@ it from memory.
 **Blockers / notes:** GitHub Actions is over its monthly free-minutes cap (resets
 ~15 days from close), so the auto-deploy did **not** run on these merges —
 `norfolk-path.vercel.app` is **stale**; playtest the native build, not the live
-link. When PR #24 merges, flip B-03/B-04 to fixed in
-[review-round4-bugs.json](review-round4-bugs.json) and correct its stale line refs
-(147-148 → 165-166). Recommended next track: **FEEL** (top-5 #2 — heal + hit/death
-feedback + audio).
+link. B-03/B-04 is now marked fixed in
+[review-round4-bugs.json](review-round4-bugs.json) (index 8, `resolution` field):
+the premature save was **removed** from `boss_irene.gd._die()` and deferred to
+`game.gd:begin_win_sequence` — so the earlier "correct 147-148 → 165-166" note is
+moot; that save no longer lives in `boss_irene.gd`. Recommended next track:
+**FEEL** (top-5 #2 — heal + hit/death feedback + audio).
 
 ## The collision rule (from PROJECT.md's parallel-work map)
 
