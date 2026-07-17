@@ -94,7 +94,7 @@ const LEVELS := {
 		"has_ariana": false,
 		"encounters": "",
 		"entries": {},
-		"transitions": [{"cells": Rect2i(6, 8, 1, 1), "to": "valley", "entry": "from_cottage"}],
+		"transitions": [{"cells": Rect2i(6, 9, 1, 1), "to": "valley", "entry": "from_cottage"}],
 	},
 	"home_a1":
 	{
@@ -105,7 +105,7 @@ const LEVELS := {
 		"has_ariana": false,
 		"encounters": "",
 		"entries": {},
-		"transitions": [{"cells": Rect2i(5, 7, 1, 1), "to": "valley", "entry": "from_home_a1"}],
+		"transitions": [{"cells": Rect2i(5, 8, 1, 1), "to": "valley", "entry": "from_home_a1"}],
 	},
 	"home_a2":
 	{
@@ -116,7 +116,7 @@ const LEVELS := {
 		"has_ariana": false,
 		"encounters": "",
 		"entries": {},
-		"transitions": [{"cells": Rect2i(5, 7, 1, 1), "to": "valley", "entry": "from_home_a2"}],
+		"transitions": [{"cells": Rect2i(5, 8, 1, 1), "to": "valley", "entry": "from_home_a2"}],
 	},
 	"home_g2":
 	{
@@ -127,7 +127,7 @@ const LEVELS := {
 		"has_ariana": false,
 		"encounters": "",
 		"entries": {},
-		"transitions": [{"cells": Rect2i(6, 8, 1, 1), "to": "valley", "entry": "from_home_g2"}],
+		"transitions": [{"cells": Rect2i(6, 9, 1, 1), "to": "valley", "entry": "from_home_g2"}],
 	},
 	"home_j1":
 	{
@@ -138,7 +138,7 @@ const LEVELS := {
 		"has_ariana": false,
 		"encounters": "",
 		"entries": {},
-		"transitions": [{"cells": Rect2i(4, 6, 1, 1), "to": "valley", "entry": "from_home_j1"}],
+		"transitions": [{"cells": Rect2i(4, 7, 1, 1), "to": "valley", "entry": "from_home_j1"}],
 	},
 	"home_e1":
 	{
@@ -149,7 +149,7 @@ const LEVELS := {
 		"has_ariana": false,
 		"encounters": "",
 		"entries": {},
-		"transitions": [{"cells": Rect2i(6, 8, 1, 1), "to": "valley", "entry": "from_home_e1"}],
+		"transitions": [{"cells": Rect2i(6, 9, 1, 1), "to": "valley", "entry": "from_home_e1"}],
 	},
 	"barn_int":
 	{
@@ -160,7 +160,7 @@ const LEVELS := {
 		"has_ariana": false,
 		"encounters": "",
 		"entries": {},
-		"transitions": [{"cells": Rect2i(7, 9, 1, 1), "to": "valley", "entry": "from_barn"}],
+		"transitions": [{"cells": Rect2i(7, 10, 1, 1), "to": "valley", "entry": "from_barn"}],
 	},
 }
 
