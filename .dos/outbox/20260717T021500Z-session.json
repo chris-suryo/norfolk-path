@@ -1,0 +1,74 @@
+{
+  "goal": "Execute the full round-3 playtest response: bug slice, combat feel, UI overhaul, library interior, and the outside-review prompt",
+  "completed": [
+    "PR #17 (merged, deployed): C3 door/art alignment (measured per-building door_dx drives collision gap, registry triggers/entries, lamps, walkways; valley rebaked, diff confined), C4 animal Y-sort feet anchoring, C5 enemy corner steering (0.35s tangent commit knob), round-3 findings/triage doc",
+    "PR #18 (merged, deployed): D combat feel (G/H + numpad keys with legacy aliases, hold-to-charge bow 1-3 dmg / 120-200 px/s over 0.9s draw, white sword swipe), E UI (Pixelify Sans OFL font + dark StyleBoxFlat panels everywhere, mouse in creator, full 16-action remap screen persisted to user://controls.json, Evan as a modular boy NPC with dialogue), F library interior (17x12 baker study behind the inn arch, 10 levels / 18 transitions), G review prompt doc",
+    "Post-merge main verified green: CI, playtest bot, deploy - the round-3 build is live on norfolk-path.vercel.app",
+    "PR #19 (OPEN, blocked): docs-only fix removing a fabricated 'built for my kids' framing from the review prompt"
+  ],
+  "discovered": [
+    "Door art is off-center on 4/6 building sprites (house_a -17px, house_g -43px, house_j -26px, house_e +12px); measured by ruler-marked contact sheet after a luminance heuristic failed",
+    "Animals' Y-sort origins sat up to 11px above the +9px feet-below-origin convention the player (feet at row 41 of 64px frame) and props share - the chicken-on-face root cause",
+    "Cute_Fantasy_UI pack ships only the same unreadable 5x9 font; raw.githubusercontent.com IS reachable through the proxy, so google/fonts OFL fetches work",
+    "GitHub Actions jobs failing at 0ms duration (runner never starts) = account minutes/spending limit or GH incident, not a code failure"
+  ],
+  "decisions": [
+    "Keys: G sword / H bow for P1, numpad 1/2/3 for P2; old keys stay as aliases until remapped (a remap replaces ALL bindings for that action)",
+    "UI font is Pixelify Sans (OFL, license committed); old 5x9 font deleted, which retires the subpixel-reimport chore",
+    "Controls screen lives in the pause menu only; title-screen entry deferred (player_select is a rigid 2-option stage machine)",
+    "Evan is built from the modular player layers (EvanNpc.PROFILE data), not a premade adult sheet",
+    "Norfolk Path is a personal engine-learning project - NOT built for kids/family (round-3 correction from Chris)"
+  ],
+  "lessons": [
+    "Never invent user context in deliverables: the review prompt shipped with a fabricated 'built for my kids' framing that Chris had to correct - project framing belongs to the user, verify before writing it into docs",
+    "Diff-bbox confinement checks (PIL) on rebaked ground PNGs catch generator drift cheaply - keep doing this for every map edit",
+    "gdformat undoes generated-file formatting: always run gdformat after regenerating prop_table.gd or the diff explodes with reflow noise",
+    "MCP actions_list responses are ~400KB - parse the saved tool-result file with python instead of re-querying"
+  ],
+  "files_changed": [
+    "tools/gen_prop_table.py",
+    "scripts/prop_table.gd",
+    "scripts/level_registry.gd",
+    "scripts/island_map.gd",
+    "assets/generated/valley-1-ground.png",
+    "docs/island-preview.png",
+    "tools/playtest/ci_driver.py",
+    "scripts/main.gd",
+    "scripts/enemy.gd",
+    "docs/playtest-findings.md",
+    "project.godot",
+    "scripts/player.gd",
+    "scenes/player_select.tscn",
+    "assets/game/fonts/PixelifySans.ttf (+.import, OFL)",
+    "scenes/*.tscn (8 UI scenes: font + dark panels)",
+    "scripts/pause_menu.gd",
+    "scripts/character_creator.gd",
+    "scripts/controls.gd (new)",
+    "scripts/controls_menu.gd (new)",
+    "scenes/controls_menu.tscn (new)",
+    "scripts/game.gd",
+    "scripts/evan_npc.gd (new)",
+    "scripts/dialogue_data.gd",
+    "tools/bake_interior.py",
+    "scripts/library_map.gd (new)",
+    "assets/generated/library-ground.png (new)",
+    "docs/review-prompt-round3.md (new)",
+    "assets/game/CuteFantasy-5x9.ttf (deleted)"
+  ],
+  "open_questions": [
+    "Do numpad 1/2/3 bindings behave with NumLock off on the web export?",
+    "Does the charge-bow curve (0.9s full draw) feel right, or need the exported knobs tuned?",
+    "Is Pixelify Sans legible at the chosen sizes on the real build (bot screenshots pending human eyes)?",
+    "What does the real Evan look like - EvanNpc.PROFILE awaits his hair/shirt"
+  ],
+  "intent": "All four round-3 slices shipped and live; session ended on Chris's wrap signal with one docs-only PR stranded by dead CI runners",
+  "next_task": "Unblock PR #19 (bump GitHub Actions spending limit or merge manually - docs-only, verified locally), then run the review prompt in a fresh local Claude Code session",
+  "blockers": "GitHub Actions runners not starting (jobs fail at 0ms) - likely Actions minutes/spending limit on the private repo; blocks PR #19 and any further CI-gated merges until resolved",
+  "resume_minutes": 10,
+  "dont_retry": [
+    "Luminance-based door-center detection on building sprites (arch frames match wall wood) - measure by eye on a ruler-marked contact sheet instead",
+    "Hand-picking dark panel art from UI_Frames.png (only mid-brown crates exist) - StyleBoxFlat is the dark-panel path",
+    "Re-running CI to fix 0ms-duration job failures - it is infrastructure, not flake; check billing"
+  ],
+  "session_id": "013FtNGtC5VqTNGotKf3Aqvi"
+}
