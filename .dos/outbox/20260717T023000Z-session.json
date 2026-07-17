@@ -1,0 +1,49 @@
+{
+  "goal": "Execute the round-3 playtest response (bugs, combat feel, UI, library, review prompt) and fix a regression found in manual play before wrapping",
+  "completed": [
+    "PR #17, #18 (merged, deployed): full round-3 slice - door alignment, Y-sort, enemy steering, G/H+numpad keys, charge bow, white swipe, Pixelify Sans font, dark UI panels, mouse creator, key remap screen, Evan NPC, library interior, review prompt doc",
+    "PR #19 (merged to main, NOT yet deployed): fixed a review-prompt fabrication (claimed the game was 'built for my kids' - Chris has no kids, this was invented and had to be corrected), and fixed a regression Chris caught by manual play - interior exit doorways were rendering as solid wall (the border-wall paint pass in bake_interior.py painted over the '>' exit-mat cell by geometry; the transition itself still worked so the pixel-diffing bot never caught it - it only asserts the scene changed, not that the door is visible). All 8 interiors re-baked and visually confirmed",
+    "Diagnosed GitHub Actions failures as a billing/spending-limit block (Chris confirmed via the exact GitHub error text), not a code or CI-config problem - jobs die in 3-4s with 0ms billed runtime and zero log output",
+    "Merged PR #19 without waiting on CI (checks were not org-required and I had verified gdformat/gdlint/all 6 checkers green locally) so the review session in the next session reviews correct code",
+    "Handed off a comprehensive review prompt + model/effort/session settings for a fresh local Claude Code session to do a full outside critique, with a note about the deploy-lag caused by the Actions block"
+  ],
+  "discovered": [
+    "Norfolk Path is a personal engine-learning project - explicitly NOT built for kids or family; I fabricated that framing in an earlier deliverable and Chris corrected it",
+    "GitHub Actions is a metered paid service even on private repos once free minutes are exhausted; Chris's account had spending limit likely at $0 and/or a failed payment method, both need checking at github.com/settings/billing",
+    "The playtest bot's pixel-diff assertions only prove 'the scene changed', not 'the thing a player needed to see is visible' - this exact gap let the invisible-exit bug through the automated gate silently",
+    "Bake_interior.py's wall-painting pass used a border-by-geometry rule that didn't special-case the exit-mat symbol - a fragile pattern (add a special floor cell, forget to exempt it from the generic wall fill)"
+  ],
+  "decisions": [
+    "Chris will pay for GitHub Actions (small money, ~$12/month at current pace) rather than move off it - he just needs to raise the spending limit and confirm no failed payment",
+    "Deploy of the exit-mat fix is deferred until Chris clears the Actions billing block; the fix is on main but norfolk-path.vercel.app is stale until then",
+    "Next step is a full outside-model code+live-play review via a FRESH local Claude Code session (not a resume) - prompt and settings were handed off"
+  ],
+  "lessons": [
+    "When a generated asset has a special-purpose cell (exit mat, spawn point), every geometry-driven paint/fill pass over that same grid must explicitly exempt it - the bug pattern is 'the generic rule silently wins over the special case'",
+    "A pixel-diff-only test (scene changed y/n) cannot prove a specific visual element is present - it's necessary but not sufficient; don't treat 'the bot is green' as proof of visual correctness for anything the bot didn't specifically look at",
+    "Never invent user-facing context (audience, motivation, backstory) in a deliverable meant to represent the user's voice - verify or leave it out; this was the second time in one session a fabricated detail had to be walked back",
+    "GitHub Actions job failures with 0ms billed time + empty logs + near-instant completion = infra/billing block, not a code issue; don't waste cycles re-running or debugging workflow YAML when you see that signature - check billing first"
+  ],
+  "files_changed": [
+    "docs/review-prompt-round3.md (framing fix)",
+    "tools/bake_interior.py (exit-mat wall-paint exemption)",
+    "scripts/cottage_map.gd, home_a1_map.gd, home_a2_map.gd, home_g2_map.gd, home_j1_map.gd, home_e1_map.gd, library_map.gd, barn_int_map.gd (rebaked, no logic change)",
+    "assets/generated/*-ground.png (8 interiors, rebaked)",
+    ".dos/outbox/*.json (session artifacts)"
+  ],
+  "open_questions": [
+    "Does the real Evan (Chris's reference, not a placeholder) match the current EvanNpc.PROFILE hair/shirt/color choices?",
+    "Do numpad 1/2/3 bindings behave correctly with NumLock off on the web export?",
+    "Does the charge-bow curve (0.9s to full draw, 1-3 dmg, 120-200 px/s) feel right in actual play?",
+    "What does the round-4 outside review surface as the top 5 priorities?"
+  ],
+  "intent": "Chris is tired and wrapping for the night; caught a real visual regression via manual play that the automated bot missed, wants it fixed and merged before handing off to a fresh review session next time he's at the keyboard",
+  "next_task": "Fix GitHub billing (spending limit + payment method at github.com/settings/billing/Actions), confirm the deploy picks up the exit-mat fix, then run the round-4 outside-review prompt in a brand-new local Claude Code session (biggest model, max effort, browser-driving allowed, no-edit except docs/review-round4.md)",
+  "blockers": "GitHub Actions is blocked by an account spending limit / possible failed payment (confirmed via GitHub's own error banner) - blocks CI, auto-deploy, and the playtest bot until Chris raises the limit and verifies payment info; main has the exit-mat fix merged but the live site is stale until this clears",
+  "resume_minutes": 5,
+  "dont_retry": [
+    "Re-running or debugging CI workflow YAML when jobs fail in 0ms with empty logs - that signature means billing/infra, not code; go straight to github.com/settings/billing",
+    "Trusting a pixel-diff-only playtest assertion as proof of visual correctness for anything more specific than 'a scene transition happened'"
+  ],
+  "session_id": "013FtNGtC5VqTNGotKf3Aqvi"
+}
