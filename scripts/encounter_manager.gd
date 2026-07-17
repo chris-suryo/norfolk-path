@@ -223,7 +223,9 @@ func _update_coop_revive() -> void:
 
 
 func _on_boss_defeated() -> void:
-	# Let her defeat line + fade play, then the quest-complete screen.
+	# Let her defeat line + fade play, then the quest-complete screen. Doors are
+	# disabled while the win is pending so a wandering player can't swallow it.
+	Game.win_pending = true
 	await get_tree().create_timer(WIN_DELAY).timeout
 	Game.change_scene(WIN_SCENE)
 

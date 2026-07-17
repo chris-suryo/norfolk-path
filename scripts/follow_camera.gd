@@ -58,11 +58,14 @@ func _physics_process(_delta: float) -> void:
 		global_position = _target.global_position
 
 
-## Live zoom change from the pause menu's Zoom presets. The painted-bounds limits
-## are in world space, so they don't depend on zoom — no need to recompute them.
+## Live zoom change from the pause menu's Zoom presets. Recompute the limits:
+## on a level smaller than the view they are a view-sized centred window, and
+## the view size just changed with the zoom.
 func set_zoom_preset(value: float) -> void:
 	zoom_level = value
 	zoom = Vector2(value, value)
+	if _bounds_source != null and _bounds_source.tile_set != null:
+		_apply_bounds()
 
 
 func _apply_bounds() -> void:
