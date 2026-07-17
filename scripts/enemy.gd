@@ -33,6 +33,13 @@ const DIR_FRAMES := 4
 ## skeleton). Being hit doesn't wake it; only proximity does.
 @export var aggro_radius: float = 0.0
 
+## Corner steering (round-3 "enemies get stuck on corners"): a chaser whose
+## straight line to the player is blocked by a prop commits to sliding along
+## the obstacle's surface for this long before re-aiming — long enough to clear
+## a fence post or table corner, short enough to stay dumb. 0 disables. No
+## pathfinding; feel knob, tune live.
+@export var steer_duration: float = 0.35
+
 ## Animation layout.
 @export var directional: bool = false
 @export var idle_row: int = 0
@@ -52,6 +59,8 @@ var _death_time := 0.0
 var _contact_cd := 0.0
 var _knockback := Vector2.ZERO
 var _facing := Vector2.DOWN
+var _steer_dir := Vector2.ZERO
+var _steer_time := 0.0
 
 @onready var _sprite: Sprite2D = $Sprite2D
 @onready var _contact: Area2D = $ContactHitbox
@@ -75,6 +84,7 @@ func return_home() -> void:
 	velocity = Vector2.ZERO
 	_knockback = Vector2.ZERO
 	_aggro = false
+	_steer_time = 0.0
 
 
 func take_damage(amount: int, from: Vector2) -> void:
@@ -100,20 +110,46 @@ func _physics_process(delta: float) -> void:
 
 	var target := _nearest_player()
 	var moving := false
+	var chasing := false
 	if target != null and _awake(target):
 		var to_target := target.global_position - global_position
 		if to_target.length() > 6.0:
-			_facing = to_target.normalized()
-			velocity = _facing * move_speed + _knockback
+			chasing = true
 			moving = true
+			_steer_time = maxf(0.0, _steer_time - delta)
+			# Committed steer: keep sliding along the obstacle instead of
+			# re-aiming at the player every frame (which just pins the enemy
+			# back into the corner it is stuck on).
+			_facing = _steer_dir if _steer_time > 0.0 else to_target.normalized()
+			velocity = _facing * move_speed + _knockback
 		else:
 			velocity = _knockback
 	else:
 		velocity = _knockback
 
+	var before := global_position
 	move_and_slide()
+	if chasing and _steer_time <= 0.0:
+		_maybe_steer(before, delta, target)
 	_try_contact_damage()
 	_animate(moving, delta)
+
+
+## Blocked-chaser detection, run after move_and_slide: intent to move but almost
+## no ground covered against something collidable. Picks the collision tangent
+## that points toward the player and commits to it for steer_duration.
+func _maybe_steer(before: Vector2, delta: float, target: Node2D) -> void:
+	if steer_duration <= 0.0 or get_slide_collision_count() == 0:
+		return
+	var progress := global_position.distance_to(before)
+	if progress >= move_speed * delta * 0.3:
+		return
+	var tangent := get_slide_collision(0).get_normal().orthogonal()
+	var to_target := target.global_position - global_position
+	if tangent.dot(to_target) < 0.0:
+		tangent = -tangent
+	_steer_dir = tangent
+	_steer_time = steer_duration
 
 
 ## Ambush latch: always awake when aggro_radius is 0 (default) or once triggered;
