@@ -19,6 +19,11 @@ const SAVE_VERSION := 4
 const PREVIOUS_SAVE_VERSION := 3
 ## How long each half of the scene-change fade takes (out, then back in).
 const FADE_HALF := 0.22
+## The quest-complete screen, and the beat that precedes it (lets the boss's
+## defeat line + fade play before the swap). Both live here — not on the
+## EncounterManager — so the win coroutine runs on a node the scene swap can't free.
+const WIN_SCENE := "res://scenes/win_screen.tscn"
+const WIN_DELAY := 3.0
 
 var player_count := 1
 var checkpoint := 0
@@ -54,8 +59,17 @@ var dialogue_active := false
 
 ## Runtime-only: true between the boss falling and the win screen loading.
 ## Level transitions no-op while pending — walking into a door during the win
-## delay must not swallow the quest-complete screen.
+## delay must not swallow the quest-complete screen. The win beat itself lives on
+## this autoload (begin_win_sequence) so a freed EncounterManager can't strand it.
 var win_pending := false
+
+## Runtime-only: the encounter-area ids the party has already cleared this run.
+## NOT persisted (keeps the ints/bools-only save note above): it exists to survive
+## change_scene, which frees the EncounterManager and its per-area `cleared` flags.
+## Without it a door round-trip respawns every beaten area (R4-43). A cold Continue
+## (fresh launch) rebuilds clears from the saved checkpoint instead — see
+## EncounterManager._apply_resume.
+var cleared_areas: Array[int] = []
 
 var _fading := false
 var _fade_rect: ColorRect
@@ -94,6 +108,11 @@ func is_fading() -> bool:
 func change_scene(path: String) -> void:
 	if _fading:
 		return
+	# Every freeze in the win/pause cluster is "pause state outlived the scene that
+	# could clear it": the only paused=false sites live in main.tscn, which the swap
+	# frees. Clearing it here — on EVERY change — means no scene ever loads frozen
+	# (Esc/dialogue during the win delay or any fade). Cheapest fix in the cluster.
+	get_tree().paused = false
 	_fading = true
 	var out_tween := create_tween()
 	out_tween.tween_property(_fade_rect, "modulate:a", 1.0, FADE_HALF)
@@ -105,6 +124,28 @@ func change_scene(path: String) -> void:
 	in_tween.tween_property(_fade_rect, "modulate:a", 0.0, FADE_HALF)
 	await in_tween.finished
 	_fading = false
+
+
+## The boss is down: hold doors (win_pending) through a short beat so a wandering
+## player can't swallow the quest-complete screen, then load it. Runs on this
+## always-alive autoload so returning to title or racing a door during the delay
+## can't drop the coroutine — the win screen still loads and win_pending never
+## sticks true for the session (B-02). Cleared before the swap since the win
+## screen has no doors to guard.
+func begin_win_sequence() -> void:
+	if win_pending:
+		return
+	win_pending = true
+	await get_tree().create_timer(WIN_DELAY).timeout
+	win_pending = false
+	change_scene(WIN_SCENE)
+
+
+## Records that an encounter area was cleared this run. Idempotent. Runtime-only;
+## see cleared_areas above.
+func mark_area_cleared(id: int) -> void:
+	if id not in cleared_areas:
+		cleared_areas.append(id)
 
 
 func set_player_count(count: int) -> void:
@@ -121,6 +162,7 @@ func reset_run() -> void:
 	current_level_id = "valley"
 	current_entry = ""
 	win_pending = false
+	cleared_areas.clear()
 
 
 func appearance_for_player(player_index: int) -> Dictionary:

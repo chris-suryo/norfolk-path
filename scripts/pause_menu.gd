@@ -93,8 +93,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event.is_action_pressed("ui_cancel"):
 		# The dialogue box owns the paused tree while a conversation is open —
-		# Esc must not stack the pause menu on top of it.
-		if Game.dialogue_active:
+		# Esc must not stack the pause menu on top of it. Likewise during the
+		# post-boss win beat: don't let the pause menu stack over the incoming
+		# win screen (change_scene already clears the paused tree either way).
+		if Game.dialogue_active or Game.win_pending:
 			return
 		_toggle()
 		get_viewport().set_input_as_handled()
