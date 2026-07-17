@@ -10,6 +10,13 @@ extends Camera2D
 ## reference) so a bad path fails loudly instead of leaving the camera
 ## silently parked at its own default (0, 0) position with no visible error.
 
+## Free-zoom (mouse wheel) bounds. The pause-menu presets stay Far 2.0 / Normal
+## 2.5 / Close 3.0; the wheel goes wider than "Far" (down to ZOOM_MIN) so you can
+## pull back to see the whole area — Chris's "zoom out as much as I want" ask.
+const ZOOM_STEP := 0.15
+const ZOOM_MIN := 0.6
+const ZOOM_MAX := 6.0
+
 ## Path to the node this camera tracks (the players' midpoint node).
 @export var target_path: NodePath
 
@@ -56,6 +63,23 @@ func _ready() -> void:
 func _physics_process(_delta: float) -> void:
 	if _target != null:
 		global_position = _target.global_position
+
+
+## Mouse wheel = free zoom (scroll up in / down out), past the pause-menu presets,
+## clamped to [ZOOM_MIN, ZOOM_MAX]. Reuses set_zoom_preset so bounds recompute. Held
+## off during the intro/resolution cutscene, whose camera is script-driven; a
+## paused tree (pause menu, dialogue) already stops this from firing.
+func _unhandled_input(event: InputEvent) -> void:
+	if Game.cutscene_active:
+		return
+	if not (event is InputEventMouseButton and event.pressed):
+		return
+	if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+		set_zoom_preset(clampf(zoom_level + ZOOM_STEP, ZOOM_MIN, ZOOM_MAX))
+		get_viewport().set_input_as_handled()
+	elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+		set_zoom_preset(clampf(zoom_level - ZOOM_STEP, ZOOM_MIN, ZOOM_MAX))
+		get_viewport().set_input_as_handled()
 
 
 ## Live zoom change from the pause menu's Zoom presets. Recompute the limits:
