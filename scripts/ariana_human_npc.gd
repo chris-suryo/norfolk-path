@@ -8,8 +8,8 @@ extends Node2D
 ## normalize to catalog defaults, so it can never crash.
 
 const PROFILE := {
-	"hair_style": 4,
-	"hair_color": "Blonde",
+	"hair_style": 4,  # long hair (drapes past the jaw); brown per Chris
+	"hair_color": "Brown",
 	"shirt_style": "Classic",
 	"shirt_color": "Purple",
 	"pants_color": "Brown",
