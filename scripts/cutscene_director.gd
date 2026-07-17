@@ -50,16 +50,35 @@ const FLASH_RISE := 0.18
 const FLASH_HOLD := 0.22
 const FLASH_FALL := 0.7
 
+## Resolution (reverse) cutscene — played after the boss falls, before the win
+## card: the goose changes back into human Ariana where the fight ended, with a
+## closing line branched on the library-door choice. A short held beat frames the
+## transform on each side.
+const RESOLUTION_BEAT := 1.4
+## PLACEHOLDER resolution captions — Chris's locked round-5 payoff replaces both
+## branches (story brief section C). "dvd" = returned the DVD; else (friend / the
+## door skipped) = came for her.
+const RESOLUTION_DVD := [
+	["ARIANA", "You actually brought it back. Hm."],
+	["", "(She's a person again. Somehow that's the smaller shock.)"],
+]
+const RESOLUTION_FRIEND := [
+	["ARIANA", "You came all this way. For me."],
+	["", "(She's a person again. You did that.)"],
+]
+
 @export var camera_path: NodePath
 @export var world_path: NodePath
 
 var _running := false
+var _res_running := false
 var _released := false
 var _active_tween: Tween
 var _landing: Node2D
 var _irene: Node2D
 var _ariana: Node2D
 var _goose: Node2D
+var _human: Node2D
 
 @onready var _camera: Camera2D = get_node_or_null(camera_path)
 @onready var _world: Node2D = get_node_or_null(world_path)
@@ -164,10 +183,75 @@ func _play_landing() -> void:
 		_release()
 
 
+## The reverse cutscene: the goose changes back into human Ariana where the fight
+## ended, then a closing branched line, then control returns to Game to load the
+## win card. Awaited by Game.begin_win_sequence — it MUST always finish (never
+## hang), or the win screen never loads. Teardown is minimal: the win-screen swap
+## frees this whole scene, so we don't restore player control here. Skippable via
+## ui_accept (fast-forwards to the end).
+func play_resolution() -> void:
+	if _running or _res_running or _camera == null or _world == null:
+		return
+	_res_running = true
+	Game.cutscene_active = true
+	_freeze_players()
+	# Stage beside the camera centre (where the party beat her), not on top of the
+	# frozen player sprite.
+	var at := _camera.global_position + Vector2(22, 0)
+	_goose = _make_goose(at, false)
+	_world.add_child(_goose)
+	var ok := await _res_wait(RESOLUTION_BEAT)
+	if ok:
+		_tween_prop(_flash, "modulate:a", 1.0, FLASH_RISE)
+		ok = await _res_wait(FLASH_RISE)
+	if ok:
+		_swap_goose_to_human(at)
+		_spawn_sparkle(at)
+		ok = await _res_wait(FLASH_HOLD)
+	if ok:
+		_tween_prop(_flash, "modulate:a", 0.0, FLASH_FALL)
+		ok = await _res_wait(FLASH_FALL)
+	if ok:
+		ok = await _res_wait(RESOLUTION_BEAT)
+	if ok:
+		for pair in _resolution_lines():
+			_show_caption(pair[0], pair[1])
+			if not await _res_wait(CAPTION_SECONDS):
+				break
+	_hide_caption()
+	_flash.modulate.a = 0.0
+	_res_running = false
+
+
+## Like _wait, but for the resolution's own run flag so a skip drops its chain.
+func _res_wait(seconds: float) -> bool:
+	await get_tree().create_timer(seconds).timeout
+	return _res_running
+
+
+func _resolution_lines() -> Array:
+	return RESOLUTION_DVD if Game.irene_choice == "dvd" else RESOLUTION_FRIEND
+
+
+func _swap_goose_to_human(at: Vector2) -> void:
+	if is_instance_valid(_goose):
+		_goose.queue_free()
+		_goose = null
+	_human = ArianaHumanNpc.new()
+	_human.position = at
+	_world.add_child(_human)
+
+
 func _unhandled_input(event: InputEvent) -> void:
-	if _running and event.is_action_pressed("ui_accept"):
+	if not event.is_action_pressed("ui_accept"):
+		return
+	if _running:
 		get_viewport().set_input_as_handled()
 		_release()
+	elif _res_running:
+		# Fast-forward the resolution; its coroutine finishes and Game loads the win card.
+		get_viewport().set_input_as_handled()
+		_res_running = false
 
 
 ## All pacing goes through a SceneTreeTimer (which always fires, even after a skip
@@ -215,6 +299,13 @@ func _swap_to_goose(library_world: Vector2) -> void:
 	if is_instance_valid(_ariana):
 		_ariana.queue_free()
 		_ariana = null
+	_goose = _make_goose(library_world, true)
+	_world.add_child(_goose)
+
+
+## A goose from the shared sheet at `at`. Wander is on for the intro (she bolts
+## off after the change) and off for the resolution (she's about to change back).
+func _make_goose(at: Vector2, wander: bool) -> AmbientAnimal:
 	var goose := AmbientAnimal.new()
 	goose.texture = GOOSE_TEX
 	goose.hframes = 12
@@ -223,12 +314,12 @@ func _swap_to_goose(library_world: Vector2) -> void:
 	goose.idle_count = 2
 	goose.walk_row = 1
 	goose.walk_count = 6
-	goose.can_wander = true
-	goose.wander_radius = 40.0
-	goose.move_speed = 52.0
-	goose.position = library_world
-	_world.add_child(goose)
-	_goose = goose
+	goose.position = at
+	if wander:
+		goose.can_wander = true
+		goose.wander_radius = 40.0
+		goose.move_speed = 52.0
+	return goose
 
 
 func _freeze_players() -> void:
@@ -253,7 +344,7 @@ func _release() -> void:
 		_active_tween.kill()
 	_hide_caption()
 	_flash.modulate.a = 0.0
-	for actor in [_irene, _ariana, _goose]:
+	for actor in [_irene, _ariana, _goose, _human]:
 		if is_instance_valid(actor):
 			actor.queue_free()
 	if _camera != null:
