@@ -197,6 +197,35 @@ INTERIORS = {
         ],
     },
     # Y @ (43,17) — barn storage.
+    # L @ (162,17) — Irene's library: the grandest room in the valley. Shelf
+    # bank across the top wall around a grand clock, twin reading desks with a
+    # centre aisle between them, rug at the heart. The boss fight stays
+    # OUTSIDE; this room is pure story space.
+    "library": {
+        "size": (17, 12),
+        "wall": "stone",
+        "floor": "wood_dark",
+        "windows": [4, 12],
+        "furniture": [
+            ("rug_teal", 7, 9),
+            ("bookshelf_big", 1, 3),
+            ("bookshelf_big", 3, 3),
+            ("bookshelf_big", 5, 3),
+            ("clock_grand", 8, 3),
+            ("bookshelf_big", 10, 3),
+            ("bookshelf_big", 12, 3),
+            ("bookshelf_small", 14, 3),
+            ("lamp_gold", 1, 6),
+            ("chair_right", 2, 6),
+            ("table_dark", 3, 6),
+            ("chair_left", 6, 6),
+            ("chair_right", 9, 6),
+            ("table_dark", 10, 6),
+            ("chair_left", 13, 6),
+            ("plant_leafy", 14, 8),
+            ("plant_blue", 1, 8),
+        ],
+    },
     "barn_int": {
         "size": (14, 11),
         "wall": "brick",

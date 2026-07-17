@@ -1,8 +1,7 @@
 [gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/player_select.gd" id="1_select"]
-[ext_resource type="Texture2D" path="res://assets/game/UI_Frames.png" id="2_frames"]
-[ext_resource type="FontFile" path="res://assets/game/CuteFantasy-5x9.ttf" id="3_font"]
+[ext_resource type="FontFile" path="res://assets/game/fonts/PixelifySans.ttf" id="3_font"]
 [ext_resource type="Texture2D" path="res://assets/generated/valley-1-ground.png" id="4_ground"]
 [ext_resource type="Texture2D" path="res://assets/cute_fantasy/packs/Cute_Fantasy/Cute_Fantasy/Outdoor decoration/Outdoor_Decor_Animations/Other_Animations/Campfire_Anim.png" id="5_fire"]
 [ext_resource type="Script" path="res://scripts/critter.gd" id="6_critter"]
@@ -10,11 +9,23 @@
 
 [sub_resource type="Theme" id="theme"]
 default_font = ExtResource("3_font")
-default_font_size = 9
+default_font_size = 12
 
 [sub_resource type="AtlasTexture" id="bg"]
 atlas = ExtResource("4_ground")
 region = Rect2(1400, 260, 640, 360)
+
+[sub_resource type="StyleBoxFlat" id="panel_dark"]
+bg_color = Color(0.11, 0.09, 0.08, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.62, 0.47, 0.3, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_left = 2
+corner_radius_bottom_right = 2
 
 [node name="PlayerSelect" type="Control"]
 layout_mode = 3
@@ -40,7 +51,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(0.05, 0.07, 0.1, 0.62)
 
-[node name="Frame" type="NinePatchRect" parent="."]
+[node name="Frame" type="Panel" parent="."]
+theme_override_styles/panel = SubResource("panel_dark")
 layout_mode = 1
 anchor_left = 0.5
 anchor_top = 0.5
@@ -52,12 +64,6 @@ offset_right = 144.0
 offset_bottom = 118.0
 grow_horizontal = 2
 grow_vertical = 2
-texture = ExtResource("2_frames")
-region_rect = Rect2(10, 10, 28, 28)
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
 
 [node name="Campfire" type="Sprite2D" parent="Frame"]
 position = Vector2(144, 36)
@@ -85,14 +91,14 @@ theme_override_constants/separation = 6
 
 [node name="Title" type="Label" parent="Frame/Box"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 20
 text = "NORFOLK PATH"
 horizontal_alignment = 1
 
 [node name="Subtitle" type="Label" parent="Frame/Box"]
 layout_mode = 2
 modulate = Color(0.85, 0.71, 0.4, 1)
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 10
 text = "A CO-OP PATH TO IRENE"
 horizontal_alignment = 1
 
@@ -111,17 +117,17 @@ text = "2 PLAYERS"
 horizontal_alignment = 1
 
 [node name="Hint" type="Label" parent="Frame/Box"]
-modulate = Color(0.45, 0.32, 0.22, 1)
+modulate = Color(0.85, 0.79, 0.68, 1)
 layout_mode = 2
-theme_override_font_sizes/font_size = 8
+theme_override_font_sizes/font_size = 10
 text = "CLICK OR ARROWS + ENTER"
 horizontal_alignment = 1
 
 [node name="Legend" type="Label" parent="Frame/Box"]
 layout_mode = 2
-modulate = Color(0.45, 0.32, 0.22, 1)
-theme_override_font_sizes/font_size = 8
-text = "P1: WASD + SPACE    P2: ARROWS + /"
+modulate = Color(0.85, 0.79, 0.68, 1)
+theme_override_font_sizes/font_size = 10
+text = "P1: WASD  G SWORD  H BOW    P2: ARROWS + NUMPAD 1/2"
 horizontal_alignment = 1
 
 [node name="BuildVersion" type="Label" parent="Frame"]
@@ -134,8 +140,8 @@ offset_top = -20.0
 offset_bottom = -8.0
 grow_horizontal = 2
 grow_vertical = 0
-modulate = Color(0.55, 0.45, 0.35, 1)
-theme_override_font_sizes/font_size = 7
+modulate = Color(0.72, 0.66, 0.56, 1)
+theme_override_font_sizes/font_size = 10
 horizontal_alignment = 1
 
 [node name="Creator" parent="." instance=ExtResource("7_creator")]

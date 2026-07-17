@@ -1,14 +1,26 @@
 [gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/dialogue_box.gd" id="1_dialogue"]
-[ext_resource type="Texture2D" path="res://assets/game/UI_Frames.png" id="2_frames"]
-[ext_resource type="FontFile" path="res://assets/game/CuteFantasy-5x9.ttf" id="3_font"]
+[ext_resource type="FontFile" path="res://assets/game/fonts/PixelifySans.ttf" id="3_font"]
+
+[sub_resource type="StyleBoxFlat" id="panel_dark"]
+bg_color = Color(0.11, 0.09, 0.08, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.62, 0.47, 0.3, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_left = 2
+corner_radius_bottom_right = 2
 
 [node name="DialogueBox" type="CanvasLayer"]
 layer = 20
 script = ExtResource("1_dialogue")
 
-[node name="Panel" type="NinePatchRect" parent="."]
+[node name="Panel" type="Panel" parent="."]
+theme_override_styles/panel = SubResource("panel_dark")
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
@@ -19,12 +31,6 @@ offset_right = 180.0
 offset_bottom = -10.0
 grow_horizontal = 2
 grow_vertical = 0
-texture = ExtResource("2_frames")
-region_rect = Rect2(10, 10, 28, 28)
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
 
 [node name="Name" type="Label" parent="Panel"]
 layout_mode = 0
@@ -32,9 +38,9 @@ offset_left = 10.0
 offset_top = 6.0
 offset_right = 350.0
 offset_bottom = 20.0
-theme_override_colors/font_color = Color(0.55, 0.32, 0.16, 1)
+theme_override_colors/font_color = Color(0.95, 0.78, 0.35, 1)
 theme_override_fonts/font = ExtResource("3_font")
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 
 [node name="Text" type="Label" parent="Panel"]
 layout_mode = 0
@@ -42,9 +48,9 @@ offset_left = 10.0
 offset_top = 22.0
 offset_right = 350.0
 offset_bottom = 62.0
-theme_override_colors/font_color = Color(0.24, 0.16, 0.1, 1)
+theme_override_colors/font_color = Color(0.94, 0.89, 0.78, 1)
 theme_override_fonts/font = ExtResource("3_font")
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 autowrap_mode = 2
 
 [node name="Prompt" type="Label" parent="."]
@@ -60,6 +66,6 @@ offset_bottom = -12.0
 grow_horizontal = 2
 grow_vertical = 0
 theme_override_fonts/font = ExtResource("3_font")
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 text = "E - TALK   (P2: ENTER)"
 horizontal_alignment = 1

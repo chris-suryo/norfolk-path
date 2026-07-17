@@ -23,7 +23,7 @@ signal downed
 ## polling. Carries current + max so a listener needs no other reference.
 signal health_changed(current: int, maximum: int)
 
-enum State { NORMAL, ATTACK, ROLL, HURT, DOWN, FIRE }
+enum State { NORMAL, ATTACK, ROLL, HURT, DOWN, FIRE, DRAW }
 
 const ARROW_SCENE := preload("res://scenes/arrow_projectile.tscn")
 
@@ -52,11 +52,11 @@ const ATTACK_ACTIVE_START := 0.1
 const ATTACK_ACTIVE_END := 0.28
 const SWORD_REACH := 18.0
 
-## The bow: a quick draw-and-release. The arrow leaves at FIRE_RELEASE so the
-## shot reads as coming off the string, not the keypress.
-const FIRE_DURATION := 0.35
-const FIRE_RELEASE := 0.15
-const FIRE_FRAMES := 3
+## The bow is hold-to-charge (round-3 direction): DRAW steps through these
+## frames while the key is held, releasing looses the arrow and holds the
+## final pose for RELEASE_TIME. Power scales with the hold (see the exports).
+const DRAW_FRAMES := 3
+const RELEASE_TIME := 0.15
 
 ## A brisk ~29px evasive step. The immunity window is deliberately shorter than
 ## the travel so a roll must be timed through a hit rather than held as safety.
@@ -83,9 +83,18 @@ const DEATH_DURATION := 0.7
 
 @export var max_hp: int = 6
 @export var attack_damage: int = 4
-## The bow's damage per arrow (sword hits harder; the bow buys you distance).
-@export var ranged_damage: int = 2
-## Seconds between shots.
+## Charge-bow tuning (all feel knobs — tune live). A bare tap fires the min
+## arrow; holding for full_draw_time fires the max. Damage and arrow speed
+## scale together, so a full draw both hits harder and flies flatter.
+@export var ranged_damage_min: int = 1
+@export var ranged_damage_max: int = 3
+@export var arrow_speed_min: float = 120.0
+@export var arrow_speed_max: float = 200.0
+## Seconds of held draw for a max-power shot.
+@export var full_draw_time: float = 0.9
+## You can keep moving while drawing, at this fraction of max_speed.
+@export var draw_move_factor: float = 0.5
+## Seconds between shots (starts when the arrow is loosed).
 @export var fire_cooldown: float = 0.7
 
 var _action_prefix: String
@@ -96,7 +105,6 @@ var _state_time := 0.0
 var _invuln_time := 0.0
 var _roll_cd := 0.0
 var _fire_cd := 0.0
-var _arrow_fired := false
 var _hp: int = 6
 var _hit_this_swing: Array = []
 var _downed_emitted := false
@@ -155,6 +163,8 @@ func _physics_process(delta: float) -> void:
 			_process_down(delta)
 		State.FIRE:
 			_process_fire(delta)
+		State.DRAW:
+			_process_draw(delta)
 
 	move_and_slide()
 
@@ -167,8 +177,8 @@ func _process_normal(delta: float) -> void:
 	if Input.is_action_just_pressed(_action_prefix + "action2") and _roll_cd <= 0.0:
 		_enter_roll(input_vector)
 		return
-	if Input.is_action_just_pressed(_action_prefix + "fire") and _fire_cd <= 0.0:
-		_enter_fire(input_vector)
+	if Input.is_action_pressed(_action_prefix + "fire") and _fire_cd <= 0.0:
+		_enter_draw(input_vector)
 		return
 
 	if input_vector != Vector2.ZERO:
@@ -205,14 +215,31 @@ func _process_roll(_delta: float) -> void:
 		_enter_normal()
 
 
+## Drawing: the string is held. Movement stays live at a fraction of walk
+## speed (kiting is the bow's identity), the draw pose steps with the charge,
+## and letting go of the key looses the arrow at the accumulated power.
+func _process_draw(delta: float) -> void:
+	var input_vector := _move_input()
+	if input_vector != Vector2.ZERO:
+		input_vector = input_vector.normalized()
+		velocity = velocity.move_toward(
+			input_vector * max_speed * draw_move_factor, acceleration * delta
+		)
+		_facing = input_vector
+	else:
+		velocity = velocity.move_toward(Vector2.ZERO, friction * delta)
+	var column := mini(DRAW_FRAMES - 1, int(_state_time / full_draw_time * DRAW_FRAMES))
+	_set_frame(_attack_row(), column)
+	if not Input.is_action_pressed(_action_prefix + "fire"):
+		_loose_arrow()
+
+
+## Post-release: hold the final pose briefly so the shot reads as coming off
+## the string. The arrow is already in flight.
 func _process_fire(delta: float) -> void:
 	velocity = velocity.move_toward(Vector2.ZERO, friction * delta)
-	var column := mini(FIRE_FRAMES - 1, int(_state_time / FIRE_DURATION * FIRE_FRAMES))
-	_set_frame(_attack_row(), column)
-	if not _arrow_fired and _state_time >= FIRE_RELEASE:
-		_arrow_fired = true
-		_spawn_arrow()
-	if _state_time >= FIRE_DURATION:
+	_set_frame(_attack_row(), DRAW_FRAMES)
+	if _state_time >= RELEASE_TIME:
 		_enter_normal()
 
 
@@ -265,23 +292,28 @@ func _enter_attack(input_vector: Vector2) -> void:
 	_appearance.set_sword_visible(true)
 
 
-func _enter_fire(input_vector: Vector2) -> void:
+func _enter_draw(input_vector: Vector2) -> void:
 	if input_vector != Vector2.ZERO:
 		_facing = input_vector.normalized()
-	_state = State.FIRE
+	_state = State.DRAW
 	_state_time = 0.0
-	velocity = Vector2.ZERO
-	_fire_cd = fire_cooldown
-	_arrow_fired = false
 	_appearance.set_bow_visible(true)
 
 
-func _spawn_arrow() -> void:
+## Fire at the accumulated charge: a tap is a weak lob, a full draw
+## (>= full_draw_time held) is the hardest, fastest arrow. Cooldown starts
+## here — you can't feather the string for a stream of taps.
+func _loose_arrow() -> void:
+	var charge := clampf(_state_time / full_draw_time, 0.0, 1.0)
 	var arrow := ARROW_SCENE.instantiate()
-	arrow.damage = ranged_damage
+	arrow.damage = int(roundf(lerpf(float(ranged_damage_min), float(ranged_damage_max), charge)))
+	arrow.speed = lerpf(arrow_speed_min, arrow_speed_max, charge)
 	arrow.global_position = global_position + _facing * 10.0 + Vector2(0, -6)
 	arrow.launch(_facing)
 	get_parent().add_child(arrow)
+	_fire_cd = fire_cooldown
+	_state = State.FIRE
+	_state_time = 0.0
 
 
 func _enter_roll(input_vector: Vector2) -> void:
@@ -387,8 +419,10 @@ func _animate_roll() -> void:
 	_appearance.set_frame(row, column, flip)
 
 
-## The free-sheet sword frames are compact, so a short stepped crescent makes the
-## same forward hit zone visible without reading as a projectile or an arrow.
+## The free-sheet sword frames are compact, so a short stepped crescent makes
+## the forward hit zone visible. White/pale (round-3: the old orange read as a
+## fireball) to style-match the impact sparks, tracing the same reach as the
+## SwordHitbox sweep.
 func _draw() -> void:
 	if (
 		_state != State.ATTACK
@@ -399,8 +433,8 @@ func _draw() -> void:
 	var progress := inverse_lerp(ATTACK_ACTIVE_START, ATTACK_ACTIVE_END, _state_time)
 	var direction := _facing.normalized()
 	var arc_head := lerpf(-0.95, 0.95, progress)
-	var outer := Color(0.72, 0.30, 0.08, 0.88)
-	var inner := Color(1.0, 0.85, 0.34, 1.0)
+	var outer := Color(0.88, 0.93, 1.0, 0.45)
+	var inner := Color(1.0, 1.0, 1.0, 0.95)
 	for step in 5:
 		var angle := arc_head - float(step) * 0.16
 		var radius := 20.0 + float(step) * 1.5

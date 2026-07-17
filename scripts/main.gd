@@ -33,6 +33,10 @@ const TERRAIN_SYMS := [
 ]
 const FENCE_SYMS := ["F", "|"]
 
+## Where Evan stands relative to his stall's cell center (front-left, clear of
+## the stall collider).
+const EVAN_OFFSET := Vector2(-20.0, 10.0)
+
 ## Ambient-animal animation, keyed by map symbol (from the audited sheet layout —
 ## 32px frames unless "frame_size" says otherwise). "idle"/"idle_n" = the idle
 ## row + frame count; the optional "walk"/"walk_n" + "wander" enable a slow
@@ -174,7 +178,12 @@ func _ready() -> void:
 		$World/Player2.queue_free()
 	# Shop + Ariana are valley-only; other levels drop them.
 	if _def.has_shop:
-		$World/Shop.position = _map.cell_center(_map.find_one("H"))
+		var stall := _map.cell_center(_map.find_one("H"))
+		$World/Shop.position = stall
+		# Evan himself, standing in front of his stand (modular boy sprite).
+		var evan := EvanNpc.new()
+		evan.position = stall + EVAN_OFFSET
+		_world.add_child(evan)
 	else:
 		$World/Shop.queue_free()
 	if _def.has_ariana:
@@ -204,6 +213,8 @@ func _spawn_talkers() -> void:
 		_add_talker("ariana", _map.cell_center(_map.find_one("$")))
 	for cell in _map.find_all("L"):
 		_add_talker("library_door", _map.cell_center(cell))
+	if _def.has_shop:
+		_add_talker("evan", _map.cell_center(_map.find_one("H")) + EVAN_OFFSET)
 
 
 func _add_talker(npc_id: String, at: Vector2) -> void:

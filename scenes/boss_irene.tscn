@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/boss_irene.gd" id="1_boss"]
 [ext_resource type="Texture2D" path="res://assets/game/Irene.png" id="2_tex"]
 [ext_resource type="Texture2D" path="res://assets/game/UI_Bars.png" id="3_bars"]
-[ext_resource type="FontFile" path="res://assets/game/CuteFantasy-5x9.ttf" id="4_font"]
+[ext_resource type="FontFile" path="res://assets/game/fonts/PixelifySans.ttf" id="4_font"]
 
 [sub_resource type="RectangleShape2D" id="body"]
 size = Vector2(14, 20)
@@ -53,7 +53,7 @@ offset_right = 102.0
 offset_bottom = 18.0
 grow_horizontal = 2
 theme_override_fonts/font = ExtResource("4_font")
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 text = "Irene"
 horizontal_alignment = 1
 
@@ -87,7 +87,7 @@ offset_top = -46.0
 offset_right = -20.0
 offset_bottom = -8.0
 theme_override_fonts/font = ExtResource("4_font")
-theme_override_font_sizes/font_size = 9
+theme_override_font_sizes/font_size = 11
 horizontal_alignment = 1
 vertical_alignment = 1
 autowrap_mode = 3

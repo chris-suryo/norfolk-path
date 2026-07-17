@@ -1,13 +1,24 @@
 [gd_scene load_steps=5 format=3]
 
 [ext_resource type="Script" path="res://scripts/character_creator.gd" id="1_creator"]
-[ext_resource type="Texture2D" path="res://assets/game/UI_Frames.png" id="2_frames"]
-[ext_resource type="FontFile" path="res://assets/game/CuteFantasy-5x9.ttf" id="3_font"]
+[ext_resource type="FontFile" path="res://assets/game/fonts/PixelifySans.ttf" id="3_font"]
 [ext_resource type="PackedScene" path="res://scenes/appearance_preview.tscn" id="4_preview"]
 
 [sub_resource type="Theme" id="theme"]
 default_font = ExtResource("3_font")
-default_font_size = 9
+default_font_size = 12
+
+[sub_resource type="StyleBoxFlat" id="panel_dark"]
+bg_color = Color(0.11, 0.09, 0.08, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.62, 0.47, 0.3, 1)
+corner_radius_top_left = 2
+corner_radius_top_right = 2
+corner_radius_bottom_left = 2
+corner_radius_bottom_right = 2
 
 [node name="CharacterCreator" type="Control"]
 layout_mode = 3
@@ -25,7 +36,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(0.04, 0.06, 0.09, 0.8)
 
-[node name="Frame" type="NinePatchRect" parent="."]
+[node name="Frame" type="Panel" parent="."]
+theme_override_styles/panel = SubResource("panel_dark")
 layout_mode = 1
 anchor_left = 0.5
 anchor_top = 0.5
@@ -37,12 +49,6 @@ offset_right = 208.0
 offset_bottom = 152.0
 grow_horizontal = 2
 grow_vertical = 2
-texture = ExtResource("2_frames")
-region_rect = Rect2(10, 10, 28, 28)
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
 
 [node name="Slot" type="Label" parent="Frame"]
 layout_mode = 1
@@ -51,7 +57,7 @@ anchor_right = 1.0
 offset_top = 18.0
 offset_bottom = 36.0
 grow_horizontal = 2
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 16
 horizontal_alignment = 1
 text = "CREATE PLAYER 1"
 
@@ -61,7 +67,7 @@ offset_left = 42.0
 offset_top = 66.0
 offset_right = 170.0
 offset_bottom = 82.0
-theme_override_font_sizes/font_size = 7
+theme_override_font_sizes/font_size = 10
 horizontal_alignment = 1
 text = "LIVE PREVIEW"
 
@@ -127,7 +133,7 @@ offset_top = -27.0
 offset_bottom = -12.0
 grow_horizontal = 2
 grow_vertical = 0
-modulate = Color(0.45, 0.32, 0.22, 1)
-theme_override_font_sizes/font_size = 8
+modulate = Color(0.85, 0.79, 0.68, 1)
+theme_override_font_sizes/font_size = 10
 horizontal_alignment = 1
-text = "ARROWS: CHANGE    ENTER / SPACE: SELECT    ESC: BACK"
+text = "ARROWS OR MOUSE: CHANGE    ENTER / CLICK: SELECT    ESC: BACK"

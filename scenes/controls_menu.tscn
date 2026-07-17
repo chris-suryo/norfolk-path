@@ -1,12 +1,11 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=4 format=3]
 
-[ext_resource type="Script" path="res://scripts/pause_menu.gd" id="1_pause"]
-[ext_resource type="FontFile" path="res://assets/game/fonts/PixelifySans.ttf" id="3_font"]
-[ext_resource type="PackedScene" path="res://scenes/controls_menu.tscn" id="4_controls"]
+[ext_resource type="Script" path="res://scripts/controls_menu.gd" id="1_controls"]
+[ext_resource type="FontFile" path="res://assets/game/fonts/PixelifySans.ttf" id="2_font"]
 
 [sub_resource type="Theme" id="theme"]
-default_font = ExtResource("3_font")
-default_font_size = 12
+default_font = ExtResource("2_font")
+default_font_size = 11
 
 [sub_resource type="StyleBoxFlat" id="panel_dark"]
 bg_color = Color(0.11, 0.09, 0.08, 0.95)
@@ -20,9 +19,10 @@ corner_radius_top_right = 2
 corner_radius_bottom_left = 2
 corner_radius_bottom_right = 2
 
-[node name="PauseMenu" type="CanvasLayer"]
+[node name="ControlsMenu" type="CanvasLayer"]
 process_mode = 3
-script = ExtResource("1_pause")
+layer = 2
+script = ExtResource("1_controls")
 
 [node name="Panel" type="Control" parent="."]
 layout_mode = 3
@@ -39,18 +39,18 @@ anchor_bottom = 1.0
 color = Color(0, 0, 0, 0.55)
 
 [node name="Frame" type="Panel" parent="Panel"]
-theme_override_styles/panel = SubResource("panel_dark")
 layout_mode = 1
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -100.0
-offset_top = -96.0
-offset_right = 100.0
-offset_bottom = 96.0
+offset_left = -190.0
+offset_top = -150.0
+offset_right = 190.0
+offset_bottom = 150.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_styles/panel = SubResource("panel_dark")
 
 [node name="Box" type="VBoxContainer" parent="Panel/Frame"]
 layout_mode = 1
@@ -58,49 +58,39 @@ anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 16.0
-offset_top = 16.0
+offset_top = 12.0
 offset_right = -16.0
-offset_bottom = -16.0
+offset_bottom = -12.0
 grow_horizontal = 2
 grow_vertical = 2
 alignment = 1
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
 
 [node name="Title" type="Label" parent="Panel/Frame/Box"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 16
-text = "PAUSED"
+text = "CONTROLS"
 horizontal_alignment = 1
 
-[node name="Resume" type="Label" parent="Panel/Frame/Box"]
+[node name="Grid" type="GridContainer" parent="Panel/Frame/Box"]
 layout_mode = 2
-text = "Resume"
+columns = 4
+theme_override_constants/h_separation = 14
+theme_override_constants/v_separation = 2
+
+[node name="Reset" type="Label" parent="Panel/Frame/Box"]
+layout_mode = 2
+text = "RESET TO DEFAULTS"
 horizontal_alignment = 1
 
-[node name="Zoom" type="Label" parent="Panel/Frame/Box"]
+[node name="Back" type="Label" parent="Panel/Frame/Box"]
 layout_mode = 2
-text = "Zoom: Normal"
+text = "BACK"
 horizontal_alignment = 1
 
-[node name="Save" type="Label" parent="Panel/Frame/Box"]
+[node name="Hint" type="Label" parent="Panel/Frame/Box"]
+modulate = Color(0.72, 0.66, 0.56, 1)
 layout_mode = 2
-text = "Save Now"
-horizontal_alignment = 1
-
-[node name="Controls" type="Label" parent="Panel/Frame/Box"]
-layout_mode = 2
-text = "Controls"
-horizontal_alignment = 1
-
-[node name="ToTitle" type="Label" parent="Panel/Frame/Box"]
-layout_mode = 2
-text = "Return to Title"
-horizontal_alignment = 1
-
-[node name="Status" type="Label" parent="Panel/Frame/Box"]
-modulate = Color(0.7, 0.8, 0.7, 1)
-layout_mode = 2
+theme_override_font_sizes/font_size = 10
 text = ""
 horizontal_alignment = 1
-
-[node name="ControlsMenu" parent="." instance=ExtResource("4_controls")]
