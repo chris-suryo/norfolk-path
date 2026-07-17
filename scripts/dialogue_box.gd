@@ -15,7 +15,7 @@ var _lines: PackedStringArray = []
 var _index := 0
 var _prompt_requests := 0
 
-@onready var _panel: NinePatchRect = $Panel
+@onready var _panel: Panel = $Panel
 @onready var _name_label: Label = $Panel/Name
 @onready var _text_label: Label = $Panel/Text
 @onready var _prompt: Label = $Prompt
