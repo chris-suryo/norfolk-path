@@ -4,6 +4,30 @@ Companion to [review-round4.md](review-round4.md). This maps the review's
 findings onto **parallel tracks that don't collide**, so multiple sessions
 (or agents, or Chris offline) can work at once and merge cleanly.
 
+## Status — round-4 close (2026-07-17)
+
+The single source of truth for what's actually done, so nobody has to reconstruct
+it from memory.
+
+| Item | State |
+|---|---|
+| Review round-4 (all 8 sections, 44 findings, appendices, finalized top-5) | **DONE** — merged (PR #20). §3 map-forensics independently re-verified. |
+| Actions-usage cuts (paths filters, dispatch-only playtest) | **DONE** — merged (PR #21) |
+| CORE — scene-state ownership (R4-43/44, B-01…B-06) | **DONE** — merged + verified (PR #23) |
+| QUICKFIX — integrity one-liners (R4-01, B-27/B-11/B-10, B-16/R4-10, B-07) | **DONE** — merged + verified (PR #22) |
+| B-03/B-04 — defer `boss_defeated` save until win is guaranteed | **PR OPEN** (#24), branch `claude/norfolk-round4-playtest-km5bvj` |
+| STORY — dialogue pass (`dialogue_data.gd` + 2 labels) | **IN PROGRESS** — Chris, offline, from [story-brief-round4.md](story-brief-round4.md) |
+| FEEL / WORLD / UI tracks | **NOT STARTED** — each wants its own grill+plan |
+| Native Windows playtest of all merged fixes | **NOT DONE** — the human gate before "confirmed playable" |
+
+**Blockers / notes:** GitHub Actions is over its monthly free-minutes cap (resets
+~15 days from close), so the auto-deploy did **not** run on these merges —
+`norfolk-path.vercel.app` is **stale**; playtest the native build, not the live
+link. When PR #24 merges, flip B-03/B-04 to fixed in
+[review-round4-bugs.json](review-round4-bugs.json) and correct its stale line refs
+(147-148 → 165-166). Recommended next track: **FEEL** (top-5 #2 — heal + hit/death
+feedback + audio).
+
 ## The collision rule (from PROJECT.md's parallel-work map)
 
 Two files are shared hotspots — **only one open PR may touch each at a time:**
