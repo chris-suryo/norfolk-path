@@ -65,6 +65,16 @@ var dialogue_active := false
 ## never engaged. Not saved (like dialogue_active); cleared on reset_run.
 var irene_choice := ""
 
+## Runtime-only: true while the intro cutscene is playing. The pause menu ignores
+## Esc during it, since Esc pauses the tree and would freeze the cutscene's pan.
+var cutscene_active := false
+
+## Runtime-only one-shot: the intro cutscene plays once per app launch, on a fresh
+## New-Game valley start. NOT persisted and deliberately NOT cleared by reset_run
+## (post-win "play again" must not replay the long cutscene); a fresh launch
+## recreates this autoload and lets it play again.
+var intro_played := false
+
 ## Runtime-only: true between the boss falling and the win screen loading.
 ## Level transitions no-op while pending — walking into a door during the win
 ## delay must not swallow the quest-complete screen. The win beat itself lives on
@@ -121,6 +131,9 @@ func change_scene(path: String) -> void:
 	# frees. Clearing it here — on EVERY change — means no scene ever loads frozen
 	# (Esc/dialogue during the win delay or any fade). Cheapest fix in the cluster.
 	get_tree().paused = false
+	# Same class of guard for the intro cutscene: if a swap ever races the cutscene,
+	# its director (in the freed main.tscn) can't clear this — so clear it here too.
+	cutscene_active = false
 	_fading = true
 	var out_tween := create_tween()
 	out_tween.tween_property(_fade_rect, "modulate:a", 1.0, FADE_HALF)

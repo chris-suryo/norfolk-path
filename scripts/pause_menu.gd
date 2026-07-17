@@ -102,7 +102,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		# Esc must not stack the pause menu on top of it. Likewise during the
 		# post-boss win beat: don't let the pause menu stack over the incoming
 		# win screen (change_scene already clears the paused tree either way).
-		if Game.dialogue_active or Game.win_pending:
+		if Game.dialogue_active or Game.win_pending or Game.cutscene_active:
 			return
 		_toggle()
 		get_viewport().set_input_as_handled()
