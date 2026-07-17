@@ -37,6 +37,10 @@ const FENCE_SYMS := ["F", "|"]
 ## the stall collider).
 const EVAN_OFFSET := Vector2(-20.0, 10.0)
 
+## The onboarding guide's cell — grass just east of the village spawn "S" (6,25),
+## in view when the intro pan lands on the player. Valley-only (gated with Ariana).
+const GUIDE_CELL := Vector2i(9, 25)
+
 ## Ambient-animal animation, keyed by map symbol (from the audited sheet layout —
 ## 32px frames unless "frame_size" says otherwise). "idle"/"idle_n" = the idle
 ## row + frame count; the optional "walk"/"walk_n" + "wander" enable a slow
@@ -188,6 +192,10 @@ func _ready() -> void:
 		$World/Shop.queue_free()
 	if _def.has_ariana:
 		$World/Ariana.position = _map.cell_center(_map.find_one("$"))
+		# The onboarding guide, standing near the village spawn (modular sprite).
+		var guide := GuideNpc.new()
+		guide.position = _map.cell_center(GUIDE_CELL)
+		_world.add_child(guide)
 	else:
 		$World/Ariana.queue_free()
 	_spawn_props()
@@ -212,6 +220,7 @@ func _spawn_talkers() -> void:
 		_add_talker("villager_%d_%d" % [cell.x, cell.y], _map.cell_center(cell))
 	if _def.has_ariana:
 		_add_talker("ariana", _map.cell_center(_map.find_one("$")))
+		_add_talker("guide", _map.cell_center(GUIDE_CELL))
 	for cell in _map.find_all("L"):
 		_add_talker("library_door", _map.cell_center(cell))
 	if _def.has_shop:

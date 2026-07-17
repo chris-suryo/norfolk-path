@@ -56,12 +56,12 @@ theme_override_fonts/font = ExtResource("2_font")
 theme_override_font_sizes/font_size = 11
 autowrap_mode = 2
 
-[node name="Blackout" type="CanvasLayer" parent="."]
+[node name="Flash" type="CanvasLayer" parent="."]
 layer = 30
 
-[node name="Rect" type="ColorRect" parent="Blackout"]
+[node name="Rect" type="ColorRect" parent="Flash"]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 mouse_filter = 2
-color = Color(0, 0, 0, 1)
+color = Color(1, 0.97, 0.88, 1)

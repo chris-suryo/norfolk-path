@@ -13,28 +13,42 @@ extends Node2D
 ## Every camera move / zoom / pan / caption timing here is engine-only — none of it
 ## can be verified headlessly. The constants below are meant to be tuned in-editor.
 
+## PLACEHOLDER intro captions — Chris's locked round-5 copy replaces this whole
+## array (story brief: exposition -> confrontation -> transformation -> bridge).
+## Beats auto-play at CAPTION_SECONDS each; the panel fits ~3 short lines, so keep
+## each beat short. "" speaker = a narrator caption.
 const SHOT1 := [
-	["IRENE", "You still have my copy of 'Peep and the Big Wide World.'"],
-	["ARIANA", "I do."],
-	["IRENE", "I'd like it back."],
+	["", "Ariana rented a film from the library. She never brought it back."],
+	["IRENE", "You still have my copy. The late fee has escalated."],
 	["ARIANA", "I'm not going to return it."],
-	["IRENE", "Understood."],
+	["IRENE", "Then it's the usual arrangement, I'm afraid."],
+	["", "(Irene is the librarian. This is, apparently, what she does.)"],
 ]
-const LANDING := "It's not much of a job. But it's yours now."
+## PLACEHOLDER landing/bridge caption — replaced with Chris's locked line.
+const LANDING := "Find Ariana. The library's east. Bring her home."
 
 const IRENE_TEX := preload("res://assets/game/Irene.png")
 const GOOSE_TEX := preload(
 	"res://assets/cute_fantasy/packs/Cute_Fantasy/Cute_Fantasy/Animals/Goose/Goose_01.png"
 )
 
-## Shot timings (seconds) and zooms — tune in-engine.
+## Shot timings (seconds) and zooms — tune in-engine. The pan is deliberately slow
+## and pulled-back (Chris's playtest: the old 6s/zoom-2.6 sweep was too fast and
+## too tight — hard on the eyes). Lower zoom = wider view; higher PAN_SECONDS = slower.
 const CAPTION_SECONDS := 2.6
-const CUT_FADE := 0.5
 const GOOSE_SECONDS := 2.2
-const PAN_SECONDS := 6.0
+const PAN_SECONDS := 11.0
 const LIBRARY_ZOOM := 3.2
-const PULLBACK_ZOOM := 2.6
+const PULLBACK_ZOOM := 1.8
 const FOLLOW_ZOOM := 2.5
+
+## Shot 2 is a burst of magic light (not a plain cut-to-black) so the
+## transformation reads as a spell: snap to light, swap under the peak, bloom away
+## to reveal the goose. Asset-free (a warm-white flash + a textureless sparkle) so
+## the headless asset gate stays green. Tune in-engine.
+const FLASH_RISE := 0.18
+const FLASH_HOLD := 0.22
+const FLASH_FALL := 0.7
 
 @export var camera_path: NodePath
 @export var world_path: NodePath
@@ -52,12 +66,12 @@ var _goose: Node2D
 @onready var _cap_layer: CanvasLayer = $Captions
 @onready var _cap_name: Label = $Captions/Panel/Name
 @onready var _cap_text: Label = $Captions/Panel/Text
-@onready var _blackout: ColorRect = $Blackout/Rect
+@onready var _flash: ColorRect = $Flash/Rect
 
 
 func _ready() -> void:
 	_cap_layer.visible = false
-	_blackout.modulate.a = 0.0
+	_flash.modulate.a = 0.0
 	if _camera == null or _world == null:
 		push_error("CutsceneDirector: camera_path/world_path did not resolve.")
 
@@ -96,16 +110,41 @@ func _play_captions() -> bool:
 	return true
 
 
-## Shot 2 — cut to black, swap human-Ariana for the goose under cover, fade back.
+## Shot 2 — a burst of magic light covers the human-Ariana -> goose swap: snap to
+## light, swap + spray a sparkle at the peak, then bloom away to reveal the goose.
 func _play_cut(library_world: Vector2) -> bool:
-	_tween_prop(_blackout, "modulate:a", 1.0, CUT_FADE)
-	if not await _wait(CUT_FADE):
+	_tween_prop(_flash, "modulate:a", 1.0, FLASH_RISE)
+	if not await _wait(FLASH_RISE):
 		return false
 	_swap_to_goose(library_world)
-	if not await _wait(CUT_FADE):
+	_spawn_sparkle(library_world)
+	if not await _wait(FLASH_HOLD):
 		return false
-	_tween_prop(_blackout, "modulate:a", 0.0, CUT_FADE)
-	return await _wait(CUT_FADE)
+	_tween_prop(_flash, "modulate:a", 0.0, FLASH_FALL)
+	return await _wait(FLASH_FALL)
+
+
+## A one-shot magic sparkle at the transform point — textureless CPUParticles2D
+## (small bright motes, no art asset) that frees itself once the burst is done.
+## A placeholder VFX; the exact look is Chris's to dial in-engine.
+func _spawn_sparkle(at: Vector2) -> void:
+	var burst := CPUParticles2D.new()
+	burst.position = at + Vector2(0, -6)
+	burst.one_shot = true
+	burst.explosiveness = 0.9
+	burst.amount = 28
+	burst.lifetime = 0.9
+	burst.direction = Vector2.UP
+	burst.spread = 180.0
+	burst.gravity = Vector2.ZERO
+	burst.initial_velocity_min = 24.0
+	burst.initial_velocity_max = 70.0
+	burst.scale_amount_min = 1.0
+	burst.scale_amount_max = 2.5
+	burst.color = Color(1.0, 0.95, 0.6)
+	burst.emitting = true
+	_world.add_child(burst)
+	get_tree().create_timer(burst.lifetime + 0.4).timeout.connect(burst.queue_free)
 
 
 ## Shot 3 — goose runs while the camera pulls back; shot 4 — the long pan west.
@@ -213,7 +252,7 @@ func _release() -> void:
 	if _active_tween != null and _active_tween.is_valid():
 		_active_tween.kill()
 	_hide_caption()
-	_blackout.modulate.a = 0.0
+	_flash.modulate.a = 0.0
 	for actor in [_irene, _ariana, _goose]:
 		if is_instance_valid(actor):
 			actor.queue_free()
