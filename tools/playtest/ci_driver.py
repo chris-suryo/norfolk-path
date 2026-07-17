@@ -213,14 +213,15 @@ def run_fresh(page) -> list:
     time.sleep(0.8)
     outside = d.shot("13-after-roll")
 
-    # DOOR LOOP — walk into cottage A's doorway (cell 10,19) and back out.
-    # Post-roll the player sits ~cell (6.5, 23.7) facing north. Route: north to
-    # ~row 22 (clear of the lamp at (8,20)), east along row 22 to the door
-    # column, then north through the collision door gap; the transition fires
-    # mid-hold. Every crossing hides ~0.44s of black fade — sleep it out
-    # before screenshotting.
+    # DOOR LOOP — walk into cottage A's doorway and back out. The door ART is
+    # left of sprite center (door_dx -17): gap center sits at col ~9.4, trigger
+    # cells (8..10,19), flanking lamps at (7,20)/(11,20). Post-roll the player
+    # sits ~cell (6.5, 23.7) facing north. Route: north to ~row 22, east along
+    # row 22 to the walkway stub (cols 8-9), then north through the collision
+    # door gap; the transition fires mid-hold. Every crossing hides ~0.44s of
+    # black fade — sleep it out before screenshotting.
     d.hold("w", 0.47)
-    d.hold("d", 1.09)
+    d.hold("d", 0.80)
     d.hold("w", 0.9, settle=0.2)
     time.sleep(1.6)
     interior = d.shot("14-interior")
@@ -231,7 +232,7 @@ def run_fresh(page) -> list:
             f"14-interior: only {delta_in} pixels changed after the door walk — "
             f"the transition into home_a1 did not happen"
         )
-    # Interior spawn (5,6); the exit mat is directly south at (5,7).
+    # Interior spawn (5,7); the exit mat is directly south at (5,8).
     d.hold("s", 0.6, settle=0.2)
     time.sleep(1.6)
     back = d.shot("15-back-outside")

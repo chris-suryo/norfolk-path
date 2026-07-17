@@ -43,29 +43,30 @@ const LEVELS := {
 		"entries":
 		{
 			"from_cove": Vector2i(186, 25),
-			"from_cottage": Vector2i(21, 18),
-			"from_home_a1": Vector2i(10, 20),
-			"from_home_a2": Vector2i(27, 35),
-			"from_home_g2": Vector2i(38, 37),
-			"from_home_j1": Vector2i(14, 36),
-			"from_home_e1": Vector2i(33, 21),
+			"from_cottage": Vector2i(18, 18),
+			"from_home_a1": Vector2i(9, 20),
+			"from_home_a2": Vector2i(26, 35),
+			"from_home_g2": Vector2i(35, 37),
+			"from_home_j1": Vector2i(12, 36),
+			"from_home_e1": Vector2i(34, 21),
 			"from_barn": Vector2i(43, 18),
 		},
-		# East-edge crossing to the cove + one door per building. Every building
-		# sprite has a centered door gap in its collision, so the trigger is the
-		# door-mouth cell ITSELF (the anchor): you must step INTO the doorway to
-		# travel. (The old trigger sat on the path row in front of cottage G, so
-		# just walking the village path yanked you inside — the "abrupt" bug.)
+		# East-edge crossing to the cove + one door per building. Door art is
+		# OFF-CENTER on most house sprites (the round-3 "entrance not where it
+		# looks" bug), so trigger cells cover the cells the 20px collision gap
+		# actually overlaps — computed from each building's measured door_dx in
+		# tools/gen_prop_table.py — and the entry sits one row below the gap's
+		# center column. You still must step INTO the doorway to travel.
 		"transitions":
 		[
 			{"cells": Rect2i(190, 24, 2, 5), "to": "cove", "entry": "from_valley"},
-			{"cells": Rect2i(21, 17, 1, 1), "to": "cottage", "entry": "from_valley"},
-			{"cells": Rect2i(10, 19, 1, 1), "to": "home_a1", "entry": "from_valley"},
-			{"cells": Rect2i(27, 34, 1, 1), "to": "home_a2", "entry": "from_valley"},
-			{"cells": Rect2i(38, 36, 1, 1), "to": "home_g2", "entry": "from_valley"},
-			{"cells": Rect2i(14, 35, 1, 1), "to": "home_j1", "entry": "from_valley"},
-			{"cells": Rect2i(33, 20, 1, 1), "to": "home_e1", "entry": "from_valley"},
-			{"cells": Rect2i(43, 17, 1, 1), "to": "barn_int", "entry": "from_valley"},
+			{"cells": Rect2i(18, 17, 2, 1), "to": "cottage", "entry": "from_valley"},
+			{"cells": Rect2i(8, 19, 3, 1), "to": "home_a1", "entry": "from_valley"},
+			{"cells": Rect2i(25, 34, 3, 1), "to": "home_a2", "entry": "from_valley"},
+			{"cells": Rect2i(35, 36, 2, 1), "to": "home_g2", "entry": "from_valley"},
+			{"cells": Rect2i(12, 35, 2, 1), "to": "home_j1", "entry": "from_valley"},
+			{"cells": Rect2i(33, 20, 2, 1), "to": "home_e1", "entry": "from_valley"},
+			{"cells": Rect2i(42, 17, 3, 1), "to": "barn_int", "entry": "from_valley"},
 		],
 	},
 	"cove":

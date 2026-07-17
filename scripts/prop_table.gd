@@ -110,9 +110,9 @@ const PROPS := {
 		Vector2(0, 0),
 		Vector2(0, 0),
 		[
-			[Vector2(13, 8), Vector2(-16.5, -4)],
-			[Vector2(13, 8), Vector2(16.5, -4)],
-			[Vector2(20, 6), Vector2(0, -15)]
+			[Vector2(7, 8), Vector2(-30.5, -4)],
+			[Vector2(30, 8), Vector2(8, -4)],
+			[Vector2(20, 6), Vector2(-17, -15)]
 		]
 	],
 	"C": ["chicken", Rect2(0, 0, 32, 32), Vector2(0, -10), Vector2(0, 0), Vector2(0, 0), []],
@@ -124,9 +124,9 @@ const PROPS := {
 		Vector2(0, 0),
 		Vector2(0, 0),
 		[
-			[Vector2(38, 8), Vector2(-29, -4)],
-			[Vector2(38, 8), Vector2(29, -4)],
-			[Vector2(20, 6), Vector2(0, -15)]
+			[Vector2(50, 8), Vector2(-23, -4)],
+			[Vector2(26, 8), Vector2(35, -4)],
+			[Vector2(20, 6), Vector2(12, -15)]
 		]
 	],
 	"G":
@@ -137,9 +137,9 @@ const PROPS := {
 		Vector2(0, 0),
 		Vector2(0, 0),
 		[
-			[Vector2(38, 8), Vector2(-29, -4)],
-			[Vector2(38, 8), Vector2(29, -4)],
-			[Vector2(20, 6), Vector2(0, -15)]
+			[Vector2(5, 8), Vector2(-55.5, -4)],
+			[Vector2(81, 8), Vector2(7.5, -4)],
+			[Vector2(20, 6), Vector2(-43, -15)]
 		]
 	],
 	"H": ["stall", Rect2(96, 0, 48, 48), Vector2(0, -16), Vector2(26, 10), Vector2(0, 0), []],
@@ -151,9 +151,9 @@ const PROPS := {
 		Vector2(0, 0),
 		Vector2(0, 0),
 		[
-			[Vector2(22, 8), Vector2(-21, -4)],
-			[Vector2(22, 8), Vector2(21, -4)],
-			[Vector2(20, 6), Vector2(0, -15)]
+			[Vector2(8, 8), Vector2(-40, -4)],
+			[Vector2(48, 8), Vector2(8, -4)],
+			[Vector2(20, 6), Vector2(-26, -15)]
 		]
 	],
 	"K": ["scarecrow", Rect2(0, 0, 32, 32), Vector2(0, -8), Vector2(6, 10), Vector2(0, 0), []],

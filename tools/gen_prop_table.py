@@ -147,16 +147,18 @@ SPEC = {
 
 # Buildings drawn via blit_building (whole sheet, foot offset) — derive region +
 # offset from the sheet dims so we don't hand-copy 240x192 etc.
-BUILDINGS = {  # sym: (sheet_key, foot, foundation_width, foundation_y)
-    # Each doorway has a 20px recess. Low left/right foundations stop a player
-    # at the visible facade; the shallow rear backstop keeps the recess exterior
-    # until buildings gain real enter/exit scenes.
-    "L": ("inn", 8, 186, -4),
-    "A": ("house_a", 8, 46, -4),
-    "G": ("house_g", 8, 96, -4),
-    "J": ("house_j", 8, 64, -4),
-    "E": ("house_e", 8, 96, -4),
-    "Y": ("barn", 8, 76, -4),
+BUILDINGS = {  # sym: (sheet_key, foot, facade_left, facade_right, foundation_y, door_dx)
+    # Each doorway is a 20px collision gap. Round-3 finding: the drawn doors are
+    # NOT centered on most sprites — door_dx (px from sprite center, measured
+    # from the art) shifts the gap onto the actual door, and the facade extends
+    # to the art edge on the door side so the shifted gap still has a wall
+    # segment beyond it. The shallow rear backstop keeps the recess exterior.
+    "L": ("inn", 8, -93, 93, -4, 0),
+    "A": ("house_a", 8, -34, 23, -4, -17),
+    "G": ("house_g", 8, -58, 48, -4, -43),
+    "J": ("house_j", 8, -44, 32, -4, -26),
+    "E": ("house_e", 8, -48, 48, -4, 12),
+    "Y": ("barn", 8, -38, 38, -4, 0),
 }
 
 WELL = ("well", 6, 16, 8, -5)
@@ -173,16 +175,21 @@ def build_table():
             errors.append(f"{sym}: region ({rx},{ry},{rw},{rh}) exceeds {key} {sw}x{sh}")
         used_sheets.add(key)
         table[sym] = (key, rx, ry, rw, rh, ax + rw / 2.0, ay + rh / 2.0, cw, ch, 0.0, 0.0)
-    for sym, (key, foot, width, foundation_y) in BUILDINGS.items():
+    for sym, (key, foot, facade_left, facade_right, foundation_y, door_dx) in BUILDINGS.items():
         rel = SHEETS[key]
         sw, sh = dims(rel)
         used_sheets.add(key)
-        # whole sheet, centered offset = (0, foot - sh/2)
-        side_width = (width - 20.0) / 2.0
+        # whole sheet, centered offset = (0, foot - sh/2). The 20px door gap sits
+        # at door_dx; a wall segment runs from each facade edge to the gap.
+        left_w = (door_dx - 10.0) - facade_left
+        right_w = facade_right - (door_dx + 10.0)
+        if left_w <= 0 or right_w <= 0:
+            errors.append(f"{sym}: door gap at {door_dx} leaves no wall (L={left_w} R={right_w})")
+            continue
         segments = [
-            (side_width, 8.0, -(10.0 + side_width / 2.0), foundation_y),
-            (side_width, 8.0, 10.0 + side_width / 2.0, foundation_y),
-            (20.0, 6.0, 0.0, foundation_y - 11.0),
+            (left_w, 8.0, facade_left + left_w / 2.0, foundation_y),
+            (right_w, 8.0, door_dx + 10.0 + right_w / 2.0, foundation_y),
+            (20.0, 6.0, float(door_dx), foundation_y - 11.0),
         ]
         table[sym] = (key, 0, 0, sw, sh, 0.0, foot - sh / 2.0, 0.0, 0.0, 0.0, 0.0, segments)
     key, foot, cw, ch, collider_y = WELL
