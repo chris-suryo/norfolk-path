@@ -349,11 +349,14 @@ def render(spec: dict, grid: list) -> Image.Image:
         for x in range(w):
             px, py = (x * TILE) % floor.width, (y * TILE) % floor.height
             img.paste(floor.crop((px, py, px + TILE, py + TILE)), (x * TILE, y * TILE))
-    # ... walls: trim on row 0, body below (the 2-row band + borders) ...
+    # ... walls: trim on row 0, body below (the 2-row band + borders). The exit
+    # mat cell ('>') stays FLOOR — painting the whole border by geometry walled
+    # over the doorway and made every exit invisible (round-3.5 regression; the
+    # transition still worked, players just saw solid wall).
     for y in range(h):
         for x in range(w):
             border = y < WALL_TOP_ROWS or y == h - 1 or x == 0 or x == w - 1
-            if border:
+            if border and grid[y][x] != ">":
                 tile = wall_top if y == 0 else wall_body
                 img.paste(tile, (x * TILE, y * TILE), tile)
     # ... windows set into the wall band ...
