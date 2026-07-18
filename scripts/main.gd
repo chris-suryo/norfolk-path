@@ -202,6 +202,7 @@ func _ready() -> void:
 	_spawn_fences()
 	_spawn_transitions()
 	_spawn_talkers()
+	_spawn_chests()
 	# Encounters/checkpoints/respawn — AFTER players are positioned so a
 	# saved-checkpoint resume can override the default spawn.
 	$World/EncounterManager.setup($HUD, _def.encounters, _map)
@@ -232,6 +233,20 @@ func _add_talker(npc_id: String, at: Vector2) -> void:
 	talker.npc_id = npc_id
 	talker.position = at
 	_world.add_child(talker)
+
+
+## Reward chests, code-placed from LootData (the map's decorative `x` is a singleton
+## and is suppressed in _spawn_props). Valley-only, like the guide/Ariana; runs after
+## _spawn_talkers so the shared DialogueBox exists for the pickup message.
+func _spawn_chests() -> void:
+	if not _def.has_ariana:
+		return
+	for cell in LootData.CHESTS:
+		var chest := Chest.new()
+		chest.chest_id = LootData.chest_id(cell)
+		chest.upgrade_id = LootData.CHESTS[cell]
+		chest.position = _map.cell_center(cell)
+		_world.add_child(chest)
 
 
 ## The cell the players spawn on: the named entry they arrived through (a door /
@@ -299,6 +314,8 @@ func _spawn_props() -> void:
 			var sym := row[x]
 			if not PropTable.PROPS.has(sym):
 				continue
+			if sym == "x":
+				continue  # chests are live Chest nodes now (see _spawn_chests)
 			var spec: Array = PropTable.PROPS[sym]
 			var base := _map.cell_center(Vector2i(x, y))
 			if ANIMAL_ANIM.has(sym):
