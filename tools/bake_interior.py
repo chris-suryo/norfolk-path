@@ -264,6 +264,28 @@ INTERIORS = {
             ("barrel", 12, 8),
         ],
     },
+    # z @ (56,39) — the windmill's ground floor: a working mill storeroom. Grain
+    # and flour barrels line both walls, a work table sits center, hand-authored
+    # (no mill ROOM_TEMPLATE / no sack sprite exists) in the barn_int style.
+    "windmill": {
+        "size": (11, 9),
+        "wall": "wood",
+        "floor": "wood_mix",
+        "windows": [3, 7],
+        "furniture": [
+            ("barrel", 1, 3),
+            ("barrel_water", 1, 5),
+            ("barrel_berry", 1, 7),
+            ("crate", 2, 6),
+            ("barrel", 9, 3),
+            ("barrel_water", 9, 5),
+            ("barrel_berry", 9, 7),
+            ("crate", 8, 6),
+            ("table_dark", 4, 5),
+            ("lamp_gold", 8, 3),
+            ("plant_leafy", 2, 3),
+        ],
+    },
 }
 
 _sheet_cache = {}
