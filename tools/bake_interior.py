@@ -26,9 +26,12 @@ Writes scripts/<id>_map.gd + assets/generated/<id>-ground.png per room.
 """
 
 import math
+import sys
 from pathlib import Path
 
 from PIL import Image
+
+import interior_furnish
 
 REPO = Path(__file__).resolve().parents[1]
 PACK = REPO / "assets/cute_fantasy/packs/Cute_Fantasy/Cute_Fantasy/Buildings"
@@ -157,6 +160,8 @@ INTERIORS = {
         "wall": "plaster",
         "floor": "tile_blue",
         "windows": [3, 9],
+        # PROCEDURAL (see home_j1): furnisher-generated; list below is the fallback.
+        "furnish": {"type": "parlor"},
         "furniture": [
             ("rug_teal", 5, 7),
             ("fireplace", 2, 3),
@@ -177,6 +182,9 @@ INTERIORS = {
         "wall": "wood",
         "floor": "wood_mix",
         "windows": [4],
+        # PROCEDURAL: the furnisher generates this room (seed = id); the
+        # hand-authored list below is the kept fallback — delete "furnish" to revert.
+        "furnish": {"type": "bedroom"},
         "furniture": [
             ("bed", 1, 3),
             ("crate", 7, 3),
@@ -215,6 +223,8 @@ INTERIORS = {
         "wall": "stone",
         "floor": "wood_dark",
         "windows": [4, 12],
+        # PROCEDURAL (see home_j1): furnisher-generated; list below is the fallback.
+        "furnish": {"type": "library"},
         "furniture": [
             ("rug_teal", 7, 9),
             ("bookshelf_big", 1, 3),
@@ -401,8 +411,35 @@ def write_gd(interior_id: str, grid: list) -> None:
     (REPO / f"scripts/{interior_id}_map.gd").write_text(text, encoding="utf-8")
 
 
+def catalog() -> dict:
+    """name -> (fw, fh, kind) for every sprite — the abstract catalog the
+    procedural furnisher places against (it never touches the art itself)."""
+    return {name: (*footprint(name), SPRITES[name][2]) for name in SPRITES}
+
+
+def resolve_furniture(interior_id: str, spec: dict, cat: dict) -> dict:
+    """A room may opt into procedural furnishing via a ``furnish`` block
+    (``{"type": ..., "seed": ...}``); then its furniture list is GENERATED
+    (deterministic per id), else the hand-authored ``furniture`` is used. Either
+    way the result flows through the same validate/render pipeline + backstop."""
+    if "furnish" not in spec:
+        return spec
+    fspec = spec["furnish"]
+    resolved = dict(spec)
+    resolved["furniture"] = interior_furnish.furnish(
+        fspec["type"], spec["size"], spec.get("windows", []), fspec.get("seed", interior_id), cat
+    )
+    return resolved
+
+
 def main() -> None:
-    for interior_id, spec in INTERIORS.items():
+    # `--only <id>` bakes a single room (fast iteration); default bakes all.
+    only = sys.argv[2] if len(sys.argv) >= 3 and sys.argv[1] == "--only" else None
+    cat = catalog()
+    for interior_id, raw in INTERIORS.items():
+        if only is not None and interior_id != only:
+            continue
+        spec = resolve_furniture(interior_id, raw, cat)
         w, h = spec["size"]
         grid = build_grid(w, h)
         validate_and_stamp(interior_id, spec, grid)

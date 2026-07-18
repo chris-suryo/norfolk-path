@@ -9,10 +9,10 @@ extends RefCounted
 const MAP := """
 XXXXXXXXX
 XXXXXXXXX
-XXX___X_X
-XXX___XXX
-X______XX
-X______XX
-X___S___X
+X_____XXX
+XX____XXX
+XX______X
+XX_____XX
+XX__S__XX
 XXXX>XXXX
 """
