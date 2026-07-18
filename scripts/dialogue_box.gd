@@ -69,6 +69,25 @@ func open(npc_id: String) -> void:
 	get_tree().paused = true
 
 
+## Show an arbitrary message not backed by DialogueData — used by chests/pickups for
+## "you found X" feedback. Reuses the same advance-to-close machinery; no choices.
+func show_message(speaker: String, lines: Array) -> void:
+	if _panel.visible:
+		return
+	_lines = PackedStringArray(lines)
+	_index = 0
+	_choices = {}
+	_choice_active = false
+	_choices_box.visible = false
+	_text_label.visible = true
+	_name_label.text = speaker
+	_text_label.text = _lines[0] if _lines.size() > 0 else "..."
+	_panel.visible = true
+	_prompt.visible = false
+	Game.dialogue_active = true
+	get_tree().paused = true
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not _panel.visible:
 		return

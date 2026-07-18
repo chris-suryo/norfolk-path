@@ -25,6 +25,18 @@ const FADE_HALF := 0.22
 const WIN_SCENE := "res://scenes/win_screen.tscn"
 const WIN_DELAY := 3.0
 
+## Power-up catalog (direct, permanent upgrades). A chest grants one id;
+## Player._ready sums the stat deltas of every collected id onto its base exports,
+## and a live grant applies the same delta immediately. Ids are a curated set (no
+## quotes/backslashes), so they are save-safe like the appearance ids. Extend freely.
+const UPGRADES := {
+	"bow_power":
+	{"name": "Fletching Kit", "line": "Your arrows bite harder now.", "ranged_damage": 2},
+	"max_hp": {"name": "Heart Locket", "line": "You feel hardier.", "max_hp": 2},
+	"sword_power": {"name": "Whetstone", "line": "Your blade cuts deeper.", "attack_damage": 3},
+	"swift": {"name": "Swift Boots", "line": "Your step quickens.", "max_speed": 18},
+}
+
 var player_count := 1
 var checkpoint := 0
 ## Persisted only in begin_win_sequence, after the win screen is guaranteed to
@@ -88,6 +100,13 @@ var win_pending := false
 ## (fresh launch) rebuilds clears from the saved checkpoint instead — see
 ## EncounterManager._apply_resume.
 var cleared_areas: Array[int] = []
+
+## Permanent power-ups the party has collected (ids into UPGRADES) + the chest ids
+## already opened. BOTH are saved — they're progress, not run state — so upgrades
+## survive a relaunch and a chest never re-grants. Applied to each player in
+## Player._ready (players are recreated on every scene reload). Cleared on New Game.
+var upgrades: Array[String] = []
+var opened_chests: Array[String] = []
 
 var _fading := false
 var _fade_rect: ColorRect
@@ -195,6 +214,20 @@ func mark_area_cleared(id: int) -> void:
 		cleared_areas.append(id)
 
 
+## Open a chest ONCE: record it, collect its upgrade, and persist both together so a
+## reload/refresh can't lose the power-up or re-open the chest. Returns the UPGRADES
+## entry granted (for feedback), or {} if the chest was already opened. Live players
+## are boosted separately by the caller (Chest) via Player.apply_upgrade.
+func open_chest(chest_id: String, upgrade_id: String) -> Dictionary:
+	if chest_id in opened_chests:
+		return {}
+	opened_chests.append(chest_id)
+	if upgrade_id != "" and upgrade_id not in upgrades:
+		upgrades.append(upgrade_id)
+	save()
+	return UPGRADES.get(upgrade_id, {})
+
+
 func set_player_count(count: int) -> void:
 	player_count = clampi(count, 1, 2)
 
@@ -211,6 +244,8 @@ func reset_run() -> void:
 	win_pending = false
 	irene_choice = ""
 	cleared_areas.clear()
+	upgrades.clear()
+	opened_chests.clear()
 
 
 func appearance_for_player(player_index: int) -> Dictionary:
@@ -237,6 +272,10 @@ func save() -> void:
 		"boss_defeated": boss_defeated,
 		"level": current_level_id,
 		"appearances": appearances,
+		# Additive optional fields (no version bump — pre-upgrade saves default to
+		# empty on load). Both are curated-string arrays, quote/backslash-free.
+		"upgrades": upgrades,
+		"opened_chests": opened_chests,
 	}
 	var text := JSON.stringify(data)
 	last_saved = Time.get_time_string_from_system().substr(0, 5)
@@ -296,6 +335,15 @@ func _apply(text: String) -> bool:
 				if item is Dictionary:
 					loaded.append(item)
 		set_appearances(loaded)
+		# Additive optional fields — absent in pre-upgrade saves, default to empty.
+		upgrades.clear()
+		for u in parsed.get("upgrades", []):
+			if u is String:
+				upgrades.append(u)
+		opened_chests.clear()
+		for c in parsed.get("opened_chests", []):
+			if c is String:
+				opened_chests.append(c)
 		if version == PREVIOUS_SAVE_VERSION:
 			save()
 	return ok

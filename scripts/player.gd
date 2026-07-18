@@ -117,11 +117,42 @@ var _downed_emitted := false
 func _ready() -> void:
 	_action_prefix = "p%d_" % player_index
 	_appearance.apply_profile(Game.appearance_for_player(player_index))
+	_apply_all_upgrades()  # before _hp = max_hp, so a Heart Locket spawns you full
 	_hp = max_hp
 	add_to_group("players")
 	_sword.monitoring = true
 	_sword_shape.disabled = true
 	health_changed.emit(_hp, max_hp)
+
+
+## Re-apply every collected power-up onto the base exports. Players are recreated on
+## each scene reload, so upgrades live on the Game autoload and are re-summed here.
+func _apply_all_upgrades() -> void:
+	for uid in Game.upgrades:
+		_add_upgrade(uid)
+
+
+## Grant one upgrade to a LIVE player (called by a Chest on open) so it's felt now,
+## not only after the next reload. A max-HP bump also heals by the gained amount so
+## the new capacity isn't left empty.
+func apply_upgrade(upgrade_id: String) -> void:
+	var gained_hp := _add_upgrade(upgrade_id)
+	if gained_hp > 0:
+		_hp = mini(_hp + gained_hp, max_hp)
+		health_changed.emit(_hp, max_hp)
+
+
+## Add one upgrade's stat deltas onto the exports. Returns the max-HP delta so a live
+## grant can heal to match; zero for non-HP upgrades.
+func _add_upgrade(upgrade_id: String) -> int:
+	var up: Dictionary = Game.UPGRADES.get(upgrade_id, {})
+	var hp_gain := int(up.get("max_hp", 0))
+	max_hp += hp_gain
+	attack_damage += int(up.get("attack_damage", 0))
+	ranged_damage_min += int(up.get("ranged_damage", 0))
+	ranged_damage_max += int(up.get("ranged_damage", 0))
+	max_speed += float(up.get("max_speed", 0))
+	return hp_gain
 
 
 ## Current HP (the HUD reads this on connect; _hp itself stays private).
