@@ -348,10 +348,14 @@ func _release() -> void:
 		if is_instance_valid(actor):
 			actor.queue_free()
 	if _camera != null:
+		# Restore the player's chosen zoom, not a hardcoded default: set_zoom_preset
+		# persists to Game.camera_zoom, so passing FOLLOW_ZOOM here would overwrite
+		# a player's preset every time a cutscene ends. Game.camera_zoom defaults to
+		# FOLLOW_ZOOM's 2.5 on a fresh launch, so the intro pan is unaffected.
 		if _camera.has_method("set_zoom_preset"):
-			_camera.set_zoom_preset(FOLLOW_ZOOM)
+			_camera.set_zoom_preset(Game.camera_zoom)
 		else:
-			_camera.zoom = Vector2(FOLLOW_ZOOM, FOLLOW_ZOOM)
+			_camera.zoom = Vector2(Game.camera_zoom, Game.camera_zoom)
 		if _landing != null:
 			_camera.global_position = _landing.global_position
 		_camera.set_physics_process(true)
