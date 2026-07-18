@@ -91,6 +91,9 @@ func take_damage(amount: int, from: Vector2) -> void:
 	if _dead:
 		return
 	_hp -= amount
+	# Getting hit wakes it — so an arrow from beyond aggro_radius still starts the
+	# chase instead of leaving it idling (inherited by ranged + bomb enemies).
+	_aggro = true
 	_knockback = (global_position - from).normalized() * knockback_speed
 	if _hp <= 0:
 		_die()
