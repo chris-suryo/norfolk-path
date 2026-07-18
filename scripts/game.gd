@@ -93,6 +93,14 @@ var intro_played := false
 ## this autoload (begin_win_sequence) so a freed EncounterManager can't strand it.
 var win_pending := false
 
+## Runtime-only: the game-speed multiplier, an experiment knob for pace. Driven by
+## the pause-menu Speed row via set_game_speed, which pushes it to Engine.time_scale
+## — one global lever that scales the player, enemies, projectiles, and tweens
+## together, so combat relationships stay intact. Engine.time_scale is global (it
+## also scales cutscenes, fades, and menus), and it is NOT saved: a fresh launch
+## starts at 1.0. The var mirrors time_scale so the pause row can re-sync on open.
+var game_speed := 1.0
+
 ## Runtime-only: the encounter-area ids the party has already cleared this run.
 ## NOT persisted (keeps the ints/bools-only save note above): it exists to survive
 ## change_scene, which frees the EncounterManager and its per-area `cleared` flags.
@@ -230,6 +238,13 @@ func open_chest(chest_id: String, upgrade_id: String) -> Dictionary:
 
 func set_player_count(count: int) -> void:
 	player_count = clampi(count, 1, 2)
+
+
+## Set the game-speed multiplier and apply it globally via Engine.time_scale.
+## Kept in lockstep with game_speed so the pause row can read one back the other.
+func set_game_speed(value: float) -> void:
+	game_speed = value
+	Engine.time_scale = value
 
 
 ## Clears RUN progress only. Appearances are identity, not run state: they

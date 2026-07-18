@@ -10,6 +10,8 @@ extends CanvasLayer
 ##   Resume        -> unpause, hide.
 ##   Zoom          -> cycle Far / Normal / Close camera presets live; the value
 ##                    row also steps with Left/Right, like the character creator.
+##   Speed         -> cycle Slow / Normal / Fast game speed (Engine.time_scale),
+##                    a pace experiment knob; steps with Left/Right like Zoom.
 ##   Save Now      -> Game.save(), then show the "Saved HH:MM" confirmation.
 ##   Controls      -> open the key-remap overlay.
 ##   How to Play   -> open the read-only control reference.
@@ -30,18 +32,28 @@ const ZOOM_PRESETS := [
 	{"label": "Close", "value": 3.0},
 ]
 
+## label shown / Engine.time_scale multiplier for each Speed preset. Modest spread
+## on purpose — a pace experiment, not a slow-mo toy; tune the values live.
+const SPEED_PRESETS := [
+	{"label": "Slow", "value": 0.8},
+	{"label": "Normal", "value": 1.0},
+	{"label": "Fast", "value": 1.25},
+]
+
 ## Path to the FollowCamera whose zoom the presets drive.
 @export var camera_path: NodePath
 
 var _open := false
 var _selected := 0
 var _zoom_idx := 1
+var _speed_idx := 1
 ## True while an overlay (Controls or How to Play) is on top — the pause menu goes
 ## inert (its panel hidden, its input ignored) until the overlay reports closed.
 var _overlay_open := false
 
 @onready var _panel: Control = $Panel
 @onready var _zoom_label: Label = $Panel/Frame/Box/Zoom
+@onready var _speed_label: Label = $Panel/Frame/Box/Speed
 @onready var _status: Label = $Panel/Frame/Box/Status
 @onready var _camera: Node = get_node_or_null(camera_path)
 @onready var _controls: ControlsMenu = $ControlsMenu
@@ -49,6 +61,7 @@ var _overlay_open := false
 @onready var _options: Array = [
 	$Panel/Frame/Box/Resume,
 	$Panel/Frame/Box/Zoom,
+	$Panel/Frame/Box/Speed,
 	$Panel/Frame/Box/Save,
 	$Panel/Frame/Box/Controls,
 	$Panel/Frame/Box/HowToPlay,
@@ -64,6 +77,7 @@ func _ready() -> void:
 	_how_to_play.closed.connect(_on_overlay_closed)
 	_wire_mouse()
 	_sync_zoom_label()
+	_sync_speed_from_game()
 
 
 ## Mouse as a second input path (keyboard stays): hover highlights, a click on the
@@ -119,6 +133,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("ui_right") and _selected == 1:
 		_cycle_zoom(1)
 		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("ui_left") and _selected == 2:
+		_cycle_speed(-1)
+		get_viewport().set_input_as_handled()
+	elif event.is_action_pressed("ui_right") and _selected == 2:
+		_cycle_speed(1)
+		get_viewport().set_input_as_handled()
 	elif event.is_action_pressed("ui_accept"):
 		_activate()
 		get_viewport().set_input_as_handled()
@@ -133,6 +153,9 @@ func _toggle() -> void:
 		_open = true
 		_panel.visible = true
 		get_tree().paused = true
+		# This node is rebuilt on every scene reload, so _speed_idx resets while
+		# Engine.time_scale persists — re-sync the row to the live speed on open.
+		_sync_speed_from_game()
 		_refresh()
 
 
@@ -154,12 +177,14 @@ func _activate() -> void:
 		1:
 			_cycle_zoom()
 		2:
-			_save_now()
+			_cycle_speed()
 		3:
-			_open_controls()
+			_save_now()
 		4:
-			_open_how_to_play()
+			_open_controls()
 		5:
+			_open_how_to_play()
+		6:
 			_return_to_title()
 
 
@@ -190,6 +215,14 @@ func _cycle_zoom(dir: int = 1) -> void:
 	_sync_zoom_label()
 
 
+## Steps the game-speed preset like the zoom row. set_game_speed pushes the value
+## to Engine.time_scale, so every timed thing (player, enemies, tweens) scales with it.
+func _cycle_speed(dir: int = 1) -> void:
+	_speed_idx = posmod(_speed_idx + dir, SPEED_PRESETS.size())
+	Game.set_game_speed(SPEED_PRESETS[_speed_idx]["value"])
+	_sync_speed_label()
+
+
 func _save_now() -> void:
 	Game.save()
 	_status.text = "Saved %s" % Game.last_saved
@@ -202,6 +235,26 @@ func _return_to_title() -> void:
 
 func _sync_zoom_label() -> void:
 	_zoom_label.text = "Zoom: %s" % ZOOM_PRESETS[_zoom_idx]["label"]
+
+
+## Point _speed_idx at the preset matching the live Engine.time_scale (mirrored on
+## Game.game_speed) before showing the menu, so a speed carried across a scene
+## reload doesn't leave the row stale. Falls back to the nearest preset if the live
+## value ever drifts off the discrete set.
+func _sync_speed_from_game() -> void:
+	var best := 0
+	var best_gap := INF
+	for i in SPEED_PRESETS.size():
+		var gap: float = absf(SPEED_PRESETS[i]["value"] - Game.game_speed)
+		if gap < best_gap:
+			best_gap = gap
+			best = i
+	_speed_idx = best
+	_sync_speed_label()
+
+
+func _sync_speed_label() -> void:
+	_speed_label.text = "Speed: %s" % SPEED_PRESETS[_speed_idx]["label"]
 
 
 func _refresh() -> void:
