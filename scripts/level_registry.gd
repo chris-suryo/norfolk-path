@@ -29,6 +29,7 @@ const HOME_J1_MAP := preload("res://scripts/home_j1_map.gd")
 const HOME_E1_MAP := preload("res://scripts/home_e1_map.gd")
 const BARN_INT_MAP := preload("res://scripts/barn_int_map.gd")
 const LIBRARY_MAP := preload("res://scripts/library_map.gd")
+const WINDMILL_MAP := preload("res://scripts/windmill_map.gd")
 
 const LEVELS := {
 	"valley":
@@ -52,6 +53,7 @@ const LEVELS := {
 			"from_home_e1": Vector2i(34, 21),
 			"from_barn": Vector2i(43, 18),
 			"from_library": Vector2i(162, 18),
+			"from_windmill": Vector2i(56, 40),
 		},
 		# East-edge crossing to the cove + one door per building. Door art is
 		# OFF-CENTER on most house sprites (the round-3 "entrance not where it
@@ -70,6 +72,7 @@ const LEVELS := {
 			{"cells": Rect2i(33, 20, 2, 1), "to": "home_e1", "entry": "from_valley"},
 			{"cells": Rect2i(42, 17, 3, 1), "to": "barn_int", "entry": "from_valley"},
 			{"cells": Rect2i(161, 17, 3, 1), "to": "library", "entry": "from_valley"},
+			{"cells": Rect2i(56, 39, 1, 1), "to": "windmill", "entry": "from_valley"},
 		],
 	},
 	"cove":
@@ -176,6 +179,17 @@ const LEVELS := {
 		"encounters": "",
 		"entries": {},
 		"transitions": [{"cells": Rect2i(8, 11, 1, 1), "to": "valley", "entry": "from_library"}],
+	},
+	"windmill":
+	{
+		"map": WINDMILL_MAP,
+		"ground": "res://assets/generated/windmill-ground.png",
+		"biome": "interior",
+		"has_shop": false,
+		"has_ariana": false,
+		"encounters": "",
+		"entries": {},
+		"transitions": [{"cells": Rect2i(5, 8, 1, 1), "to": "valley", "entry": "from_windmill"}],
 	},
 }
 

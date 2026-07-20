@@ -212,6 +212,18 @@ const PROPS := {
 	"w": ["decor", Rect2(0, 16, 16, 16), Vector2(0, 0), Vector2(0, 0), Vector2(0, 0), []],
 	"x": ["chest", Rect2(0, 0, 16, 16), Vector2(0, -4), Vector2(12, 8), Vector2(0, 0), []],
 	"y": ["butterfly", Rect2(0, 0, 16, 16), Vector2(0, -12), Vector2(0, 0), Vector2(0, 0), []],
-	"z": ["windmill", Rect2(0, 0, 64, 112), Vector2(0, -48), Vector2(28, 14), Vector2(0, 0), []],
+	"z":
+	[
+		"windmill",
+		Rect2(0, 0, 64, 112),
+		Vector2(0, -48),
+		Vector2(0, 0),
+		Vector2(0, 0),
+		[
+			[Vector2(10, 14), Vector2(-13, 0)],
+			[Vector2(10, 14), Vector2(13, 0)],
+			[Vector2(16, 4), Vector2(0, -5)]
+		]
+	],
 	"|": ["wfence", Rect2(16, 0, 16, 16), Vector2(0, 0), Vector2(14, 6), Vector2(0, 0), []],
 }
