@@ -33,6 +33,11 @@ var _bounds_source: TileMapLayer
 
 
 func _ready() -> void:
+	# Restore the zoom the player last chose: this node is rebuilt on every scene
+	# reload (doors/edges reload main.tscn), so without this it snaps back to the
+	# export default. Set before `zoom` so the deferred _apply_bounds below sizes
+	# interior clamps against the restored zoom, not the default.
+	zoom_level = Game.camera_zoom
 	zoom = Vector2(zoom_level, zoom_level)
 
 	if target_path.is_empty():
@@ -88,6 +93,9 @@ func _unhandled_input(event: InputEvent) -> void:
 func set_zoom_preset(value: float) -> void:
 	zoom_level = value
 	zoom = Vector2(value, value)
+	# Persist so the choice survives the next scene reload. Covers both the
+	# pause-menu presets and the mouse-wheel free-zoom (both route through here).
+	Game.camera_zoom = value
 	if _bounds_source != null and _bounds_source.tile_set != null:
 		_apply_bounds()
 
