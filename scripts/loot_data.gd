@@ -13,6 +13,10 @@ const CHESTS := {
 	# The forest camp's stash, earned by clearing the camp — a bow boost for the road
 	# ahead and the boss.
 	Vector2i(120, 32): "bow_power",
+	# The North Overlook, tucked under the birches on the meadow knoll behind the E
+	# cottage — the village's first, unguarded exploration reward. Swift Boots: felt
+	# instantly on the walk home, teaching "explore -> get stronger" without a combat gate.
+	Vector2i(35, 8): "swift",
 }
 
 
