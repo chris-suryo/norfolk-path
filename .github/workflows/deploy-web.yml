@@ -100,7 +100,33 @@ jobs:
           rm -rf .vercel/output
           mkdir -p .vercel/output/static
           cp -a "${{ steps.locate.outputs.dir }}/." .vercel/output/static/
-          printf '{"version":3}\n' > .vercel/output/config.json
+          # Cache policy (additive routes only — NEVER add COOP/COEP here: the
+          # export runs threads-off specifically so no isolation headers are
+          # needed, and adding them is the one way to break a working deploy):
+          # - engine/data blobs (wasm/pck) + art get a year of immutable cache;
+          #   every deploy uploads new files, so stale-cache risk is nil and a
+          #   returning player skips re-downloading the ~40MB engine wasm.
+          # - index.html revalidates every visit, so a new deploy is picked up
+          #   immediately.
+          cat > .vercel/output/config.json <<'CONFIG'
+          {
+            "version": 3,
+            "routes": [
+              {
+                "src": "/(.*)\\.(wasm|pck|png|ttf|otf|ico)",
+                "headers": { "cache-control": "public, max-age=31536000, immutable" },
+                "continue": true
+              },
+              {
+                "src": "/(index\\.html)?",
+                "headers": { "cache-control": "public, max-age=0, must-revalidate" },
+                "continue": true
+              },
+              { "handle": "filesystem" }
+            ]
+          }
+          CONFIG
+          python3 -c "import json; json.load(open('.vercel/output/config.json')); print('config.json: valid JSON')"
           echo "Staged Build Output API tree:"
           find .vercel/output -maxdepth 2
 
