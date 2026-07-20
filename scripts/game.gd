@@ -101,6 +101,14 @@ var win_pending := false
 ## starts at 1.0. The var mirrors time_scale so the pause row can re-sync on open.
 var game_speed := 1.0
 
+## Runtime-only: the last chosen camera zoom, so it survives scene reloads. Every
+## door/edge transition reloads main.tscn and rebuilds the FollowCamera, which
+## used to snap back to its export default (2.5) — the player's pause-menu preset
+## or mouse-wheel zoom was lost on every house entry/exit. FollowCamera restores
+## this on _ready and writes it back in set_zoom_preset. NOT persisted to disk
+## (the save is curated ints/bools); it resets to 2.5 on a fresh app launch.
+var camera_zoom := 2.5
+
 ## Runtime-only: the encounter-area ids the party has already cleared this run.
 ## NOT persisted (keeps the ints/bools-only save note above): it exists to survive
 ## change_scene, which frees the EncounterManager and its per-area `cleared` flags.

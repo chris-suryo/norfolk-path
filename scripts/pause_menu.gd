@@ -153,8 +153,10 @@ func _toggle() -> void:
 		_open = true
 		_panel.visible = true
 		get_tree().paused = true
-		# This node is rebuilt on every scene reload, so _speed_idx resets while
-		# Engine.time_scale persists — re-sync the row to the live speed on open.
+		# This node is rebuilt on every scene reload, so both rows can drift from
+		# their live values (zoom via wheel/reload, speed via Engine.time_scale
+		# persisting) — re-sync both to the live state on open.
+		_sync_zoom_from_game()
 		_sync_speed_from_game()
 		_refresh()
 
@@ -231,6 +233,23 @@ func _save_now() -> void:
 func _return_to_title() -> void:
 	get_tree().paused = false
 	Game.change_scene(SELECT_SCENE)
+
+
+## Point _zoom_idx at the preset nearest the live camera zoom before showing the
+## menu. The zoom can drift from the presets via the mouse wheel or a restore
+## across a scene reload, which would otherwise leave the label stale (and the
+## first Left/Right jump from a wrong index). Snapping to the nearest preset is
+## deliberate: cycling from there lands on a real preset value.
+func _sync_zoom_from_game() -> void:
+	var best := 0
+	var best_gap := INF
+	for i in ZOOM_PRESETS.size():
+		var gap: float = absf(ZOOM_PRESETS[i]["value"] - Game.camera_zoom)
+		if gap < best_gap:
+			best_gap = gap
+			best = i
+	_zoom_idx = best
+	_sync_zoom_label()
 
 
 func _sync_zoom_label() -> void:
