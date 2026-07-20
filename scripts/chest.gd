@@ -19,7 +19,7 @@ var upgrade_id := ""
 
 var _sprite: Sprite2D
 var _box: DialogueBox
-var _near := 0
+var _near_bodies: Array[Node] = []
 var _opened := false
 
 
@@ -53,20 +53,31 @@ func _ready() -> void:
 
 func _on_body_entered(body: Node) -> void:
 	if body is Player:
-		_near += 1
-		if _near == 1 and not _opened and _box != null:
+		_near_bodies.append(body)
+		if _near_bodies.size() == 1 and not _opened and _box != null:
 			_box.request_prompt(true)
 
 
 func _on_body_exited(body: Node) -> void:
 	if body is Player:
-		_near -= 1
-		if _near == 0 and _box != null:
+		_near_bodies.erase(body)
+		if _near_bodies.is_empty() and _box != null:
 			_box.request_prompt(false)
 
 
+## Same downed-state gate as Interactable: a downed co-op body next to the chest
+## must not open it (and pop its message box) mid-fight.
+func _any_near_targetable() -> bool:
+	for body in _near_bodies:
+		if is_instance_valid(body) and body.is_targetable():
+			return true
+	return false
+
+
 func _unhandled_input(event: InputEvent) -> void:
-	if _near <= 0 or _opened or Game.dialogue_active:
+	if _near_bodies.is_empty() or _opened or Game.dialogue_active:
+		return
+	if not _any_near_targetable():
 		return
 	if event.is_action_pressed("p1_interact") or event.is_action_pressed("p2_interact"):
 		get_viewport().set_input_as_handled()

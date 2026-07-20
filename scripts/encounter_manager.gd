@@ -38,6 +38,20 @@ const BOSS_ID := 4
 ## any player (the fight around them is cleared).
 const REVIVE_RADIUS := 130.0
 
+## Stand-off shooters (bowman ~stays at range, mage) killed a player from beyond
+## REVIVE_RADIUS and never closed in, so the death was voided by an instant free
+## revive (R4 B-13). An AGGROED enemy inside this wider radius still counts as
+## an ongoing fight; idle enemies (a sleeping camp you walked past) don't.
+const REVIVE_STANDOFF_RADIUS := 260.0
+
+## Checkpoints record by x-progress ALONG THE ROAD. Without a y-gate, any
+## walkable content north of the road (the Harbor Road loop, the Overlook)
+## advanced checkpoints — and woke the boss — from across the map the moment a
+## player's x passed an area center. A player must be within this band of the
+## area's road spot for their x to count. Generous enough for edge-hugging on
+## the widest road sections; far tighter than the meadows above.
+const CHECKPOINT_Y_BAND := 96.0
+
 var _areas: Array = []
 var _world: Node2D
 var _hud: Node
@@ -225,16 +239,19 @@ func _apply_resume() -> void:
 ## player has walked past (by world-x). Monotonic — never moves backward — so a
 ## respawn (which teleports players west to the checkpoint) can't lower it.
 func _update_checkpoint() -> void:
-	var max_x := -INF
-	for player in get_tree().get_nodes_in_group("players"):
-		if player.is_targetable():
-			max_x = maxf(max_x, player.global_position.x)
-	if max_x == -INF:
-		return
 	var reached := Game.checkpoint
 	for area in _areas:
-		if area.center.x <= max_x and area.id > reached:
-			reached = area.id
+		if area.id <= reached:
+			continue
+		# An area is passed when a live player is beyond its x AND near the road
+		# (the y-band) — x alone let the northern meadows trip checkpoints.
+		for player in get_tree().get_nodes_in_group("players"):
+			if not player.is_targetable():
+				continue
+			var pos: Vector2 = player.global_position
+			if pos.x >= area.center.x and absf(pos.y - area.center.y) <= CHECKPOINT_Y_BAND:
+				reached = area.id
+				break
 	if reached > Game.checkpoint:
 		Game.checkpoint = reached
 		Game.save()
@@ -271,6 +288,12 @@ func _update_coop_revive() -> void:
 			downed.append(player)
 	if not any_up or downed.is_empty() or _enemies_near_players(REVIVE_RADIUS):
 		return
+	# A stand-off shooter that never enters REVIVE_RADIUS is still the fight
+	# that downed them — no free revive while an AGGROED enemy is in stand-off
+	# range (B-13). Idle enemies don't block: a sleeping camp nearby must not
+	# trap a teammate in the downed state.
+	if _aggroed_enemies_near_players(REVIVE_STANDOFF_RADIUS):
+		return
 	for player in downed:
 		player.respawn_at(player.global_position)
 
@@ -294,6 +317,19 @@ func _enemies_near_players(radius: float) -> bool:
 	var players := get_tree().get_nodes_in_group("players")
 	for enemy in get_tree().get_nodes_in_group("enemies"):
 		if not is_instance_valid(enemy):
+			continue
+		for player in players:
+			if enemy.global_position.distance_to(player.global_position) <= radius:
+				return true
+	return false
+
+
+func _aggroed_enemies_near_players(radius: float) -> bool:
+	var players := get_tree().get_nodes_in_group("players")
+	for enemy in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(enemy):
+			continue
+		if not (enemy.has_method("is_aggroed") and enemy.is_aggroed()):
 			continue
 		for player in players:
 			if enemy.global_position.distance_to(player.global_position) <= radius:

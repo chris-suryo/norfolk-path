@@ -8,7 +8,7 @@ radius = 4.0
 
 [node name="EnemyBolt" type="Area2D"]
 collision_layer = 0
-collision_mask = 2
+collision_mask = 3
 script = ExtResource("1_bolt")
 
 [node name="Sprite" type="Sprite2D" parent="."]

@@ -12,6 +12,7 @@ extends Area2D
 
 var _dir := Vector2.RIGHT
 var _life := 0.0
+var _consumed := false
 
 
 func launch(direction: Vector2) -> void:
@@ -31,6 +32,14 @@ func _physics_process(delta: float) -> void:
 
 
 func _on_body_entered(body: Node) -> void:
+	# One book, one hit: queue_free is deferred, so without this guard a book
+	# overlapping both co-op players in the same physics tick damaged them both.
+	if _consumed:
+		return
 	if body.is_in_group("players") and body.has_method("take_damage"):
+		# A downed body must not soak the throw meant for the survivor.
+		if body.has_method("is_targetable") and not body.is_targetable():
+			return
+		_consumed = true
 		body.take_damage(damage, global_position)
 		queue_free()
