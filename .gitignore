@@ -41,3 +41,6 @@ assets/placeholder/
 
 .vercel
 .env*
+
+# launcher: cached local Godot exe path (per-machine)
+launcher/.godot-path
