@@ -61,3 +61,7 @@ jobs:
           # Connected-levels graph + dialogue coverage (transitions resolve,
           # arrivals walkable, interiors doored, every talker has lines).
           python tools/check_levels.py
+          # Audio registry: every Audio.SFX/TRACKS id resolves to a file, every
+          # non-generated audio file has a LICENSES.md entry, and gen_audio.py
+          # stays in sync with audio.gd.
+          python tools/check_audio.py
