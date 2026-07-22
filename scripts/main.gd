@@ -26,7 +26,26 @@ const WINDMILL_SAILS := (
 ## Used by the build-time coverage assert so a future map edit can never silently
 ## reintroduce the old blank-grass gap.
 const TERRAIN_SYMS := [
-	".", "#", "S", "~", "B", "D", "Q", "c", "g", "O", "k", "a", "l", "@", "$", "_", "X", ">", "!"
+	".",
+	"#",
+	"S",
+	"~",
+	"B",
+	"D",
+	"Q",
+	"c",
+	"g",
+	"O",
+	"k",
+	"a",
+	"l",
+	"@",
+	"$",
+	"_",
+	"X",
+	">",
+	"!",
+	"P"
 ]
 const FENCE_SYMS := ["F", "|"]
 
@@ -236,6 +255,18 @@ func _spawn_talkers() -> void:
 		_add_talker(
 			"note_%s_%d_%d" % [Game.current_level_id, cell.x, cell.y], _map.cell_center(cell)
 		)
+	# Interior residents: baked "P" floor cells (bake_interior.py). Each gets the
+	# SAME modular VillagerNpc body as the exterior "N" villagers (so indoor people
+	# share the farm-folk look) plus an Interactable on a level-scoped placeholder
+	# id, CI-checkable like the notes. Only interiors carry "P".
+	for cell in _map.find_all("P"):
+		_add_talker(
+			"person_%s_%d_%d" % [Game.current_level_id, cell.x, cell.y], _map.cell_center(cell)
+		)
+		var resident := VillagerNpc.new()
+		resident.profile = VillagerNpc.profile_for(cell.x, cell.y)
+		resident.position = _map.cell_center(cell)
+		_world.add_child(resident)
 
 
 func _add_talker(npc_id: String, at: Vector2) -> void:

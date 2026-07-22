@@ -160,6 +160,59 @@ const LINES := {
 		"name": "Worktable",
 		"lines": ["[PLACEHOLDER] A miller's ledger, open to a page of debts. One name is circled."],
 	},
+	# PLACEHOLDER — interior residents (the "P" cells baked into each room). Ids
+	# are person_<level>_<x>_<y>, one standing villager per house; Chris's real
+	# copy is a find-and-fill. Move/add/remove by editing the room's "people" in
+	# tools/bake_interior.py + re-baking; check_levels enforces every "P" cell has
+	# an entry here and vice versa.
+	"person_cottage_9_7":
+	{
+		"name": "Resident",
+		"lines": ["[PLACEHOLDER] Mind the ashes — that hearth's older than the house."],
+	},
+	"person_home_a1_8_6":
+	{
+		"name": "Cook",
+		"lines": ["[PLACEHOLDER] I'd offer you something, but the pot's been on since morning."],
+	},
+	"person_home_a2_7_6":
+	{
+		"name": "Gardener",
+		"lines": ["[PLACEHOLDER] Don't touch the one marked 'DO NOT'. I mean it."],
+	},
+	"person_home_g2_9_7":
+	{
+		"name": "Resident",
+		"lines": ["[PLACEHOLDER] Pull up a chair. We were just talking about you. ...Not really."],
+	},
+	"person_home_j1_6_5":
+	{
+		"name": "Lodger",
+		"lines": ["[PLACEHOLDER] Spare room, spare bed. You're welcome to neither."],
+	},
+	"person_home_e1_10_7":
+	{
+		"name": "Resident",
+		"lines":
+		["[PLACEHOLDER] The chalk marks on the chimney? One for every winter we've stayed."],
+	},
+	"person_library_13_9":
+	{
+		"name": "Reader",
+		"lines": ["[PLACEHOLDER] Quietly, please. Irene hears everything in here."],
+	},
+	"person_barn_int_10_8":
+	{
+		"name": "Farmhand",
+		"lines":
+		["[PLACEHOLDER] Careful past the barrels — the tally's optimistic, the floor isn't."],
+	},
+	"person_windmill_7_6":
+	{
+		"name": "Miller",
+		"lines":
+		["[PLACEHOLDER] Grain in, flour out. The debts in the ledger stay right where they are."],
+	},
 }
 
 const DEFAULT := {"name": "???", "lines": ["..."]}
