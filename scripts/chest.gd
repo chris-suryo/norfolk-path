@@ -12,6 +12,12 @@ const RADIUS := 18.0
 const CHEST_TEX := preload(
 	"res://assets/cute_fantasy/Cute_Fantasy_Free/Outdoor decoration/Chest.png"
 )
+# A 6-frame closed->open strip (16px cells). Loaded at runtime, not preloaded, so
+# a missing import degrades to the flat closed sprite + tint below instead of a
+# hard failure. String literal (not a var) so check_assets.py validates the path.
+const CHEST_ANIM_PATH := "res://assets/cute_fantasy/packs/Cute_Fantasy/Cute_Fantasy/Buildings/House_Decor/Chest_Anim.png"
+const CHEST_FRAMES := 6
+const CHEST_OPEN_FRAME := 5
 const LOOTED_TINT := Color(0.55, 0.5, 0.45)
 
 var chest_id := ""
@@ -21,6 +27,7 @@ var _sprite: Sprite2D
 var _box: DialogueBox
 var _near_bodies: Array[Node] = []
 var _opened := false
+var _has_anim := false
 
 
 func _ready() -> void:
@@ -41,7 +48,14 @@ func _ready() -> void:
 	body.add_child(body_shape)
 	add_child(body)
 	_sprite = Sprite2D.new()
-	_sprite.texture = CHEST_TEX
+	var anim := load(CHEST_ANIM_PATH) as Texture2D
+	if anim != null:
+		_has_anim = true
+		_sprite.texture = anim
+		_sprite.hframes = CHEST_FRAMES
+		_sprite.frame = 0  # closed
+	else:
+		_sprite.texture = CHEST_TEX
 	_sprite.offset = Vector2(0, -4)
 	body.add_child(_sprite)
 	body_entered.connect(_on_body_entered)
@@ -55,7 +69,7 @@ func _on_body_entered(body: Node) -> void:
 	if body is Player:
 		_near_bodies.append(body)
 		if _near_bodies.size() == 1 and not _opened and _box != null:
-			_box.request_prompt(true)
+			_box.request_prompt(true, "OPEN")
 
 
 func _on_body_exited(body: Node) -> void:
@@ -86,7 +100,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _open() -> void:
 	var granted := Game.open_chest(chest_id, upgrade_id)
-	_mark_looted()
+	_mark_looted(true)
 	if _box != null:
 		_box.request_prompt(false)
 	if granted.is_empty():
@@ -99,7 +113,18 @@ func _open() -> void:
 		_box.show_message(str(granted.get("name", "Found")), [str(granted.get("line", "..."))])
 
 
-func _mark_looted() -> void:
+## Show the looted state. With the 6-frame strip: animate the lid up on a fresh
+## open, or snap to the open frame when restoring an already-looted chest on
+## scene load. Without the strip (import missing): fall back to the dim tint.
+func _mark_looted(animate := false) -> void:
 	_opened = true
-	if _sprite != null:
+	if _sprite == null:
+		return
+	if _has_anim:
+		if animate:
+			var tw := create_tween()
+			tw.tween_property(_sprite, "frame", CHEST_OPEN_FRAME, 0.28).from(0)
+		else:
+			_sprite.frame = CHEST_OPEN_FRAME
+	else:
 		_sprite.modulate = LOOTED_TINT

@@ -8,7 +8,10 @@ extends Area2D
 @export var speed: float = 75.0
 @export var damage: int = 1
 @export var lifetime: float = 4.0
-@export var spin: float = 6.0
+# A slow tumble reads as a thrown book; the old 6.0 spun it into an unreadable
+# blur. The book is drawn flat (cover to camera) so it stays a recognizable book
+# as it turns - no travel-facing, which in 2D would just point it edge-on.
+@export var spin: float = 3.0
 
 var _dir := Vector2.RIGHT
 var _life := 0.0
