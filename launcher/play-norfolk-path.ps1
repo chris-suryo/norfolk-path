@@ -19,26 +19,55 @@ $Repo = Split-Path $PSScriptRoot -Parent
 
 function Fail($m) { Write-Host "`n[X] $m" -ForegroundColor Red; Read-Host "Press Enter to close"; exit 1 }
 
+# Say something IMMEDIATELY so the window is never blank while it works.
+Write-Host ""
+Write-Host "  Norfolk Path - playtest launcher" -ForegroundColor Green
+Write-Host "  --------------------------------" -ForegroundColor DarkGray
+
 if (-not (Test-Path (Join-Path $Repo "project.godot"))) {
 	Fail "This script must live in <repo>\launcher\. Couldn't find project.godot in $Repo."
 }
 Set-Location $Repo
 
 # --- find Godot 4.7 (cache the answer next to this script) -----------------
+# The cache is the fast path. Auto-detect is a BOUNDED, shallow scan of the few
+# folders Godot actually lands in - never a full recurse of LOCALAPPDATA (that
+# walks thousands of cache dirs and looks like a hang). If we can't find it in
+# a second or two, we just ask.
 $cache = Join-Path $PSScriptRoot ".godot-path"
 $godot = ""
 if (Test-Path $cache) { $godot = (Get-Content $cache -Raw).Trim() }
-if (-not $godot -or -not (Test-Path $godot)) {
+
+if ($godot -and (Test-Path $godot)) {
+	Write-Host "Using Godot: $godot" -ForegroundColor DarkGray
+}
+else {
+	Write-Host "Looking for Godot 4.7..." -ForegroundColor Cyan
 	$onPath = (Get-Command godot -ErrorAction SilentlyContinue).Source
 	if ($onPath) { $godot = $onPath }
 	if (-not $godot) {
-		$godot = Get-ChildItem "$env:USERPROFILE\Downloads", "$env:USERPROFILE\Desktop", "$env:LOCALAPPDATA" `
-			-Recurse -Filter "Godot_v4.7*.exe" -ErrorAction SilentlyContinue |
-			Select-Object -First 1 -ExpandProperty FullName
+		$roots = @(
+			"$env:USERPROFILE\Downloads",
+			"$env:USERPROFILE\Desktop",
+			"$env:USERPROFILE\Documents",
+			"$env:LOCALAPPDATA\Programs",
+			"$env:ProgramFiles",
+			"${env:ProgramFiles(x86)}"
+		) | Where-Object { $_ -and (Test-Path $_) }
+		foreach ($root in $roots) {
+			Write-Host "  scanning $root ..." -ForegroundColor DarkGray
+			$hit = Get-ChildItem -Path $root -Depth 2 -Filter "Godot_v4.7*.exe" -File -ErrorAction SilentlyContinue |
+				Select-Object -First 1 -ExpandProperty FullName
+			if ($hit) { $godot = $hit; break }
+		}
 	}
-	if (-not $godot) { $godot = Read-Host "Full path to your Godot 4.7 .exe" }
-	if (-not (Test-Path $godot)) { Fail "Godot not found at '$godot'." }
+	if (-not $godot) {
+		Write-Host "Couldn't find Godot 4.7 automatically." -ForegroundColor Yellow
+		$godot = (Read-Host "Paste the full path to your Godot 4.7 .exe").Trim().Trim('"')
+	}
+	if (-not $godot -or -not (Test-Path $godot)) { Fail "Godot not found at '$godot'." }
 	Set-Content $cache $godot
+	Write-Host "Using Godot: $godot" -ForegroundColor Green
 }
 
 # --- sync to the exact pinned version --------------------------------------
