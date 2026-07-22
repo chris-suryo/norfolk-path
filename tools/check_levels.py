@@ -144,6 +144,8 @@ def check_dialogue(levels):
     problems = []
     ids = set(re.findall(r'^\t"(\w+)":', read("scripts/dialogue_data.gd"), re.M))
     all_villagers = set()
+    all_notes = set()
+    all_persons = set()
     for lid, lv in levels.items():
         rows = lv["rows"]
         for y, r in enumerate(rows):
@@ -153,6 +155,18 @@ def check_dialogue(levels):
                     all_villagers.add(vid)
                     if vid not in ids:
                         problems.append(f"{lid}: villager at ({x},{y}) has no dialogue entry '{vid}'")
+                elif c == "!":
+                    # Interior examine-trigger — main.gd derives this exact id.
+                    nid = f"note_{lid}_{x}_{y}"
+                    all_notes.add(nid)
+                    if nid not in ids:
+                        problems.append(f"{lid}: note at ({x},{y}) has no dialogue entry '{nid}'")
+                elif c == "P":
+                    # Interior resident — main.gd derives this exact id.
+                    pid = f"person_{lid}_{x}_{y}"
+                    all_persons.add(pid)
+                    if pid not in ids:
+                        problems.append(f"{lid}: person at ({x},{y}) has no dialogue entry '{pid}'")
         joined = "".join(rows)
         if "$" in joined and "ariana" not in ids:
             problems.append(f"{lid}: Ariana ('$') present but no 'ariana' dialogue entry")
@@ -161,6 +175,12 @@ def check_dialogue(levels):
     for vid in sorted(i for i in ids if i.startswith("villager_")):
         if vid not in all_villagers:
             problems.append(f"dialogue_data: '{vid}' matches no villager cell on any map")
+    for nid in sorted(i for i in ids if i.startswith("note_")):
+        if nid not in all_notes:
+            problems.append(f"dialogue_data: '{nid}' matches no note cell on any map")
+    for pid in sorted(i for i in ids if i.startswith("person_")):
+        if pid not in all_persons:
+            problems.append(f"dialogue_data: '{pid}' matches no person cell on any map")
     return problems
 
 

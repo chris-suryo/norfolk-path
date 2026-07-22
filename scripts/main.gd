@@ -12,12 +12,9 @@ extends Node2D
 
 const DIALOGUE_BOX_SCENE := preload("res://scenes/dialogue_box.tscn")
 
-## Cosmetic-variety assets (map audit M7/M10). The alt villager breaks the
-## one-sprite-plays-four-people clone effect; the sail sheet is the windmill's
-## rotating cross, shipped separately from the tower in the pack.
-const VILLAGER_ALT := (
-	"res://assets/cute_fantasy/packs/Cute_Fantasy/Cute_Fantasy" + "/NPCs (Premade)/Chef_Chloe.png"
-)
+## The windmill's rotating cross (map audit M7), shipped separately from the
+## tower in the pack. (Villager variety moved to modular VillagerNpc nodes —
+## the old premade-sheet alt, M10, is retired.)
 const WINDMILL_SAILS := (
 	"res://assets/cute_fantasy/packs/Cute_Fantasy/Cute_Fantasy"
 	+ "/Buildings/Buildings/Unique_Buildings/Windmill/Windmill_Sail_Anim.png"
@@ -29,7 +26,26 @@ const WINDMILL_SAILS := (
 ## Used by the build-time coverage assert so a future map edit can never silently
 ## reintroduce the old blank-grass gap.
 const TERRAIN_SYMS := [
-	".", "#", "S", "~", "B", "D", "Q", "c", "g", "O", "k", "a", "l", "@", "$", "_", "X", ">"
+	".",
+	"#",
+	"S",
+	"~",
+	"B",
+	"D",
+	"Q",
+	"c",
+	"g",
+	"O",
+	"k",
+	"a",
+	"l",
+	"@",
+	"$",
+	"_",
+	"X",
+	">",
+	"!",
+	"P"
 ]
 const FENCE_SYMS := ["F", "|"]
 
@@ -219,6 +235,12 @@ func _spawn_talkers() -> void:
 	add_child(box)
 	for cell in _map.find_all("N"):
 		_add_talker("villager_%d_%d" % [cell.x, cell.y], _map.cell_center(cell))
+		# The body you walk up to: a modular villager whose look is unique per
+		# cell (M10 — one premade sheet no longer plays every villager).
+		var villager := VillagerNpc.new()
+		villager.profile = VillagerNpc.profile_for(cell.x, cell.y)
+		villager.position = _map.cell_center(cell)
+		_world.add_child(villager)
 	if _def.has_ariana:
 		_add_talker("ariana", _map.cell_center(_map.find_one("$")))
 		_add_talker("guide", _map.cell_center(GUIDE_CELL))
@@ -226,6 +248,25 @@ func _spawn_talkers() -> void:
 		_add_talker("library_door", _map.cell_center(cell))
 	if _def.has_shop:
 		_add_talker("evan", _map.cell_center(_map.find_one("H")) + EVAN_OFFSET)
+	# Interior examine-triggers: baked "!" floor cells (bake_interior.py). The id
+	# is derived from the level + cell, matching the villager_<x>_<y> convention,
+	# so DialogueData coverage is CI-checkable. Only interiors carry "!".
+	for cell in _map.find_all("!"):
+		_add_talker(
+			"note_%s_%d_%d" % [Game.current_level_id, cell.x, cell.y], _map.cell_center(cell)
+		)
+	# Interior residents: baked "P" floor cells (bake_interior.py). Each gets the
+	# SAME modular VillagerNpc body as the exterior "N" villagers (so indoor people
+	# share the farm-folk look) plus an Interactable on a level-scoped placeholder
+	# id, CI-checkable like the notes. Only interiors carry "P".
+	for cell in _map.find_all("P"):
+		_add_talker(
+			"person_%s_%d_%d" % [Game.current_level_id, cell.x, cell.y], _map.cell_center(cell)
+		)
+		var resident := VillagerNpc.new()
+		resident.profile = VillagerNpc.profile_for(cell.x, cell.y)
+		resident.position = _map.cell_center(cell)
+		_world.add_child(resident)
 
 
 func _add_talker(npc_id: String, at: Vector2) -> void:
@@ -316,6 +357,8 @@ func _spawn_props() -> void:
 				continue
 			if sym == "x":
 				continue  # chests are live Chest nodes now (see _spawn_chests)
+			if sym == "N":
+				continue  # villagers are modular VillagerNpc nodes now (_spawn_talkers)
 			var spec: Array = PropTable.PROPS[sym]
 			var base := _map.cell_center(Vector2i(x, y))
 			if ANIMAL_ANIM.has(sym):
@@ -350,10 +393,8 @@ func _spawn_props() -> void:
 
 ## Per-cell cosmetic variation (map audit M10/M12), deterministic by cell so
 ## runs, saves, and the review composites always agree.
-func _style_prop(sprite: Sprite2D, sym: String, sheet_key: String, x: int, y: int) -> void:
-	if sym == "N" and x % 2 == 1:
-		sprite.texture = load(VILLAGER_ALT)
-	elif sheet_key == "oak" or sheet_key == "oak_s":
+func _style_prop(sprite: Sprite2D, _sym: String, sheet_key: String, x: int, y: int) -> void:
+	if sheet_key == "oak" or sheet_key == "oak_s":
 		sprite.flip_h = (x * 31 + y * 17) % 2 == 1
 
 
