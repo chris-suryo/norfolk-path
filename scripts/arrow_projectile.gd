@@ -4,6 +4,9 @@ extends Area2D
 ## The player's bow shot: a straight arrow that damages the first enemy it
 ## touches. The book_projectile pattern with the collision mask flipped to the
 ## enemies layer; rotation faces travel so the bolt sprite reads as an arrow.
+## The scene mask also includes the world layer, so arrows stop on terrain and
+## buildings — symmetric with enemy bolts, no shooting over walls (Chris's
+## difficulty call). Only Irene's books are magic enough to sail over cover.
 
 @export var speed: float = 140.0
 @export var damage: int = 2
@@ -38,4 +41,8 @@ func _on_body_entered(body: Node) -> void:
 	if body.is_in_group("enemies") and body.has_method("take_damage"):
 		_consumed = true
 		body.take_damage(damage, global_position)
+		queue_free()
+	else:
+		# Anything else on the mask is terrain/buildings — the arrow splinters.
+		_consumed = true
 		queue_free()
