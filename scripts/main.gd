@@ -12,12 +12,9 @@ extends Node2D
 
 const DIALOGUE_BOX_SCENE := preload("res://scenes/dialogue_box.tscn")
 
-## Cosmetic-variety assets (map audit M7/M10). The alt villager breaks the
-## one-sprite-plays-four-people clone effect; the sail sheet is the windmill's
-## rotating cross, shipped separately from the tower in the pack.
-const VILLAGER_ALT := (
-	"res://assets/cute_fantasy/packs/Cute_Fantasy/Cute_Fantasy" + "/NPCs (Premade)/Chef_Chloe.png"
-)
+## The windmill's rotating cross (map audit M7), shipped separately from the
+## tower in the pack. (Villager variety moved to modular VillagerNpc nodes —
+## the old premade-sheet alt, M10, is retired.)
 const WINDMILL_SAILS := (
 	"res://assets/cute_fantasy/packs/Cute_Fantasy/Cute_Fantasy"
 	+ "/Buildings/Buildings/Unique_Buildings/Windmill/Windmill_Sail_Anim.png"
@@ -219,6 +216,12 @@ func _spawn_talkers() -> void:
 	add_child(box)
 	for cell in _map.find_all("N"):
 		_add_talker("villager_%d_%d" % [cell.x, cell.y], _map.cell_center(cell))
+		# The body you walk up to: a modular villager whose look is unique per
+		# cell (M10 — one premade sheet no longer plays every villager).
+		var villager := VillagerNpc.new()
+		villager.profile = VillagerNpc.profile_for(cell.x, cell.y)
+		villager.position = _map.cell_center(cell)
+		_world.add_child(villager)
 	if _def.has_ariana:
 		_add_talker("ariana", _map.cell_center(_map.find_one("$")))
 		_add_talker("guide", _map.cell_center(GUIDE_CELL))
@@ -323,6 +326,8 @@ func _spawn_props() -> void:
 				continue
 			if sym == "x":
 				continue  # chests are live Chest nodes now (see _spawn_chests)
+			if sym == "N":
+				continue  # villagers are modular VillagerNpc nodes now (_spawn_talkers)
 			var spec: Array = PropTable.PROPS[sym]
 			var base := _map.cell_center(Vector2i(x, y))
 			if ANIMAL_ANIM.has(sym):
@@ -357,10 +362,8 @@ func _spawn_props() -> void:
 
 ## Per-cell cosmetic variation (map audit M10/M12), deterministic by cell so
 ## runs, saves, and the review composites always agree.
-func _style_prop(sprite: Sprite2D, sym: String, sheet_key: String, x: int, y: int) -> void:
-	if sym == "N" and x % 2 == 1:
-		sprite.texture = load(VILLAGER_ALT)
-	elif sheet_key == "oak" or sheet_key == "oak_s":
+func _style_prop(sprite: Sprite2D, _sym: String, sheet_key: String, x: int, y: int) -> void:
+	if sheet_key == "oak" or sheet_key == "oak_s":
 		sprite.flip_h = (x * 31 + y * 17) % 2 == 1
 
 
