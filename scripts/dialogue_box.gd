@@ -44,10 +44,14 @@ func _ready() -> void:
 	_choices_box.visible = false
 
 
-## Called by an Interactable when a player is in range (and left again) so the
-## prompt reflects "someone here can talk right now".
-func request_prompt(active: bool) -> void:
+## Called by an Interactable/Chest when a player is in range (and left again) so
+## the prompt reflects "someone here can act right now". `verb` lets a chest read
+## "E - OPEN" instead of an NPC's "E - TALK"; the newest active requester wins the
+## label (in practice only one trigger overlaps a player at a time).
+func request_prompt(active: bool, verb: String = "TALK") -> void:
 	_prompt_requests = maxi(0, _prompt_requests + (1 if active else -1))
+	if active:
+		_prompt.text = "E - %s   (P2: ENTER)" % verb
 	_prompt.visible = _prompt_requests > 0 and not _panel.visible
 
 
