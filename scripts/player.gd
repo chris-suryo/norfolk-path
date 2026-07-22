@@ -51,6 +51,9 @@ const ATTACK_DURATION := 0.4
 const ATTACK_ACTIVE_START := 0.1
 const ATTACK_ACTIVE_END := 0.28
 const SWORD_REACH := 18.0
+## You keep a slow shuffle during the swing (playtest feedback: the dead stop
+## felt stiff) — this fraction of walk speed, mirroring the bow's draw_move_factor.
+const ATTACK_MOVE_FACTOR := 0.5
 
 ## The bow is hold-to-charge (round-3 direction): DRAW steps through these
 ## frames while the key is held, releasing looses the arrow and holds the
@@ -58,11 +61,14 @@ const SWORD_REACH := 18.0
 const DRAW_FRAMES := 3
 const RELEASE_TIME := 0.15
 
-## A brisk ~29px evasive step. The immunity window is deliberately shorter than
+## A brisk ~32px evasive step. The immunity window is deliberately shorter than
 ## the travel so a roll must be timed through a hit rather than held as safety.
+## Distance = ROLL_SPEED x ROLL_DURATION; nudged +10% (playtest: "a touch
+## further") via SPEED alone, which leaves the 8-frame roll animation timing
+## (driven by _state_time/ROLL_DURATION) untouched.
 const ROLL_DURATION := 0.24
 const ROLL_IFRAME_DURATION := 0.16
-const ROLL_SPEED := 120.0
+const ROLL_SPEED := 132.0
 const ROLL_COOLDOWN := 0.4
 
 const HURT_DURATION := 0.25
@@ -222,7 +228,16 @@ func _process_normal(delta: float) -> void:
 
 
 func _process_attack(_delta: float) -> void:
-	velocity = velocity.move_toward(Vector2.ZERO, friction * _delta)
+	# Move-while-attacking: a slow shuffle instead of a dead stop. Facing stays
+	# locked (set in _enter_attack) so the sword hitbox keeps pointing where the
+	# swing started — only the body translates.
+	var input_vector := _move_input()
+	if input_vector != Vector2.ZERO:
+		velocity = velocity.move_toward(
+			input_vector.normalized() * max_speed * ATTACK_MOVE_FACTOR, acceleration * _delta
+		)
+	else:
+		velocity = velocity.move_toward(Vector2.ZERO, friction * _delta)
 	var active := _state_time >= ATTACK_ACTIVE_START and _state_time <= ATTACK_ACTIVE_END
 	_sword_shape.disabled = not active
 	if active:
