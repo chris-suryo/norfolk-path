@@ -100,6 +100,66 @@ const LINES := {
 			],
 		},
 	},
+	# PLACEHOLDER — interior examine-triggers (the "!" cells baked into each
+	# room). Ids are note_<level>_<x>_<y>, one per readable spot; the comment on
+	# each says which piece it sits in front of, so Chris's real copy is a
+	# find-and-fill. These give every house a bit of story surface without a new
+	# system (pure DialogueBox reuse). Move/add/remove by editing the room's
+	# "notes" in tools/bake_interior.py + re-baking; check_levels enforces that
+	# every "!" cell has an entry here and vice versa.
+	"note_cottage_2_4":
+	{
+		"name": "Hearth",
+		"lines": ["[PLACEHOLDER] Cold ashes, and a mantel worn smooth by somebody's habit."],
+	},
+	"note_home_a1_1_4":
+	{
+		"name": "Stove",
+		"lines": ["[PLACEHOLDER] A pot left on the hob. Whoever lives here left in a hurry."],
+	},
+	"note_home_a2_3_5":
+	{
+		"name": "Plants",
+		"lines":
+		["[PLACEHOLDER] Every pot is labelled in a careful hand. This one just says 'DO NOT'."],
+	},
+	"note_home_g2_3_6":
+	{
+		"name": "Fireside",
+		"lines": ["[PLACEHOLDER] Two chairs pulled close. A conversation paused mid-sentence."],
+	},
+	"note_home_j1_3_4":
+	{
+		"name": "Bedside",
+		"lines": ["[PLACEHOLDER] A book face-down on the covers. The bookmark is a library slip."],
+	},
+	"note_home_e1_7_4":
+	{
+		"name": "Family hearth",
+		"lines": ["[PLACEHOLDER] Chalk marks up the chimney brick — a family measuring the years."],
+	},
+	"note_library_4_4":
+	{
+		"name": "Shelves",
+		"lines":
+		["[PLACEHOLDER] Overdue notices, filed alphabetically. Yours would be near the front."],
+	},
+	"note_library_11_4":
+	{
+		"name": "Shelves",
+		"lines":
+		["[PLACEHOLDER] A gap where one book should be. The card still lists who took it."],
+	},
+	"note_barn_int_3_4":
+	{
+		"name": "Stores",
+		"lines": ["[PLACEHOLDER] Barrels tallied in chalk. Someone's counting is optimistic."],
+	},
+	"note_windmill_3_6":
+	{
+		"name": "Worktable",
+		"lines": ["[PLACEHOLDER] A miller's ledger, open to a page of debts. One name is circled."],
+	},
 }
 
 const DEFAULT := {"name": "???", "lines": ["..."]}

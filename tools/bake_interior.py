@@ -109,6 +109,7 @@ INTERIORS = {
         "wall": "stone",
         "floor": "parquet",
         "windows": [3, 9],
+        "notes": [(2, 4)],  # by the hearth
         "furniture": [
             ("rug_teal", 5, 6),
             ("fireplace", 2, 3),
@@ -124,6 +125,7 @@ INTERIORS = {
         "wall": "stone",
         "floor": "wood_mix",
         "windows": [4, 7],
+        "notes": [(1, 4)],  # at the stove
         "furniture": [
             ("stove", 1, 3),
             ("sink", 2, 3),
@@ -142,6 +144,7 @@ INTERIORS = {
         "wall": "plaster",
         "floor": "diag",
         "windows": [2, 5, 8],
+        "notes": [(3, 5)],  # among the plants
         "furniture": [
             ("plant_big", 1, 4),
             ("plant_sunflower", 3, 3),
@@ -162,6 +165,7 @@ INTERIORS = {
         "windows": [3, 9],
         # PROCEDURAL (see home_j1): furnisher-generated; list below is the fallback.
         "furnish": {"type": "parlor"},
+        "notes": [(3, 6)],  # fireside
         "furniture": [
             ("rug_teal", 5, 7),
             ("fireplace", 2, 3),
@@ -185,6 +189,7 @@ INTERIORS = {
         # PROCEDURAL: the furnisher generates this room (seed = id); the
         # hand-authored list below is the kept fallback — delete "furnish" to revert.
         "furnish": {"type": "bedroom"},
+        "notes": [(3, 4)],  # bedside
         "furniture": [
             ("bed", 1, 3),
             ("crate", 7, 3),
@@ -201,6 +206,7 @@ INTERIORS = {
         "wall": "brick",
         "floor": "parquet",
         "windows": [3, 9],
+        "notes": [(7, 4)],  # by the family hearth
         "furniture": [
             ("fireplace", 6, 3),
             ("plant_big", 1, 4),
@@ -225,6 +231,7 @@ INTERIORS = {
         "windows": [4, 12],
         # PROCEDURAL (see home_j1): furnisher-generated; list below is the fallback.
         "furnish": {"type": "library"},
+        "notes": [(4, 4), (11, 4)],  # in front of the shelf banks
         "furniture": [
             ("rug_teal", 7, 9),
             ("bookshelf_big", 1, 3),
@@ -250,6 +257,7 @@ INTERIORS = {
         "wall": "brick",
         "floor": "wood_dark",
         "windows": [4, 9],
+        "notes": [(3, 4)],  # by the stores
         "furniture": [
             ("barrel", 1, 3),
             ("barrel", 2, 3),
@@ -272,6 +280,7 @@ INTERIORS = {
         "wall": "wood",
         "floor": "wood_mix",
         "windows": [3, 7],
+        "notes": [(3, 6)],  # the miller's worktable
         "furniture": [
             ("barrel", 1, 3),
             ("barrel_water", 1, 5),
@@ -366,11 +375,31 @@ def validate_and_stamp(interior_id: str, spec: dict, grid: list) -> None:
         for cell in cells:
             solid_cells[cell] = name
         solid_boxes.append((name, box))
+    # Interactable "note" cells: a walkable floor tile the game turns into an
+    # examine-trigger (main.gd spawns an Interactable there, wired to a dialogue
+    # id derived from the level + cell). Stamped AFTER furniture so the floor
+    # check sees the final grid: a note must land on clear floor ("_"), never on
+    # furniture, a wall, or the door pocket — placed a step in front of the piece
+    # it comments on. Fail loud, like every other overlap rule.
+    for (col, row) in spec.get("notes", []):
+        if not (0 <= col < w and 0 <= row < h):
+            problems.append(f"{interior_id}: note cell ({col},{row}) out of bounds")
+        elif (col, row) in reserved:
+            problems.append(f"{interior_id}: note ({col},{row}) blocks the door pocket")
+        elif (col, row) in solid_cells:
+            problems.append(
+                f"{interior_id}: note ({col},{row}) sits on furniture "
+                f"'{solid_cells[(col, row)]}' — place it on adjacent floor"
+            )
+        elif grid[row][col] == "X":
+            problems.append(f"{interior_id}: note ({col},{row}) is a wall cell, not floor")
     if problems:
         raise SystemExit("bake_interior FAIL:\n  - " + "\n  - ".join(problems))
     for (cx, cy) in solid_cells:
         if 0 <= cx < w and 0 <= cy < h and grid[cy][cx] == "_":
             grid[cy][cx] = "X"
+    for (col, row) in spec.get("notes", []):
+        grid[row][col] = "!"
 
 
 def render(spec: dict, grid: list) -> Image.Image:
@@ -426,7 +455,8 @@ def write_gd(interior_id: str, grid: list) -> None:
         "## GENERATED interior map — do not hand-edit; regenerate with\n"
         "## `python tools/bake_interior.py` (emits this + the baked ground PNG).\n"
         "## Symbols: X wall/solid furniture (collision), _ floor, S spawn,\n"
-        "## > exit mat (back out).\n"
+        "## > exit mat (back out), ! examine-trigger (walkable; main.gd spawns\n"
+        "## an Interactable here — dialogue id note_<level>_<x>_<y>).\n"
         "## Packed into the Web export as a resource; consumed via LevelRegistry.\n\n"
         'const MAP := """\n' + body + '\n"""\n'
     )

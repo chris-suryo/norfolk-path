@@ -29,7 +29,7 @@ const WINDMILL_SAILS := (
 ## Used by the build-time coverage assert so a future map edit can never silently
 ## reintroduce the old blank-grass gap.
 const TERRAIN_SYMS := [
-	".", "#", "S", "~", "B", "D", "Q", "c", "g", "O", "k", "a", "l", "@", "$", "_", "X", ">"
+	".", "#", "S", "~", "B", "D", "Q", "c", "g", "O", "k", "a", "l", "@", "$", "_", "X", ">", "!"
 ]
 const FENCE_SYMS := ["F", "|"]
 
@@ -226,6 +226,13 @@ func _spawn_talkers() -> void:
 		_add_talker("library_door", _map.cell_center(cell))
 	if _def.has_shop:
 		_add_talker("evan", _map.cell_center(_map.find_one("H")) + EVAN_OFFSET)
+	# Interior examine-triggers: baked "!" floor cells (bake_interior.py). The id
+	# is derived from the level + cell, matching the villager_<x>_<y> convention,
+	# so DialogueData coverage is CI-checkable. Only interiors carry "!".
+	for cell in _map.find_all("!"):
+		_add_talker(
+			"note_%s_%d_%d" % [Game.current_level_id, cell.x, cell.y], _map.cell_center(cell)
+		)
 
 
 func _add_talker(npc_id: String, at: Vector2) -> void:
