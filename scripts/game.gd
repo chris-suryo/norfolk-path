@@ -287,7 +287,11 @@ func set_appearances(next_appearances: Array[Dictionary]) -> void:
 		appearances.append(AppearanceCatalog.normalized(value))
 
 
-func save() -> void:
+## Persist the run. Returns whether the write actually landed: last_saved is
+## only stamped on a VERIFIED write, so the pause menu can't show "Saved HH:MM"
+## for a save that never happened (R4: both write paths used to swallow
+## failure after stamping the time up front).
+func save() -> bool:
 	var data := {
 		"v": SAVE_VERSION,
 		"checkpoint": checkpoint,
@@ -301,17 +305,50 @@ func save() -> void:
 		"opened_chests": opened_chests,
 	}
 	var text := JSON.stringify(data)
-	last_saved = Time.get_time_string_from_system().substr(0, 5)
-	if OS.has_feature("web"):
-		JavaScriptBridge.eval("localStorage.setItem('%s', '%s');" % [SAVE_KEY, text], true)
+	var ok := _write_save(text)
+	if ok:
+		last_saved = Time.get_time_string_from_system().substr(0, 5)
 	else:
-		var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-		if file != null:
-			file.store_string(text)
-			file.close()
+		push_error("Game.save: write failed — progress was NOT saved.")
+	return ok
+
+
+func _write_save(text: String) -> bool:
+	if OS.has_feature("web"):
+		# setItem throws on quota / blocked storage; catch in JS and report the
+		# truth instead of letting the failure vanish inside the eval.
+		var result: Variant = JavaScriptBridge.eval(
+			(
+				(
+					"(function(){try{localStorage.setItem('%s', '%s');return true;}"
+					+ "catch(e){return false;}})();"
+				)
+				% [SAVE_KEY, text]
+			),
+			true
+		)
+		return result == true
+	# Desktop: write-then-rename so a crash or power cut mid-write can't leave a
+	# truncated save.json that the next boot silently discards (R4). The rename
+	# replaces the old save atomically only after the new bytes are fully down.
+	var tmp := SAVE_PATH + ".tmp"
+	var file := FileAccess.open(tmp, FileAccess.WRITE)
+	if file == null:
+		return false
+	file.store_string(text)
+	file.flush()
+	var write_error := file.get_error()
+	file.close()
+	if write_error != OK:
+		return false
+	return DirAccess.rename_absolute(tmp, SAVE_PATH) == OK
 
 
 func load_state() -> bool:
+	# A Continue is not a door arrival: without this, an entry id left over from
+	# before Return-to-Title made main._entry_cell spawn the party at the
+	# last-used door instead of the proper spawn on checkpoint-0 Continues.
+	current_entry = ""
 	return _apply(_read_raw())
 
 
@@ -322,7 +359,7 @@ func has_save() -> bool:
 	var parsed: Variant = JSON.parse_string(text) if text != "" else null
 	if not parsed is Dictionary:
 		return false
-	var version := int(parsed.get("v", 0))
+	var version := _as_int(parsed.get("v"), 0)
 	return version == SAVE_VERSION or version == PREVIOUS_SAVE_VERSION
 
 
@@ -342,31 +379,78 @@ func _read_raw() -> String:
 
 func _apply(text: String) -> bool:
 	var parsed: Variant = JSON.parse_string(text) if text != "" else null
-	var version := int(parsed.get("v", 0)) if parsed is Dictionary else 0
-	var ok := parsed is Dictionary and (version == SAVE_VERSION or version == PREVIOUS_SAVE_VERSION)
-	if ok:
-		checkpoint = int(parsed.get("checkpoint", 0))
-		player_count = clampi(int(parsed.get("player_count", 1)), 1, 2)
-		boss_defeated = bool(parsed.get("boss_defeated", false))
-		# Missing "level" (a v3 save) defaults to the valley.
-		current_level_id = str(parsed.get("level", "valley"))
-		var loaded: Array[Dictionary] = []
-		# Appearances exist in v3 AND v4 (only "level" is new this bump), so read
-		# them for either version — dropping them would reset a customized look.
-		if parsed.get("appearances") is Array:
-			for item in parsed.appearances:
-				if item is Dictionary:
-					loaded.append(item)
-		set_appearances(loaded)
-		# Additive optional fields — absent in pre-upgrade saves, default to empty.
-		upgrades.clear()
-		for u in parsed.get("upgrades", []):
+	if not parsed is Dictionary:
+		return false
+	var version := _as_int(parsed.get("v"), 0)
+	if version != SAVE_VERSION and version != PREVIOUS_SAVE_VERSION:
+		return false
+	# TWO-PHASE apply: extract + sanitize EVERY field into locals first, assign
+	# run state only at the end. The old per-field casts could abort mid-function
+	# on a wrong-typed value (e.g. "boss_defeated": "false" as a string),
+	# leaving half-applied state that Continue then used (R4, verified on 4.7).
+	#
+	# checkpoint is clamped to the real area range: a value above the max area id
+	# (hand-edited, or a future build with fewer areas) cleared the boss area and
+	# soft-locked the run.
+	var next_checkpoint := clampi(_as_int(parsed.get("checkpoint"), 0), 0, EncounterManager.BOSS_ID)
+	var next_count := clampi(_as_int(parsed.get("player_count"), 1), 1, 2)
+	var next_boss := _as_bool(parsed.get("boss_defeated"), false)
+	# Missing "level" (a v3 save) defaults to the valley. An UNREGISTERED level id
+	# also falls back: get_def would already do that at load, but the raw string
+	# used to be round-tripped verbatim into the single-quoted localStorage eval,
+	# where one quote/backslash silently killed all future web saving.
+	var next_level := str(parsed.get("level", "valley"))
+	if not LevelRegistry.LEVELS.has(next_level):
+		next_level = "valley"
+	# Appearances exist in v3 AND v4 (only "level" is new this bump), so read
+	# them for either version — dropping them would reset a customized look.
+	var loaded: Array[Dictionary] = []
+	if parsed.get("appearances") is Array:
+		for item in parsed.appearances:
+			if item is Dictionary:
+				loaded.append(item)
+	# Additive optional fields — absent in pre-upgrade saves, default to empty.
+	# The is Array guards matter: iterating a wrong-typed String would happily
+	# append its characters one by one.
+	var next_upgrades: Array[String] = []
+	var raw_upgrades: Variant = parsed.get("upgrades", [])
+	if raw_upgrades is Array:
+		for u in raw_upgrades:
 			if u is String:
-				upgrades.append(u)
-		opened_chests.clear()
-		for c in parsed.get("opened_chests", []):
+				next_upgrades.append(u)
+	var next_chests: Array[String] = []
+	var raw_chests: Variant = parsed.get("opened_chests", [])
+	if raw_chests is Array:
+		for c in raw_chests:
 			if c is String:
-				opened_chests.append(c)
-		if version == PREVIOUS_SAVE_VERSION:
-			save()
-	return ok
+				next_chests.append(c)
+	# Phase 2: everything validated — commit.
+	checkpoint = next_checkpoint
+	player_count = next_count
+	boss_defeated = next_boss
+	current_level_id = next_level
+	set_appearances(loaded)
+	upgrades = next_upgrades
+	opened_chests = next_chests
+	if version == PREVIOUS_SAVE_VERSION:
+		save()
+	return true
+
+
+## JSON numbers arrive as floats and hand-edited saves can hold anything —
+## coerce only from safe types, else the fallback (never a runtime abort).
+func _as_int(value: Variant, fallback: int) -> int:
+	match typeof(value):
+		TYPE_INT:
+			return value
+		TYPE_FLOAT:
+			return int(value)
+		TYPE_STRING:
+			return int(value) if (value as String).is_valid_int() else fallback
+	return fallback
+
+
+func _as_bool(value: Variant, fallback: bool) -> bool:
+	if typeof(value) == TYPE_BOOL:
+		return value
+	return fallback
