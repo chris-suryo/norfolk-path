@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 from pathlib import Path
 
 from PIL import Image, ImageDraw
@@ -66,11 +67,74 @@ def capture(destination: Path) -> None:
     image.save(destination)
 
 
+# --- villager pass (M10): render the deterministic per-cell VillagerNpc looks ---
+# The four valley villager cells (N in island_map.gd). Their looks come from
+# VillagerNpc.profile_for; the rural sub-pools (V_*) are PARSED from
+# villager_npc.gd (not duplicated) so this preview can't drift from the game.
+VILLAGER_CELLS = ((63, 19), (166, 20), (175, 28), (46, 30))
+
+
+def _villager_pools() -> dict:
+    src = (ROOT / "scripts" / "villager_npc.gd").read_text(encoding="utf-8")
+
+    def arr(name: str) -> list[str]:
+        body = re.search(name + r"\s*:=\s*\[(.*?)\]", src, re.S).group(1)
+        return re.findall(r'"([^"]+)"', body)
+
+    shirt_block = re.search(r"V_SHIRT_COLORS\s*:=\s*\{(.*?)\n\}", src, re.S).group(1)
+    shirt_colors = {}
+    for style, opts in re.findall(r'"(\w+)":\s*\n?\s*\[(.*?)\]', shirt_block, re.S):
+        shirt_colors[style] = re.findall(r'"([^"]+)"', opts)
+    return {
+        "HAIR": arr("V_HAIR"),
+        "SHIRT_STYLES": arr("V_SHIRT_STYLES"),
+        "PANTS": arr("V_PANTS"),
+        "SHOES": arr("V_SHOES"),
+        "SHIRT_COLORS": shirt_colors,
+    }
+
+
+def _villager_profile(x: int, y: int, pools: dict) -> tuple:
+    seed = (x * 2654435761 + y * 40503) & 0x7FFFFFFF
+    style = pools["SHIRT_STYLES"][(seed // 30) % len(pools["SHIRT_STYLES"])]
+    opts = pools["SHIRT_COLORS"][style]
+    return (
+        f"{x},{y}",
+        (seed % 6) + 1,
+        pools["HAIR"][(seed // 6) % len(pools["HAIR"])],
+        style,
+        opts[(seed // 90) % len(opts)],
+        pools["PANTS"][(seed // 900) % len(pools["PANTS"])],
+        pools["SHOES"][(seed // 7200) % len(pools["SHOES"])],
+        (seed // 65000) % 2 == 0,
+    )
+
+
+def capture_villagers(destination: Path) -> None:
+    pools = _villager_pools()
+    profiles = [_villager_profile(x, y, pools) for x, y in VILLAGER_CELLS]
+    image = Image.new("RGBA", (len(profiles) * 128, 160), (20, 27, 30, 255))
+    draw = ImageDraw.Draw(image)
+    draw.text((12, 8), "villagers (deterministic per cell)", fill=(255, 223, 112, 255))
+    for i, profile in enumerate(profiles):
+        frame = compose(profile, 0, 0).resize((FRAME * SCALE, FRAME * SCALE), Image.Resampling.NEAREST)
+        image.alpha_composite(frame, (i * 128 + 16, 28))
+        draw.text((i * 128 + 20, 150 - 14), profile[0], fill=(238, 223, 190, 255))
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    image.save(destination)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Capture modular character review frames.")
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--villagers", action="store_true", help="render the per-cell VillagerNpc looks instead of P1/P2"
+    )
     args = parser.parse_args()
-    capture(args.output)
+    if args.villagers:
+        capture_villagers(args.output)
+    else:
+        capture(args.output)
     print(f"Character review snapshot: {args.output}")
 
 
