@@ -226,8 +226,12 @@ func _cycle_speed(dir: int = 1) -> void:
 
 
 func _save_now() -> void:
-	Game.save()
-	_status.text = "Saved %s" % Game.last_saved
+	# save() reports the verified truth now — a blocked/quota'd/failed write must
+	# not show a reassuring "Saved HH:MM" over a run that was never persisted.
+	if Game.save():
+		_status.text = "Saved %s" % Game.last_saved
+	else:
+		_status.text = "Save FAILED — progress not written!"
 
 
 func _return_to_title() -> void:
