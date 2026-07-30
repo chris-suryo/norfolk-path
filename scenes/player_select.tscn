@@ -51,6 +51,8 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color(0.05, 0.07, 0.1, 0.62)
 
+[node name="Scene" type="Node2D" parent="."]
+
 [node name="Frame" type="Panel" parent="."]
 theme_override_styles/panel = SubResource("panel_dark")
 layout_mode = 1
