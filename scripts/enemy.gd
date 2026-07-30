@@ -20,6 +20,13 @@ const DIR_WALK_DOWN := 3
 const DIR_DEATH_ROW := 9
 const DIR_FRAMES := 4
 
+## How long after a steer commit expires a re-block keeps following the same
+## wall direction instead of re-picking toward the player. In a concave corner
+## the toward-player pick flips sign on every re-block, oscillating the enemy
+## in place forever (the round-4 hole in the round-3 fix); remembering the
+## previous direction walks it out along one wall.
+const STEER_MEMORY := 0.6
+
 @export var max_hp: int = 3
 @export var move_speed: float = 30.0
 @export var contact_damage: int = 1
@@ -61,6 +68,8 @@ var _knockback := Vector2.ZERO
 var _facing := Vector2.DOWN
 var _steer_dir := Vector2.ZERO
 var _steer_time := 0.0
+var _steer_memory := 0.0
+var _last_steer := Vector2.ZERO
 
 @onready var _sprite: Sprite2D = $Sprite2D
 @onready var _contact: Area2D = $ContactHitbox
@@ -85,6 +94,8 @@ func return_home() -> void:
 	_knockback = Vector2.ZERO
 	_aggro = false
 	_steer_time = 0.0
+	_steer_memory = 0.0
+	_last_steer = Vector2.ZERO
 
 
 func take_damage(amount: int, from: Vector2) -> void:
@@ -103,6 +114,7 @@ func take_damage(amount: int, from: Vector2) -> void:
 
 func _physics_process(delta: float) -> void:
 	_contact_cd = maxf(0.0, _contact_cd - delta)
+	_steer_memory = maxf(0.0, _steer_memory - delta)
 	_knockback = _knockback.move_toward(Vector2.ZERO, 400.0 * delta)
 
 	if _dead:
@@ -140,7 +152,9 @@ func _physics_process(delta: float) -> void:
 
 ## Blocked-chaser detection, run after move_and_slide: intent to move but almost
 ## no ground covered against something collidable. Picks the collision tangent
-## that points toward the player and commits to it for steer_duration.
+## that points toward the player and commits to it for steer_duration; while a
+## recent commit's memory is warm, the tangent sign follows the previous steer
+## instead (one consistent rotational direction around the obstacle).
 func _maybe_steer(before: Vector2, delta: float, target: Node2D) -> void:
 	if steer_duration <= 0.0 or get_slide_collision_count() == 0:
 		return
@@ -148,11 +162,25 @@ func _maybe_steer(before: Vector2, delta: float, target: Node2D) -> void:
 	if progress >= move_speed * delta * 0.3:
 		return
 	var tangent := get_slide_collision(0).get_normal().orthogonal()
-	var to_target := target.global_position - global_position
-	if tangent.dot(to_target) < 0.0:
-		tangent = -tangent
+	if _steer_memory > 0.0 and _last_steer != Vector2.ZERO:
+		if tangent.dot(_last_steer) < 0.0:
+			tangent = -tangent
+	else:
+		var to_target := target.global_position - global_position
+		if tangent.dot(to_target) < 0.0:
+			tangent = -tangent
 	_steer_dir = tangent
+	_last_steer = tangent
 	_steer_time = steer_duration
+	_steer_memory = steer_duration + STEER_MEMORY
+
+
+## Whether this enemy is actively in the fight. The EncounterManager reads this
+## for the co-op revive rule: a stand-off shooter that never closes to melee
+## range still counts as an ongoing fight. Always-on chasers (aggro_radius 0,
+## e.g. slimes) are always in pursuit, so they always count.
+func is_aggroed() -> bool:
+	return _aggro or aggro_radius <= 0.0
 
 
 ## Ambush latch: always awake when aggro_radius is 0 (default) or once triggered;
@@ -185,6 +213,10 @@ func _try_contact_damage() -> void:
 		return
 	for body in _contact.get_overlapping_bodies():
 		if body.has_method("take_damage") and body.is_in_group("players"):
+			# A downed body is not a target: hitting it was a no-op that still
+			# burned the cooldown, giving the surviving player free openings.
+			if body.has_method("is_targetable") and not body.is_targetable():
+				continue
 			body.take_damage(contact_damage, global_position)
 			_contact_cd = contact_cooldown
 			return
